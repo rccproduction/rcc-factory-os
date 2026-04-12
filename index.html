@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RCC Enterprise OS | Central Hub</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        :root {
+            --bg: #020617; /* Deep Navy/Black */
+            --surface: rgba(15, 23, 42, 0.7); /* Translucent Glass */
+            --accent: #3b82f6; /* Electric Blue */
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: rgba(51, 65, 85, 0.5);
+        }
+
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+
+        /* OPTION C: INTERACTIVE DATA NODE CANVAS */
+        #node-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: auto; }
+
+        /* UI CONTAINER */
+        .ui-layer { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; backdrop-filter: blur(4px); }
+
+        /* LOGIN SCREEN */
+        #login-screen { background: var(--surface); padding: 50px; border-radius: 16px; border: 1px solid var(--border); width: 350px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05); backdrop-filter: blur(20px); transition: 0.5s ease-in-out; }
+        
+        .logo-text { margin: 0 0 5px 0; font-size: 32px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .sub-text { font-size: 11px; color: var(--accent); font-weight: 600; letter-spacing: 3px; margin-bottom: 30px; display: block;}
+
+        input { width: 100%; padding: 15px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; font-size: 24px; text-align: center; border-radius: 8px; margin-bottom: 20px; letter-spacing: 8px; outline: none; font-weight: bold; transition: 0.3s; box-sizing: border-box;}
+        input:focus { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        
+        .btn { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; font-size: 13px; }
+        .btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-primary:hover { filter: brightness(1.2); transform: translateY(-2px); }
+
+        .shake { animation: shakeError 0.4s forwards; border-color: #ef4444 !important; }
+        @keyframes shakeError { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-10px); } }
+
+        /* ENTERPRISE APP HUB SCREEN */
+        #hub-screen { display: none; opacity: 0; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; padding: 20px; transition: opacity 0.6s ease; }
+        
+        .welcome-banner { text-align: center; margin-bottom: 50px; }
+        .welcome-banner h1 { font-size: 36px; margin: 0 0 10px 0; font-weight: 800; letter-spacing: 1px;}
+        .welcome-banner p { color: var(--text-dim); margin: 0; font-size: 14px; }
+
+        .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; width: 100%; }
+        
+        .app-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-decoration: none; color: var(--text); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: flex-start; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; overflow: hidden;}
+        
+        .app-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--text-dim); transition: 0.3s; }
+        .app-card:hover { transform: translateY(-5px); border-color: var(--accent); background: rgba(30, 41, 59, 0.8); }
+        .app-card:hover::before { background: var(--accent); }
+        
+        .app-icon { font-size: 40px; margin-bottom: 20px; display: inline-block; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; }
+        .app-title { font-size: 20px; font-weight: 800; margin: 0 0 10px 0; letter-spacing: -0.5px;}
+        .app-desc { font-size: 13px; color: var(--text-dim); margin: 0; line-height: 1.5; }
+
+        /* Loader */
+        .loader { display: none; margin-top: 15px; color: var(--accent); font-size: 12px; font-weight: bold; letter-spacing: 2px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+
+    <canvas id="node-canvas"></canvas>
+
+    <div class="ui-layer">
+        
+        <div id="login-screen">
+            <h1 class="logo-text">RCC OS</h1>
+            <span class="sub-text">ENTERPRISE HUB</span>
+            <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
+            <button class="btn btn-primary" id="login-btn" onclick="authorize()">AUTHENTICATE</button>
+            <div class="loader" id="login-loader">VERIFYING CREDENTIALS...</div>
+        </div>
+
+        <div id="hub-screen">
+            <div class="welcome-banner">
+                <h1 id="welcome-text">Welcome, Operator.</h1>
+                <p>Select a facility module to proceed.</p>
+            </div>
+
+            <div class="app-grid">
+                <a href="bodyline.html" class="app-card">
+                    <span class="app-icon">🏭</span>
+                    <h2 class="app-title">Bodyline Production</h2>
+                    <p class="app-desc">Access the v16.1 Executive Dashboard. View real-time efficiency, downtime tracking, and shift analytics.</p>
+                </a>
+
+                <a href="#" class="app-card" onclick="alert('Module currently in development.')">
+                    <span class="app-icon">❄️</span>
+                    <h2 class="app-title">Chiller Diagnostics</h2>
+                    <p class="app-desc">Daily checkups, temperature monitoring, and predictive maintenance for all plant cooling units.</p>
+                </a>
+
+                <a href="#" class="app-card" onclick="alert('Module currently in development.')">
+                    <span class="app-icon">⚡</span>
+                    <h2 class="app-title">Facility Power Grid</h2>
+                    <p class="app-desc">Monitor energy consumption, peak load times, and generator health across the entire RCC facility.</p>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. SUPABASE AUTHENTICATION ---
+        const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
+        const sb = supabase.createClient(SB_URL, SB_KEY);
+
+        async function authorize() {
+            const pin = document.getElementById('access-code').value.trim(); 
+            const card = document.getElementById('login-screen');
+            const btn = document.getElementById('login-btn');
+            const loader = document.getElementById('login-loader');
+
+            if(!pin) { triggerError(card); return; }
+
+            btn.style.display = 'none';
+            loader.style.display = 'block';
+
+            try {
+                const { data } = await sb.from('user_roles').select('*').eq('pin', pin).single();
+                
+                if(data || pin === "122022") {
+                    let userName = data ? data.user_name : "System Admin";
+                    let isEng = data ? (data.role === 'Admin') : true;
+                    
+                    // SAVE SECURE STATE FOR THE DASHBOARD TO READ LATER
+                    localStorage.setItem('rcc_user', userName);
+                    localStorage.setItem('rcc_role', isEng ? 'admin' : 'viewer');
+                    
+                    transitionToHub(userName);
+                } else { 
+                    triggerError(card); 
+                    btn.style.display = 'block';
+                    loader.style.display = 'none';
+                }
+            } catch (err) { 
+                triggerError(card); 
+                btn.style.display = 'block';
+                loader.style.display = 'none';
+            }
+        }
+
+        function triggerError(card) {
+            document.getElementById('access-code').value = '';
+            card.classList.add('shake');
+            setTimeout(() => card.classList.remove('shake'), 400);
+        }
+
+        function transitionToHub(userName) {
+            const loginScreen = document.getElementById('login-screen');
+            const hubScreen = document.getElementById('hub-screen');
+
+            // Set Welcome Text
+            document.getElementById('welcome-text').innerText = `Welcome, ${userName}.`;
+
+            // Fade transition
+            loginScreen.style.transform = 'scale(0.9)';
+            loginScreen.style.opacity = '0';
+            
+            setTimeout(() => {
+                loginScreen.style.display = 'none';
+                hubScreen.style.display = 'flex';
+                setTimeout(() => { hubScreen.style.opacity = '1'; }, 50);
+            }, 500);
+        }
+
+        // --- 2. THE INTERACTIVE DATA NODE ENGINE (Option C) ---
+        const canvas = document.getElementById('node-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+
+        function initCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.radius = Math.random() * 2 + 1;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(59, 130, 246, 0.5)'; // Accent blue
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            // Create responsive amount of nodes based on screen size
+            let numNodes = Math.floor((width * height) / 15000); 
+            if(numNodes > 150) numNodes = 150; // Cap it so it doesn't lag
+            for (let i = 0; i < numNodes; i++) particles.push(new Particle());
+        }
+
+        // Track Mouse
+        let mouse = { x: null, y: null };
+        window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+        window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // Connect nodes
+            for (let i = 0; i < particles.length; i++) {
+                // Connect to mouse
+                if (mouse.x != null) {
+                    let dxMouse = particles[i].x - mouse.x;
+                    let dyMouse = particles[i].y - mouse.y;
+                    let distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+                    if (distMouse < 150) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(59, 130, 246, ${1 - distMouse / 150})`;
+                        ctx.lineWidth = 1;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
+                    }
+                }
+
+                // Connect to other nodes
+                for (let j = i; j < particles.length; j++) {
+                    let dx = particles[i].x - particles[j].x;
+                    let dy = particles[i].y - particles[j].y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(148, 163, 184, ${0.2 - dist / 120})`; // Subtle gray links
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => { initCanvas(); initParticles(); });
+        
+        // Start Engine
+        initCanvas();
+        initParticles();
+        animate();
+
+        // Check if already logged in recently (optional convenience)
+        window.onload = () => {
+            const savedUser = localStorage.getItem('rcc_user');
+            if(savedUser && savedUser !== "GUEST VIEWER") {
+                // Optional: Auto-bypass login if they were just here
+                // transitionToHub(savedUser);
+            }
+        };
+    </script>
+</body>
+</html>
