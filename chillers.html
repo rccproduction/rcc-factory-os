@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Chiller Diagnostics | Enterprise OS</title>
+    <title>RCC Chiller Diagnostics | Secure OS</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -48,11 +48,10 @@
         .header-title span { font-family: monospace; font-weight: 600; color: var(--accent); font-size: 12px; }
         
         .user-profile-container { grid-column: 3; display: flex; justify-content: flex-end; }
-        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 6px 15px 6px 6px; border-radius: 30px; border: 1px solid var(--border); }
+        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 6px 15px 6px 15px; border-radius: 30px; border: 1px solid var(--border); }
         .avatar { width: 32px; height: 32px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
         .user-info { display: flex; flex-direction: column; text-align: right;}
-        .user-name { font-size: 12px; font-weight: 800; color: var(--text); text-transform: uppercase; }
-        .user-role { font-size: 10px; color: var(--text-dim); font-weight: 600; }
+        .user-name { font-size: 13px; font-weight: 800; color: var(--text); text-transform: uppercase; }
 
         .main-content { padding: 20px; max-width: 1600px; margin: auto; }
         
@@ -111,7 +110,7 @@
         .status-warn { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid var(--warning); }
         .status-crit { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
 
-        /* v16.2 PM SCHEDULER STYLES */
+        /* PM SCHEDULER STYLES */
         .pm-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px;}
         .pm-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
         .pm-action-text { font-size: 12px; color: var(--warning); font-weight: bold; background: rgba(245, 158, 11, 0.1); padding: 8px; border-radius: 6px; border-left: 3px solid var(--warning);}
@@ -147,7 +146,7 @@
     <div id="portal-overlay">
         <div class="auth-card" id="auth-card">
             <h2 style="margin:0 0 5px 0; color:var(--text); font-weight: 800; font-size: 24px;">RCC CHILLER DIAGNOSTICS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">HVAC ENGINEERING v16.2</p>
+            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">SECURE EDITION v16.3</p>
             <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()">🔒 SECURE LOGIN</button>
             <button class="btn-guest" onclick="guestLogin()">👀 PROCEED AS VIEWER</button>
@@ -163,8 +162,7 @@
         <div class="user-profile-container">
             <div class="user-profile">
                 <div class="user-info">
-                    <span class="user-name" id="user-display">SYSTEM LOCKED</span>
-                    <span class="user-role" id="role-display">Awaiting Auth</span>
+                    <span class="user-name" id="user-display">LOCKED</span>
                 </div>
                 <div class="avatar" id="user-avatar">?</div>
             </div>
@@ -250,11 +248,11 @@
         <h2 style="color: var(--text); margin-top: 0; font-size: 18px; font-weight: 800;">DIAGNOSTIC CONTROLS</h2>
         
         <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="toggleTheme()">🌓 TOGGLE DARK MODE</button>
-        <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="exportExcel()">🟩 EXPORT TO EXCEL (.XLSX)</button>
-        <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="window.print()">🖨️ PRINT DASHBOARD (PDF)</button>
         
         <div class="admin-only" style="margin-top: 20px;">
             <h4 style="color:var(--accent); margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase;">Engineering Tools</h4>
+            <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="exportExcel()">🟩 EXPORT TO EXCEL (.XLSX)</button>
+            <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="window.print()">🖨️ PRINT DASHBOARD (PDF)</button>
             <button class="btn" style="width:100%; margin-bottom:10px; background: var(--warning); color: white;" onclick="openPMModal()">🔧 PM SCHEDULER</button>
             <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" onclick="generateShiftReport()">📋 SMART CHILLER REPORT</button>
         </div>
@@ -276,8 +274,7 @@
         <h2 style="margin:0 0 15px 0; color:var(--text); font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">🔧 TOTAL PRODUCTIVE MAINTENANCE (TPM)</h2>
         <p style="font-size: 11px; color: var(--text-dim); margin-top: 0; margin-bottom: 15px;">Tracking staggered PM schedules per unit. Resetting a clock does NOT affect historical data.</p>
         
-        <div id="pm-content" class="modal-content-box" style="background: transparent; border: none; padding: 0; max-height: 500px;">
-            </div>
+        <div id="pm-content" class="modal-content-box" style="background: transparent; border: none; padding: 0; max-height: 500px;"></div>
         <button class="btn" style="width:100%; background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px;" onclick="closeModals()">CLOSE SCHEDULER</button>
     </div>
 
@@ -290,7 +287,6 @@
         let rawCloudData = []; 
         let isEngineer = false; let period = 'daily'; let charts = {}; let currentUser = "GUEST"; let idleTimer; 
         
-        // v16.2 PM Tracker Initialization
         let pmData = JSON.parse(localStorage.getItem('rcc_chiller_pm_dates')) || {};
         const CHILLER_LIST = ['Line 1 Chiller', 'Line 2 Chiller', 'Line 3 Chiller', 'Line 4 Chiller', 'Line 5 Chiller', 'Line 6 Chiller', 'Support Chiller'];
 
@@ -317,14 +313,14 @@
         function triggerError(card) { document.getElementById('access-code').value = ''; card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 400); }
         
         function guestLogin() { 
-            let guestName = prompt("Enter your Name/Station for Live Chat:"); 
-            currentUser = guestName ? `Tech: ${guestName}` : "GUEST TECH"; 
+            let guestName = prompt("Enter your Name for Live Chat:"); 
+            // v16.3: Removed "Tech:" prefix to keep it perfectly clean
+            currentUser = guestName ? guestName : "GUEST VIEWER"; 
             isEngineer = false; unlockSystem(); 
         }
 
         function unlockSystem() {
             document.getElementById('user-display').innerText = currentUser;
-            document.getElementById('role-display').innerText = isEngineer ? "HVAC Admin" : "Guest" ;
             document.getElementById('user-avatar').innerText = currentUser.charAt(0).toUpperCase();
             document.getElementById('user-avatar').style.background = isEngineer ? "var(--accent)" : "var(--text-dim)";
 
@@ -337,7 +333,6 @@
             loadNotes(); if(!charts.amp) initCharts(); fetchData(); fetchComments(); setupRealtime(); resetIdleTimer();
             if(localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); updateChartColors(); }
             
-            // Trigger PM check on load
             if(isEngineer) checkPMAlerts();
         }
 
@@ -345,9 +340,8 @@
         ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => document.addEventListener(evt, resetIdleTimer));
 
         function lockdownSystem() {
-            isEngineer = false; currentUser = "SYSTEM LOCKED";
+            isEngineer = false; currentUser = "LOCKED";
             document.getElementById('user-display').innerText = currentUser;
-            document.getElementById('role-display').innerText = "Awaiting Auth";
             document.getElementById('user-avatar').innerText = "?";
             document.getElementById('user-avatar').style.background = "var(--danger)";
             
@@ -535,7 +529,6 @@
             const now = new Date();
 
             CHILLER_LIST.forEach(chiller => {
-                // Initialize if it doesn't exist (sets baseline to today)
                 if(!pmData[chiller]) { pmData[chiller] = now.toISOString(); localStorage.setItem('rcc_chiller_pm_dates', JSON.stringify(pmData)); }
                 
                 let lastDate = new Date(pmData[chiller]);
@@ -568,11 +561,10 @@
             if(confirm(`Confirm you have completed the required Preventive Maintenance for ${chiller}? This will reset its clock to 0 days.`)) {
                 pmData[chiller] = new Date().toISOString();
                 localStorage.setItem('rcc_chiller_pm_dates', JSON.stringify(pmData));
-                openPMModal(); // Refresh the modal UI instantly
+                openPMModal(); 
             }
         }
 
-        // --- 7. SMART REPORT ENGINE ---
         function generateShiftReport() {
             const today = new Date().toISOString().split('T')[0];
             const todayData = rawCloudData.filter(r => r.date === today);
@@ -609,10 +601,21 @@
             const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = `RCC_Chiller_Report.txt`; a.click();
         }
 
-        // --- 8. EXTRAS ---
+        function exportExcel() {
+            if(rawCloudData.length === 0) { alert("No data to export."); return; }
+            const wsData = rawCloudData.map(r => ({
+                "Date": r.date, "Shift": r.shift, "Chiller Unit": r.chiller, "Status": r.status,
+                "Amperage Draw (A)": r.amps, "Entering Water Temp (C)": r.ewt, "Leaving Water Temp (C)": r.lwt,
+                "Delta T (C)": Math.abs(r.ewt - r.lwt).toFixed(1), "Pressure (PSI)": r.psi, "Notes": r.comment
+            }));
+            const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, "Chiller Logs");
+            XLSX.writeFile(wb, `RCC_Chiller_Diagnostics_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
         async function fetchComments() {
             const { data } = await sb.from('live_comments').select('*').order('created_at', {ascending: true}).limit(50);
-            if (data) document.getElementById('chat-box').innerHTML = data.map(c => `<div class="chat-msg" style="${c.user_name.includes("Engr.") ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}"> <b>${c.user_name}</b> <span>${c.message}</span></div>`).join('');
+            if (data) document.getElementById('chat-box').innerHTML = data.map(c => `<div class="chat-msg" style="${c.user_name.includes("Engr.") || c.user_name.includes("Admin") ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}"> <b>${c.user_name}</b> <span>${c.message}</span></div>`).join('');
         }
         async function sendComment() { const input = document.getElementById('chat-input'); if(input.value.trim()) { await sb.from('live_comments').insert([{ user_name: currentUser, message: input.value.trim() }]); input.value = ''; } }
         
@@ -621,18 +624,25 @@
         function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('hvac_notes') || ""; }
         function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); document.querySelector('.menu-overlay').style.display = document.getElementById('system-menu').classList.contains('active') ? 'block' : 'none'; }
         
-        function toggleTheme() { document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light'); if(charts.amp){ Chart.defaults.color = document.body.classList.contains('dark-mode') ? '#94a3b8' : '#64748b'; Object.values(charts).forEach(c => c.update()); } }
-        function exportExcel() {
-            const wsData = rawCloudData.map(r => ({ "Date": r.date, "Shift": r.shift, "Chiller": r.chiller, "Status": r.status, "Amps": r.amps, "EWT": r.ewt, "LWT": r.lwt, "Delta T": Math.abs(r.ewt - r.lwt).toFixed(1), "PSI": r.psi, "Notes": r.comment }));
-            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(wsData), "Chiller Logs");
-            XLSX.writeFile(wb, `RCC_Chiller_DB.xlsx`);
+        function toggleTheme() { 
+            document.body.classList.toggle('dark-mode'); 
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+            if(charts.amp){ Chart.defaults.color = document.body.classList.contains('dark-mode') ? '#94a3b8' : '#64748b'; Object.values(charts).forEach(c => c.update()); }
         }
         
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
+        
         window.onload = () => { 
-            const savedUser = localStorage.getItem('rcc_user'); const savedRole = localStorage.getItem('rcc_role');
-            if(savedUser && savedUser !== "GUEST VIEWER") { currentUser = savedUser; isEngineer = (savedRole === 'admin'); document.getElementById('portal-overlay').style.display = 'none'; unlockSystem(); } 
-            else { document.getElementById('access-code').focus(); }
+            const savedUser = localStorage.getItem('rcc_user');
+            const savedRole = localStorage.getItem('rcc_role');
+            if(savedUser && savedUser !== "GUEST VIEWER") {
+                currentUser = savedUser;
+                isEngineer = (savedRole === 'admin');
+                document.getElementById('portal-overlay').style.display = 'none';
+                unlockSystem();
+            } else {
+                document.getElementById('access-code').focus(); 
+            }
             if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark-mode'); 
         };
     </script>
