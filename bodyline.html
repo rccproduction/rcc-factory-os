@@ -258,7 +258,7 @@
             </div>
 
             <div class="panel chat-panel">
-                <h3 style="margin:0 0 15px 0; font-size:13px; text-transform:uppercase; color: var(--accent);">💬 Shift Comms</h3>
+                <h3 style="margin:0 0 15px 0; font-size:13px; text-transform:uppercase; color: var(--accent);">💬 Production Comms</h3>
                 <div id="chat-box" class="chat-container"></div>
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="chat-input" placeholder="Type message..." style="margin:0;" onkeypress="if(event.key === 'Enter') sendComment()">
@@ -472,7 +472,6 @@
             filterAndRender(start, end, start, end); 
         }
 
-        // v17.2 CALCULATING TOTAL DOWN FROM THE 5 NEW COLUMNS
         function getTotalDown(r) {
             return (r.down_mech || 0) + (r.down_elec || 0) + (r.down_mat || 0) + (r.down_qc || 0) + (r.down_pack || 0);
         }
@@ -513,7 +512,6 @@
             setVar('var-down', curr.down, prev.down, false, true); 
         }
 
-        // v17.2 RESTORED ACTION CELL WITH EDIT
         function renderTable() {
             document.getElementById('log-body').innerHTML = filteredData.map(r => `
                 <tr>
@@ -529,7 +527,6 @@
             `).join('');
         }
 
-        // v17.2 SAVING MULTIPLE DOWNTIME COLUMNS
         async function saveData() {
             const btn = document.getElementById('transmit-btn'); 
             const entry = {
@@ -554,7 +551,6 @@
             } else { alert("DB Error: Did you run the SQL command in Supabase?"); btn.innerText = "☁️ TRANSMIT RECORD"; }
         }
 
-        // v17.2 EDIT LOGIC
         function openEditModal(id) {
             const log = rawData.find(r => r.id === id);
             if(!log) return;
@@ -615,7 +611,6 @@
             charts.prod.data.datasets[1].data = labels.map(d => filteredData.filter(r => r.date === d).reduce((s,r)=>s+r.target,0));
             charts.prod.update();
 
-            // v17.2: DOUGHNUT CHART NOW SUMS ACTUAL MINUTES LOST PER CATEGORY
             const reasons = { "Mechanical": 0, "Electrical": 0, "Material": 0, "QC": 0, "Packer": 0 };
             filteredData.forEach(r => { 
                 reasons.Mechanical += (r.down_mech || 0);
@@ -715,16 +710,14 @@
             if(confirm(`Reset PM clock for ${line}?`)) { pmData[line] = new Date().toISOString(); localStorage.setItem('rcc_bodyline_pm_dates', JSON.stringify(pmData)); openPMModal(); }
         }
 
-        // v17.2 REWRITTEN CHAT DELETION
+        // CHAT PARTITION: PRODUCTION ONLY
         async function fetchComments() {
-            const { data } = await sb.from('live_comments').select('*').order('created_at', {ascending: true}).limit(50);
+            const { data } = await sb.from('live_comments').select('*').eq('module', 'production').order('created_at', {ascending: true}).limit(50);
             if(data) {
                 document.getElementById('chat-box').innerHTML = data.map(c => {
                     const isAdmin = c.user_name.includes("Admin") || c.user_name.includes("Engr.");
-                    // Check if current user is the author OR if they are an admin
                     const canDelete = (c.user_name === currentUser) || isEngineer;
                     const delBtn = canDelete ? `<button class="del-msg-btn" onclick="deleteComment(${c.id})">✖</button>` : '';
-                    
                     return `<div class="chat-msg" style="${isAdmin ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}"> 
                         ${delBtn} <b>${c.user_name}</b> <span>${c.message}</span>
                     </div>`;
@@ -736,16 +729,16 @@
         async function sendComment() { 
             const i = document.getElementById('chat-input'); 
             if(i.value) { 
-                await sb.from('live_comments').insert([{ user_name: currentUser, message: i.value }]); 
+                await sb.from('live_comments').insert([{ user_name: currentUser, message: i.value, module: 'production' }]); 
                 i.value = ''; 
-                fetchComments(); // Force immediate refresh
+                fetchComments(); 
             } 
         }
 
         async function deleteComment(id) { 
             if(confirm("Remove this message?")) { 
                 await sb.from('live_comments').delete().eq('id', id); 
-                fetchComments(); // Force immediate refresh
+                fetchComments(); 
             } 
         }
 
