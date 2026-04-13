@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v16.3 Secure</title>
+    <title>RCC Bodyline OS | v16.4 Unified TPM</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -100,8 +100,14 @@
         .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; }
 
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 12px; z-index: 3000; box-shadow: 0 15px 40px rgba(0,0,0,0.5); width: 90%; max-width: 600px; }
-        .modal-content-box { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 15px; border-radius: 8px; margin: 15px 0; max-height: 400px; overflow-y: auto; font-size: 13px; line-height: 1.6; border: 1px solid var(--border);}
+        .modal-content-box { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 15px; border-radius: 8px; margin: 15px 0; max-height: 400px; overflow-y: auto; font-size: 13px; line-height: 1.6; border: 1px solid var(--border); white-space: pre-wrap;}
         
+        /* PM SCHEDULER STYLES */
+        .pm-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px;}
+        .pm-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .pm-action-text { font-size: 12px; color: var(--warning); font-weight: bold; background: rgba(245, 158, 11, 0.1); padding: 8px; border-radius: 6px; border-left: 3px solid var(--warning);}
+        .pm-ok-text { font-size: 12px; color: var(--success); font-weight: bold; }
+
         @page { size: landscape; margin: 10mm; }
         @media print { 
             body { background: white; -webkit-print-color-adjust: exact; color-adjust: exact; font-size: 10px;} 
@@ -132,7 +138,7 @@
     <div id="portal-overlay">
         <div class="auth-card" id="auth-card">
             <h2 style="margin:0 0 5px 0; color:var(--text); font-weight: 800; font-size: 28px;">RCC BODYLINE OS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">SECURE EDITION v16.3</p>
+            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">SECURE EDITION v16.4</p>
             <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()">🔒 SECURE LOGIN</button>
             <button class="btn-guest" onclick="guestLogin()">👀 PROCEED AS VIEWER</button>
@@ -240,6 +246,7 @@
             <h4 style="color:var(--accent); margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase;">Admin Tools</h4>
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="exportExcel()">🟩 EXPORT TO EXCEL (.XLSX)</button>
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="window.print()">🖨️ PRINT DASHBOARD (PDF)</button>
+            <button class="btn" style="width:100%; margin-bottom:10px; background: var(--warning); color: white;" onclick="openPMModal()">🔧 PM SCHEDULER</button>
             <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="generateShiftReport()">📋 SMART SHIFT REPORT</button>
         </div>
         
@@ -247,7 +254,7 @@
         <textarea id="prod-notepad" placeholder="Shift Reminders (Auto-Saves)..." oninput="saveNotes()" style="height: 100px;"></textarea>
 
         <div id="admin-monitor-section" style="display:none;">
-            <h4 style="color:var(--text-dim); margin: 25px 0 10px 0; border-bottom: 1px solid var(--border); padding-bottom:5px; font-size: 11px; text-transform: uppercase;">🔒 Access Logs</h4>
+            <h4 style="color:var(--text-dim); margin: 25px 0 10px 0; border-bottom: 1px solid var(--border); padding-bottom:5px; font-size: 11px; text-transform: uppercase;">🔒 Access Logs (Security)</h4>
             <div id="access-log-display" style="font-family:monospace; font-size:11px; height:120px; overflow-y:auto; background:var(--bg); padding:10px; border-radius: 6px; border: 1px solid var(--border);"></div>
         </div>
         <button class="btn" style="width:100%; margin-top:20px; background: var(--border); color: var(--text);" onclick="toggleMenu()">CLOSE MENU</button>
@@ -258,6 +265,14 @@
         <div id="report-content" class="modal-content-box">Processing Analytics...</div>
         <button class="btn btn-primary" onclick="downloadReport()" style="margin-bottom: 10px;">💾 DOWNLOAD REPORT (.TXT)</button>
         <button class="btn" style="width:100%; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="closeModals()">CLOSE</button>
+    </div>
+
+    <div id="pm-modal" class="modal">
+        <h2 style="margin:0 0 15px 0; color:var(--text); font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">🔧 PRODUCTION LINE MAINTENANCE (TPM)</h2>
+        <p style="font-size: 11px; color: var(--text-dim); margin-top: 0; margin-bottom: 15px;">Tracking staggered PM schedules per production line. Resetting a clock does NOT affect historical yield data.</p>
+        
+        <div id="pm-content" class="modal-content-box" style="background: transparent; border: none; padding: 0; max-height: 500px;"></div>
+        <button class="btn" style="width:100%; background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px;" onclick="closeModals()">CLOSE SCHEDULER</button>
     </div>
 
     <script>
@@ -273,12 +288,16 @@
         let isEngineer = false; let period = 'daily'; let charts = {}; let currentUser = "GUEST"; let idleTimer; 
         let offlineQueue = JSON.parse(localStorage.getItem('bodyline_offline_queue')) || [];
 
+        // v16.4 PM Tracker Initialization
+        let pmData = JSON.parse(localStorage.getItem('rcc_bodyline_pm_dates')) || {};
+        const LINE_LIST = ['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5', 'Line 6'];
+
         Chart.defaults.font.family = "'Inter', sans-serif";
         Chart.defaults.color = '#64748b';
 
         if(FINANCIALS_APPROVED) { document.getElementById('card-cost').style.display = 'block'; }
 
-        // --- 2. AUTHENTICATION & AVATARS ---
+        // --- 2. AUTHENTICATION & ACCESS LOGGING ---
         async function authorize() {
             const pin = document.getElementById('access-code').value.trim(); 
             const card = document.getElementById('auth-card');
@@ -290,7 +309,8 @@
                     currentUser = data ? data.user_name : "Engr. Pinapit";
                     isEngineer = data ? (data.role === 'Admin') : true;
                     if (Notification.permission !== "granted") { Notification.requestPermission(); }
-                    unlockSystem(); recordAccess(currentUser);
+                    unlockSystem(); 
+                    recordAccess(`Admin: ${currentUser} logged in`); // Explicit Log
                 } else { triggerError(card); }
             } catch (err) { triggerError(card); }
         }
@@ -298,10 +318,11 @@
         function triggerError(card) { document.getElementById('access-code').value = ''; card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 400); }
         
         function guestLogin() { 
-            let guestName = prompt("Enter your Name for the Live Chat:"); 
-            // v16.3: Removed "Operator:" prefix to keep it perfectly clean
-            currentUser = guestName ? guestName : "GUEST VIEWER"; 
-            isEngineer = false; unlockSystem(); 
+            let guestName = prompt("Enter your Name for Live Chat (or leave blank to remain Anonymous):"); 
+            currentUser = guestName ? guestName : "Anonymous Viewer"; 
+            isEngineer = false; 
+            unlockSystem(); 
+            recordAccess(`Viewer: ${currentUser} entered the dashboard`); // Explicit Log for Viewers
         }
 
         function unlockSystem() {
@@ -319,6 +340,9 @@
 
             loadNotes(); if(!charts.prod) initCharts(); fetchData(); fetchComments(); setupRealtime(); resetIdleTimer();
             if(localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); updateChartColors(); }
+            
+            // Trigger PM check on load for Admins
+            if(isEngineer) checkPMAlerts();
         }
 
         function resetIdleTimer() { clearTimeout(idleTimer); if(isEngineer) idleTimer = setTimeout(lockdownSystem, 30 * 60 * 1000); }
@@ -340,6 +364,7 @@
             sb.channel('global-sync')
               .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => fetchData())
               .on('postgres_changes', { event: '*', schema: 'public', table: 'live_comments' }, () => fetchComments())
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'access_logs' }, () => { if(isEngineer) fetchAccessLogs(); })
               .subscribe();
             document.getElementById('cloud-dot').className = "status-dot dot-online"; document.getElementById('cloud-text').innerText = "LIVE SYNC ACTIVE";
         }
@@ -527,8 +552,69 @@
             charts.shiftComp.update();
         }
 
-        // --- 6. ADMIN TOOLS ---
+        // --- 6. ADMIN TOOLS & PM SCHEDULER ---
         function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); document.getElementById('main-overlay').style.display = 'none'; }
+
+        function checkPMAlerts() {
+            if(Notification.permission !== "granted") return;
+            let needsPM = false;
+            const now = new Date();
+            LINE_LIST.forEach(line => {
+                let lastDate = pmData[line] ? new Date(pmData[line]) : null;
+                if(!lastDate) return; 
+                let diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+                if(diffDays >= 30) needsPM = true;
+            });
+
+            if(needsPM) {
+                new Notification("🔧 RCC Maintenance Alert", { body: "One or more Production Lines are due for scheduled Preventive Maintenance. Check the PM Scheduler." });
+            }
+        }
+
+        function openPMModal() {
+            document.getElementById('system-menu').classList.remove('active');
+            document.getElementById('main-overlay').style.display = 'block';
+            document.getElementById('pm-modal').style.display = 'block';
+            
+            const contentBox = document.getElementById('pm-content');
+            let html = "";
+            const now = new Date();
+
+            LINE_LIST.forEach(line => {
+                if(!pmData[line]) { pmData[line] = now.toISOString(); localStorage.setItem('rcc_bodyline_pm_dates', JSON.stringify(pmData)); }
+                
+                let lastDate = new Date(pmData[line]);
+                let diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+                
+                let actionReq = "No Action Required";
+                let actionClass = "pm-ok-text";
+                let btnColor = "var(--border)";
+                let btnTextCol = "var(--text)";
+
+                if(diffDays >= 180) { actionReq = "SEMI-ANNUAL PM DUE: Full mechanical overhaul, replace drive chains, deep clean actuators."; actionClass = "pm-action-text"; btnColor = "var(--danger)"; btnTextCol = "white";}
+                else if(diffDays >= 90) { actionReq = "QUARTERLY PM DUE: Calibrate optical sensors, tighten terminal blocks, inspect drive motors."; actionClass = "pm-action-text"; btnColor = "var(--warning)"; btnTextCol = "white";}
+                else if(diffDays >= 30) { actionReq = "MONTHLY PM DUE: Inspect conveyor belts, lubricate bearings, check pneumatic lines."; actionClass = "pm-action-text"; btnColor = "var(--accent)"; btnTextCol = "white";}
+
+                html += `
+                <div class="pm-card">
+                    <div class="pm-header">
+                        <b style="font-size:14px; color:var(--text);">${line}</b>
+                        <span style="font-size:11px; color:var(--text-dim);">Last PM: <b>${diffDays} days ago</b> (${lastDate.toLocaleDateString()})</span>
+                    </div>
+                    <div class="${actionClass}">${actionReq}</div>
+                    <button class="btn" style="background:${btnColor}; color:${btnTextCol}; padding: 8px; margin-top:5px; font-size:10px;" onclick="resetPMClock('${line}')">MARK COMPLETED & RESET CLOCK</button>
+                </div>`;
+            });
+            contentBox.innerHTML = html;
+        }
+
+        function resetPMClock(line) {
+            if(confirm(`Confirm you have completed the required Preventive Maintenance for ${line}? This will reset its clock to 0 days.`)) {
+                pmData[line] = new Date().toISOString();
+                localStorage.setItem('rcc_bodyline_pm_dates', JSON.stringify(pmData));
+                openPMModal(); 
+            }
+        }
 
         function generateShiftReport() {
             const today = new Date().toISOString().split('T')[0];
@@ -644,12 +730,29 @@
         }
 
         async function deleteComment(id) { if(confirm("Delete message?")) await sb.from('live_comments').delete().eq('id', id); }
-        async function recordAccess(user) { await sb.from('access_logs').insert([{ user_name: user }]); }
+        
+        // v16.4: Access Logging Function
+        async function recordAccess(logMessage) { 
+            await sb.from('access_logs').insert([{ user_name: logMessage }]); 
+        }
+
+        async function fetchAccessLogs() {
+            const { data } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(50);
+            const display = document.getElementById('access-log-display');
+            if(data) display.innerHTML = data.map(l => {
+                let color = l.user_name.includes("Viewer") ? "var(--warning)" : (l.user_name.includes("Admin") ? "var(--accent)" : "var(--text-dim)");
+                return `<div style="padding:4px 0; border-bottom:1px solid var(--border);"><span style="color:${color}">[${new Date(l.created_at).toLocaleTimeString()}]</span> ${l.user_name}</div>`;
+            }).join('');
+        }
 
         function setPeriod(p, btn) { period = p; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); processAndRender(); }
         function saveNotes() { localStorage.setItem('notes', document.getElementById('prod-notepad').value); }
         function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('notes') || ""; }
-        function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); document.querySelector('.menu-overlay').style.display = document.getElementById('system-menu').classList.contains('active') ? 'block' : 'none'; }
+        function toggleMenu() { 
+            document.getElementById('system-menu').classList.toggle('active'); 
+            document.querySelector('.menu-overlay').style.display = document.getElementById('system-menu').classList.contains('active') ? 'block' : 'none'; 
+            if(isEngineer) fetchAccessLogs();
+        }
         
         function toggleTheme() { 
             document.body.classList.toggle('dark-mode'); 
@@ -667,7 +770,14 @@
         }
         
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
+        
         window.onload = () => { 
+            // V16.4: Silent Access Tracker (Logs once per session)
+            if(!sessionStorage.getItem('rcc_portal_visited')) {
+                recordAccess("Portal Opened (Unauthenticated Device)");
+                sessionStorage.setItem('rcc_portal_visited', 'true');
+            }
+
             const savedUser = localStorage.getItem('rcc_user');
             const savedRole = localStorage.getItem('rcc_role');
             if(savedUser && savedUser !== "GUEST VIEWER") {
