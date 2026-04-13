@@ -324,7 +324,7 @@
 
         function unlockSystem() {
             document.getElementById('user-display').innerText = currentUser;
-            document.getElementById('role-display').innerText = isEngineer ? "HVAC Admin";
+            document.getElementById('role-display').innerText = isEngineer ? "HVAC Admin" : "Guest" ;
             document.getElementById('user-avatar').innerText = currentUser.charAt(0).toUpperCase();
             document.getElementById('user-avatar').style.background = isEngineer ? "var(--accent)" : "var(--text-dim)";
 
