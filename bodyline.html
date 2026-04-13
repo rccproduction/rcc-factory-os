@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v16.1</title>
+    <title>RCC Bodyline OS | v16.3 Secure</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -11,14 +11,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         
-        /* LIGHT MODE (Default) */
         :root {
             --bg: #f8fafc; --surface: #ffffff; --accent: #2563eb; 
             --text: #0f172a; --text-dim: #64748b; --border: #e2e8f0;
             --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
         }
 
-        /* EXECUTIVE DARK MODE (v16.1 Upgrade) */
         body.dark-mode {
             --bg: #0f172a; --surface: #1e293b; --accent: #3b82f6; 
             --text: #f8fafc; --text-dim: #94a3b8; --border: #334155;
@@ -26,10 +24,8 @@
 
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
 
-        /* ALERTS */
         #andon-banner { display: none; width: 100%; background: var(--danger); color: white; text-align: center; font-weight: 800; padding: 12px; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; z-index: 9000; position: sticky; top: 0; }
 
-        /* PORTAL */
         #portal-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease, visibility 0.5s; }
         .auth-card { background: var(--surface); padding: 50px; border-radius: 12px; border: 1px solid var(--border); width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); transform: translateY(0); transition: 0.4s; }
         .auth-card input { width: 100%; padding: 15px; background: var(--bg); border: 2px solid var(--border); color: var(--text); font-size: 24px; text-align: center; border-radius: 8px; margin: 25px 0; letter-spacing: 8px; outline: none; font-weight: bold; transition: 0.3s; }
@@ -40,42 +36,30 @@
         .btn-guest { background: transparent; border: 1px solid var(--border); color: var(--text-dim); margin-top: 15px; font-size: 12px; padding: 10px; width: 100%; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: 600;}
         .btn-guest:hover { background: var(--bg); color: var(--text); }
 
-        /* STATUS UI */
         .cloud-status { position: fixed; top: 15px; left: 15px; font-size: 11px; display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 8px 16px; border-radius: 20px; z-index: 5000; border: 1px solid var(--border); font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; }
         .dot-offline { background: var(--warning); }
         .dot-online { background: var(--success); }
 
-        /* v16.1 PERFECTLY CENTERED HEADER */
-        .header-banner { 
-            display: grid; 
-            grid-template-columns: 1fr auto 1fr; /* 3-Column Grid */
-            align-items: center; 
-            padding: 15px 30px; 
-            background: var(--surface); 
-            border-bottom: 1px solid var(--border); 
-        }
-        .header-spacer { grid-column: 1; } /* Empty div to balance grid */
+        .header-banner { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 15px 30px; background: var(--surface); border-bottom: 1px solid var(--border); }
+        .header-spacer { grid-column: 1; } 
         .header-title { grid-column: 2; text-align: center; }
         .header-title h1 { margin: 0; letter-spacing: 2px; font-size: 22px; text-transform: uppercase; font-weight: 800; color: var(--text); }
         .header-title span { font-family: monospace; font-weight: 600; color: var(--text-dim); font-size: 12px; }
         
         .user-profile-container { grid-column: 3; display: flex; justify-content: flex-end; }
-        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 6px 15px 6px 6px; border-radius: 30px; border: 1px solid var(--border); }
+        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 6px 15px 6px 15px; border-radius: 30px; border: 1px solid var(--border); }
         .avatar { width: 32px; height: 32px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
         .user-info { display: flex; flex-direction: column; text-align: right;}
-        .user-name { font-size: 12px; font-weight: 800; color: var(--text); text-transform: uppercase; }
-        .user-role { font-size: 10px; color: var(--text-dim); font-weight: 600; }
+        .user-name { font-size: 13px; font-weight: 800; color: var(--text); text-transform: uppercase; }
 
         .main-content { padding: 20px; max-width: 1600px; margin: auto; }
         
-        /* TABS */
         .tabs { display: flex; gap: 10px; justify-content: center; margin: 10px 0 25px 0; flex-wrap: wrap;}
         .tab-btn { display: flex; align-items: center; gap: 8px; padding: 10px 25px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s;}
         .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
         .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
 
-        /* KPI GRID */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 20px 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); position: relative;}
         .kpi-card small { font-size: 11px; text-transform: uppercase; color: var(--text-dim); display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 5px; font-weight: 600; }
@@ -86,7 +70,6 @@
         @media (max-width: 1100px) { .chart-row { grid-template-columns: 1fr; } }
         .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
 
-        /* v16.1 RESPONSIVE FORM GRID */
         .admin-form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
         @media (max-width: 900px) { .admin-form-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 500px) { .admin-form-grid { grid-template-columns: 1fr; } }
@@ -119,12 +102,6 @@
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 12px; z-index: 3000; box-shadow: 0 15px 40px rgba(0,0,0,0.5); width: 90%; max-width: 600px; }
         .modal-content-box { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 15px; border-radius: 8px; margin: 15px 0; max-height: 400px; overflow-y: auto; font-size: 13px; line-height: 1.6; border: 1px solid var(--border);}
         
-        .maint-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
-        .maint-card.healthy { border-left: 4px solid var(--success); }
-        .maint-card.warning { border-left: 4px solid var(--warning); }
-        .maint-card.critical { border-left: 4px solid var(--danger); }
-
-        /* PERFECT PRINT STYLES */
         @page { size: landscape; margin: 10mm; }
         @media print { 
             body { background: white; -webkit-print-color-adjust: exact; color-adjust: exact; font-size: 10px;} 
@@ -155,7 +132,7 @@
     <div id="portal-overlay">
         <div class="auth-card" id="auth-card">
             <h2 style="margin:0 0 5px 0; color:var(--text); font-weight: 800; font-size: 28px;">RCC BODYLINE OS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">EXECUTIVE EDITION v16.1</p>
+            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">SECURE EDITION v16.3</p>
             <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()">🔒 SECURE LOGIN</button>
             <button class="btn-guest" onclick="guestLogin()">👀 PROCEED AS VIEWER</button>
@@ -163,15 +140,15 @@
     </div>
 
     <div class="header-banner">
-        <div class="header-spacer"></div> <div class="header-title">
+        <div class="header-spacer"><a href="index.html" style="text-decoration:none; color:var(--text-dim); font-size:12px; font-weight:bold;">← BACK TO HUB</a></div> 
+        <div class="header-title">
             <h1>RCC BODYLINE PRODUCTION</h1>
             <span id="live-clock"></span>
         </div>
         <div class="user-profile-container">
             <div class="user-profile">
                 <div class="user-info">
-                    <span class="user-name" id="user-display">SYSTEM LOCKED</span>
-                    <span class="user-role" id="role-display">Awaiting Auth</span>
+                    <span class="user-name" id="user-display">LOCKED</span>
                 </div>
                 <div class="avatar" id="user-avatar">?</div>
             </div>
@@ -192,7 +169,6 @@
             <div class="kpi-card" id="card-eff"><small>⚡ Avg Efficiency</small><div id="kpi-eff" class="val" data-current="0">0%</div><div class="perf-line" id="line-eff"></div></div>
             <div class="kpi-card"><small>🔮 Projected EOD</small><div id="kpi-proj" class="val" data-current="0" style="color: var(--accent);">0</div><div class="perf-line" style="background: rgba(37, 99, 235, 0.2);"></div></div>
             <div class="kpi-card"><small>⚠️ Total Downtime</small><div id="kpi-down" class="val" data-current="0">0 m</div><div class="perf-line" style="background: var(--danger);"></div></div>
-            
             <div class="kpi-card" id="card-cost" style="display: none;"><small>💸 Est. Downtime Cost</small><div id="kpi-cost" class="val" data-current="0" style="color: var(--danger);">$0</div><div class="perf-line" style="background: rgba(239,68,68,0.2);"></div></div>
         </div>
 
@@ -260,13 +236,11 @@
         
         <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="toggleTheme()">🌓 TOGGLE DARK MODE</button>
         
-        <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="exportExcel()">🟩 EXPORT TO EXCEL (.XLSX)</button>
-        <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="window.print()">🖨️ PRINT DASHBOARD (PDF)</button>
-        
         <div class="admin-only" style="margin-top: 20px;">
             <h4 style="color:var(--accent); margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase;">Admin Tools</h4>
+            <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="exportExcel()">🟩 EXPORT TO EXCEL (.XLSX)</button>
+            <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="window.print()">🖨️ PRINT DASHBOARD (PDF)</button>
             <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="generateShiftReport()">📋 SMART SHIFT REPORT</button>
-            <button class="btn" style="width:100%; margin-bottom:20px; background: var(--text); color: var(--bg);" onclick="openMaintenanceModal()">🤖 RUN MAINTENANCE SCAN</button>
         </div>
         
         <h4 style="color:var(--text-dim); margin: 20px 0 10px 0; border-bottom: 1px solid var(--border); padding-bottom:5px; font-size: 11px; text-transform: uppercase;">📝 Production Notepad</h4>
@@ -284,21 +258,6 @@
         <div id="report-content" class="modal-content-box">Processing Analytics...</div>
         <button class="btn btn-primary" onclick="downloadReport()" style="margin-bottom: 10px;">💾 DOWNLOAD REPORT (.TXT)</button>
         <button class="btn" style="width:100%; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="closeModals()">CLOSE</button>
-    </div>
-
-    <div id="maint-modal" class="modal">
-        <h2 style="margin:0 0 15px 0; color:var(--text); font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">🤖 MACHINE HEALTH PREDICTOR</h2>
-        <div style="display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px;">
-            <button class="btn" style="padding: 6px 12px; font-size:10px; background:var(--border); color:var(--text);" onclick="runMaintenanceScan(14)">14 DAYS</button>
-            <button class="btn" style="padding: 6px 12px; font-size:10px; background:var(--border); color:var(--text);" onclick="runMaintenanceScan(30)">1 MONTH</button>
-            <button class="btn" style="padding: 6px 12px; font-size:10px; background:var(--border); color:var(--text);" onclick="runMaintenanceScan(90)">1 QUARTER</button>
-            <button class="btn" style="padding: 6px 12px; font-size:10px; background:var(--border); color:var(--text);" onclick="runMaintenanceScan(180)">6 MONTHS</button>
-            <button class="btn" style="padding: 6px 12px; font-size:10px; background:var(--border); color:var(--text);" onclick="runMaintenanceScan(365)">1 YEAR</button>
-        </div>
-        <p style="font-size: 11px; color: var(--text-dim); margin-top: 0;" id="maint-timeframe-label">Analyzing data...</p>
-        
-        <div id="maint-content" class="modal-content-box" style="background: transparent; border: none; padding: 0;"></div>
-        <button class="btn" style="width:100%; background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px;" onclick="closeModals()">CLOSE PREDICTOR</button>
     </div>
 
     <script>
@@ -337,11 +296,16 @@
         }
 
         function triggerError(card) { document.getElementById('access-code').value = ''; card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 400); }
-        function guestLogin() { let guestName = prompt("Enter your Name/Station for Live Chat:"); currentUser = guestName ? `Operator: ${guestName}` : "GUEST VIEWER"; isEngineer = false; unlockSystem(); }
+        
+        function guestLogin() { 
+            let guestName = prompt("Enter your Name for the Live Chat:"); 
+            // v16.3: Removed "Operator:" prefix to keep it perfectly clean
+            currentUser = guestName ? guestName : "GUEST VIEWER"; 
+            isEngineer = false; unlockSystem(); 
+        }
 
         function unlockSystem() {
             document.getElementById('user-display').innerText = currentUser;
-            document.getElementById('role-display').innerText = isEngineer ? "System Admin" : "Floor Operator";
             document.getElementById('user-avatar').innerText = currentUser.charAt(0).toUpperCase();
             document.getElementById('user-avatar').style.background = isEngineer ? "var(--accent)" : "var(--text-dim)";
 
@@ -361,9 +325,8 @@
         ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => document.addEventListener(evt, resetIdleTimer));
 
         function lockdownSystem() {
-            isEngineer = false; currentUser = "SYSTEM LOCKED";
+            isEngineer = false; currentUser = "LOCKED";
             document.getElementById('user-display').innerText = currentUser;
-            document.getElementById('role-display').innerText = "Awaiting Auth";
             document.getElementById('user-avatar').innerText = "?";
             document.getElementById('user-avatar').style.background = "var(--danger)";
             
@@ -522,7 +485,6 @@
         async function deleteLog(id) { if(confirm("PERMANENT ACTION: Delete this log?")) { await sb.from('production_logs').delete().eq('id', id); fetchData(); } }
         async function editLog(id, cur) { let n = prompt("OVERRIDE ACTUAL VALUE:", cur); if(n) { await sb.from('production_logs').update({actual:parseInt(n)}).eq('id', id); fetchData(); } }
 
-        // V16.1 Failsafe: Handles empty chart data preventing 0/0 NaN errors
         function getSafeEff(actual, target) { return target > 0 ? (actual/target*100) : 0; }
 
         function initCharts() {
@@ -556,7 +518,7 @@
             const updateShift = (chart, shift) => {
                 const vals = lines.map(l => { const rs = data.filter(x => x.line === l && x.shift === shift); const a = rs.reduce((s,x)=>s+x.actual,0), t = rs.reduce((s,x)=>s+x.target,0); return getSafeEff(a, t); });
                 chart.data.labels = lines; chart.data.datasets[0].data = vals;
-                chart.data.datasets[0].backgroundColor = vals.map(e => e === 0 ? '#e2e8f0' : (e < 65 ? '#ef4444' : (e < 80 ? '#f59e0b' : '#10b981'))); // Gray if 0
+                chart.data.datasets[0].backgroundColor = vals.map(e => e === 0 ? '#e2e8f0' : (e < 65 ? '#ef4444' : (e < 80 ? '#f59e0b' : '#10b981')));
                 chart.update();
             }
             updateShift(charts.effDay, "Day Shift"); updateShift(charts.effNight, "Night Shift");
@@ -650,41 +612,16 @@
             const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = `RCC_Smart_Report.txt`; a.click();
         }
 
-        function openMaintenanceModal() {
-            document.getElementById('system-menu').classList.remove('active');
-            document.getElementById('main-overlay').style.display = 'block';
-            document.getElementById('maint-modal').style.display = 'block';
-            runMaintenanceScan(14); 
-        }
-
-        function runMaintenanceScan(days) {
-            document.getElementById('maint-timeframe-label').innerText = `Analyzing data & comments from the last ${days} days...`;
-            const now = new Date(); const cutoffDate = new Date(now.setDate(now.getDate() - days));
-            const filteredData = rawCloudData.filter(r => new Date(r.date) >= cutoffDate);
-            const lines = ["Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6"];
-            const jamKeywords = /jam|trouble|error|break|fix|repair|stuck|stop|mechanic/i;
-            
-            let htmlOutput = "";
-            lines.forEach(line => {
-                const lineData = filteredData.filter(r => r.line === line);
-                if(lineData.length === 0) return;
-                let tActual = 0; let tTarget = 0; let totalDown = 0; let jamCount = 0;
-                lineData.forEach(r => {
-                    tActual += r.actual; tTarget += r.target; totalDown += r.down;
-                    if(r.comment && jamKeywords.test(r.comment)) jamCount++;
-                });
-
-                const eff = tTarget > 0 ? (tActual/tTarget*100) : 0;
-                let statusClass = "healthy"; let statusText = "Healthy"; let icon = "🟢";
-                if(eff < 65 || jamCount >= 3) { statusClass = "critical"; statusText = "Action Required"; icon = "🔴"; }
-                else if(eff < 80 || jamCount >= 1 || totalDown > 60) { statusClass = "warning"; statusText = "Monitor Closely"; icon = "🟡"; }
-
-                htmlOutput += `<div class="maint-card ${statusClass}">
-                        <div><b style="font-size:14px;">${line}</b><br><span style="font-size:11px; color:var(--text-dim)">Eff: <b>${eff.toFixed(1)}%</b> | Down: <b>${totalDown}m</b> | Incidents: <b>${jamCount}</b></span></div>
-                        <div style="text-align:right; font-size:11px; font-weight:bold;">${icon}<br>${statusText}</div></div>`;
-            });
-            if(htmlOutput === "") htmlOutput = "<p style='padding:15px; text-align:center; color:var(--text-dim);'>No data found.</p>";
-            document.getElementById('maint-content').innerHTML = htmlOutput;
+        function exportExcel() {
+            if(rawCloudData.length === 0) { alert("No data to export."); return; }
+            const wsData = rawCloudData.map(r => ({
+                "Date": r.date, "Shift": r.shift, "Line": r.line, "Target": r.target, "Actual": r.actual,
+                "Efficiency (%)": r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : "0",
+                "Downtime (min)": r.down, "Root Cause": r.reason, "Operator Comments": r.comment
+            }));
+            const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, "RCC Logs");
+            XLSX.writeFile(wb, `RCC_Database_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
         // --- 7. CHAT & EXTRAS ---
@@ -693,7 +630,7 @@
             const box = document.getElementById('chat-box');
             if (data) {
                 box.innerHTML = data.map(c => {
-                    const isAdmin = c.user_name.includes("Engr.");
+                    const isAdmin = c.user_name.includes("Engr.") || c.user_name.includes("Admin");
                     let del = (isEngineer || c.user_name === currentUser) ? `<button class="del-msg-btn" onclick="deleteComment('${c.id}')">✖</button>` : "";
                     return `<div class="chat-msg" style="${isAdmin ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}"> ${del} <b>${c.user_name}</b> <span>${c.message}</span></div>`;
                 }).join(''); box.scrollTop = box.scrollHeight; 
@@ -714,7 +651,6 @@
         function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('notes') || ""; }
         function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); document.querySelector('.menu-overlay').style.display = document.getElementById('system-menu').classList.contains('active') ? 'block' : 'none'; }
         
-        // v16.1 Dark Mode Toggle Logic
         function toggleTheme() { 
             document.body.classList.toggle('dark-mode'); 
             const isDark = document.body.classList.contains('dark-mode');
@@ -723,7 +659,6 @@
         }
         
         function updateChartColors() {
-            // Forces Chart.js to redraw to pick up CSS variable changes if needed
             if(charts.prod) {
                 const color = document.body.classList.contains('dark-mode') ? '#94a3b8' : '#64748b';
                 Chart.defaults.color = color;
@@ -731,20 +666,20 @@
             }
         }
         
-        function exportExcel() {
-            if(rawCloudData.length === 0) { alert("No data to export."); return; }
-            const wsData = rawCloudData.map(r => ({
-                "Date": r.date, "Shift": r.shift, "Line": r.line, "Target": r.target, "Actual": r.actual,
-                "Efficiency (%)": r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : "0",
-                "Downtime (min)": r.down, "Root Cause": r.reason, "Operator Comments": r.comment
-            }));
-            const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(wsData);
-            XLSX.utils.book_append_sheet(wb, ws, "RCC Logs");
-            XLSX.writeFile(wb, `RCC_Database_${new Date().toISOString().split('T')[0]}.xlsx`);
-        }
-        
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
-        window.onload = () => { document.getElementById('access-code').focus(); if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark-mode'); }
+        window.onload = () => { 
+            const savedUser = localStorage.getItem('rcc_user');
+            const savedRole = localStorage.getItem('rcc_role');
+            if(savedUser && savedUser !== "GUEST VIEWER") {
+                currentUser = savedUser;
+                isEngineer = (savedRole === 'admin');
+                document.getElementById('portal-overlay').style.display = 'none';
+                unlockSystem();
+            } else {
+                document.getElementById('access-code').focus(); 
+            }
+            if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark-mode'); 
+        };
     </script>
 </body>
 </html>
