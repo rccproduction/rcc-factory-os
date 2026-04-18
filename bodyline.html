@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v18.4 Nuclear Diagnostics</title>
+    <title>RCC Bodyline OS | v18.5 Loud Diagnostics</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -107,7 +107,7 @@
     <div id="portal-overlay">
         <div class="auth-card" id="auth-card">
             <h2 style="margin:0 0 5px 0; font-weight: 800; font-size: 28px;">RCC BODYLINE OS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">DIAGNOSTIC BUILD v18.4</p>
+            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">DIAGNOSTIC BUILD v18.5</p>
             <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()">🔒 SECURE LOGIN</button>
             <button class="btn-guest" onclick="guestLogin()" style="margin-top:15px; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:10px; width:100%; border-radius:8px; cursor:pointer;">👀 VIEW AS GUEST</button>
@@ -364,12 +364,16 @@
             }
         }
 
-        // NUCLEAR FIX: Catching errors when saving access log
+        // LOUD ERROR DETECTOR FOR ACCESS LOG SAVING
         async function recordAccess(msg) { 
             try {
                 const { error } = await sb.from('access_logs').insert([{ user_name: msg }]); 
-                if(error) console.error("Access Log Insert Error:", error.message);
+                if(error) {
+                    alert("SUPABASE BLOCKED LOG SAVE:\n" + error.message + "\n\n(Please check RLS settings on access_logs table in Supabase)");
+                    console.error("Access Log Insert Error:", error.message);
+                }
             } catch(e) {
+                alert("CRITICAL LOG ERROR: " + e.message);
                 console.error("Access Log System Failure:", e);
             }
         }
@@ -656,7 +660,6 @@
         function saveNotes() { localStorage.setItem('bodyline_notes', document.getElementById('prod-notepad').value); }
         function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('bodyline_notes') || ""; }
 
-        // NUCLEAR FIX: DIAGNOSTIC ACCESS LOGS
         async function fetchAccessLogs() {
             const display = document.getElementById('access-log-display'); 
             if(!display) return;
@@ -690,7 +693,6 @@
             menu.classList.toggle('active'); 
             document.getElementById('main-overlay').style.display = menu.classList.contains('active') ? 'block' : 'none'; 
             
-            // ALWAYS run the access log fetch when opening the menu for diagnostics
             if(menu.classList.contains('active')) {
                 fetchAccessLogs();
             }
@@ -711,6 +713,9 @@
                 isEngineer = (savedRole === 'admin' || savedUser.toLowerCase().includes('admin') || savedUser.toLowerCase().includes('engr')); 
                 document.getElementById('portal-overlay').style.display = 'none'; 
                 unlockSystem(); 
+                
+                // FORCE A LOG RECORD EVEN ON REFRESH (AUTO-LOGIN RECOVERY)
+                recordAccess(`Admin: ${currentUser} Restored Session`);
             } else { 
                 document.getElementById('access-code').focus(); 
             }
