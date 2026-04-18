@@ -22,18 +22,18 @@
         .btn-guest { background: transparent; border: 1px solid var(--border); color: var(--text-dim); margin-top: 15px; }
         .shake { animation: shakeError 0.4s forwards; border-color: #ef4444 !important; }
         @keyframes shakeError { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-10px); } }
-        #hub-screen { display: none; opacity: 0; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; padding: 20px; transition: opacity 0.6s ease; }
+        #hub-screen { display: none; opacity: 0; flex-direction: column; align-items: center; width: 100%; max-width: 1200px; padding: 20px; transition: opacity 0.6s ease; }
         .welcome-banner { text-align: center; margin-bottom: 50px; }
         .welcome-banner h1 { font-size: 36px; margin: 0 0 10px 0; font-weight: 800; letter-spacing: 1px;}
         .welcome-banner p { color: var(--text-dim); margin: 0; font-size: 14px; }
-        .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; width: 100%; }
+        .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; width: 100%; }
         .app-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-decoration: none; color: var(--text); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: flex-start; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; overflow: hidden; cursor: pointer;}
         .app-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--text-dim); transition: 0.3s; }
         .app-card:hover { transform: translateY(-5px); border-color: var(--accent); background: rgba(30, 41, 59, 0.8); }
         .app-card:hover::before { background: var(--accent); }
-        .app-icon { font-size: 40px; margin-bottom: 20px; display: inline-block; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; }
-        .app-title { font-size: 20px; font-weight: 800; margin: 0 0 10px 0; letter-spacing: -0.5px;}
-        .app-desc { font-size: 13px; color: var(--text-dim); margin: 0; line-height: 1.5; }
+        .app-icon { font-size: 40px; margin-bottom: 15px; display: inline-block; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; }
+        .app-title { font-size: 18px; font-weight: 800; margin: 0 0 10px 0; letter-spacing: -0.5px;}
+        .app-desc { font-size: 12px; color: var(--text-dim); margin: 0; line-height: 1.5; }
         .loader { display: none; margin-top: 15px; color: var(--accent); font-size: 12px; font-weight: bold; letter-spacing: 2px; animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
@@ -59,12 +59,17 @@
                 <div onclick="accessModule('bodyline.html', 'any')" class="app-card">
                     <span class="app-icon">🏭</span>
                     <h2 class="app-title">Bodyline Production</h2>
-                    <p class="app-desc">Access the Executive Dashboard. View real-time efficiency, downtime tracking, and shift analytics.</p>
+                    <p class="app-desc">View real-time efficiency, output targets, downtime tracking, and shift analytics.</p>
+                </div>
+                <div onclick="accessModule('cmms.html', 'admin')" class="app-card">
+                    <span class="app-icon">🔧</span>
+                    <h2 class="app-title">CMMS Maintenance</h2>
+                    <p class="app-desc">Interactive fleet roadmap, digital checklists, hour meter tracking, and PM sign-offs. (ADMIN ONLY)</p>
                 </div>
                 <div onclick="accessModule('chillers.html', 'admin')" class="app-card">
                     <span class="app-icon">❄️</span>
                     <h2 class="app-title">Chiller Diagnostics</h2>
-                    <p class="app-desc">Daily checkups, temperature monitoring, and predictive maintenance for all plant cooling units. (ADMIN ONLY)</p>
+                    <p class="app-desc">Daily checkups, temperature monitoring, and predictive maintenance for cooling units. (ADMIN ONLY)</p>
                 </div>
                 <div onclick="accessModule('#', 'admin')" class="app-card">
                     <span class="app-icon">⚡</span>
@@ -121,18 +126,17 @@
             }, 500);
         }
 
-        // v17.2 SECURITY ACCESS LOGIC
         function accessModule(url, requiredRole) {
             const role = localStorage.getItem('rcc_role');
             if (requiredRole === 'admin' && role !== 'admin') {
-                alert("🛑 ACCESS DENIED: Administrative clearance is required to view Utility and Power Data.");
+                alert("🛑 ACCESS DENIED: Administrative clearance is required for this module.");
                 return;
             }
             if (url === '#') alert('Module currently in development.');
             else window.location.href = url;
         }
 
-        // Canvas Background Engine
+        // Canvas Engine
         const canvas = document.getElementById('node-canvas'); const ctx = canvas.getContext('2d'); let width, height, particles = [];
         function initCanvas() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
         class Particle {
