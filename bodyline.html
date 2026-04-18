@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v19.0 Industry 4.0</title>
+    <title>RCC Bodyline OS | v19.1 Fully Restored Enterprise</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -15,13 +15,14 @@
         body.dark-mode { --bg: #0f172a; --surface: #1e293b; --accent: #3b82f6; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
 
-        /* ANDON SIREN ALERT */
-        #andon-siren { display: none; width: 100%; background: var(--danger); color: white; text-align: center; font-weight: 800; padding: 15px; font-size: 18px; letter-spacing: 2px; text-transform: uppercase; z-index: 9000; position: sticky; top: 0; animation: flashSiren 1s infinite; cursor: pointer;}
+        /* RESTORED: ANDON SIREN */
+        #andon-siren { display: none; width: 100%; background: var(--danger); color: white; text-align: center; font-weight: 800; padding: 15px; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; z-index: 9000; position: sticky; top: 0; animation: flashSiren 1s infinite; cursor: pointer; box-shadow: 0 4px 15px rgba(239,68,68,0.5);}
         @keyframes flashSiren { 0%, 100% { background: #ef4444; } 50% { background: #b91c1c; } }
 
         #portal-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease, visibility 0.5s; }
         .auth-card { background: var(--surface); padding: 50px; border-radius: 12px; border: 1px solid var(--border); width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         .auth-card input { width: 100%; padding: 15px; background: var(--bg); border: 2px solid var(--border); color: var(--text); font-size: 24px; text-align: center; border-radius: 8px; margin: 25px 0; letter-spacing: 8px; outline: none; font-weight: bold; }
+        .auth-card input:focus { border-color: var(--accent); }
         
         .cloud-status { position: fixed; top: 15px; left: 15px; font-size: 11px; display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 8px 16px; border-radius: 20px; z-index: 5000; border: 1px solid var(--border); font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; }
@@ -35,94 +36,174 @@
         .header-title span { font-family: monospace; font-weight: 600; color: var(--text-dim); font-size: 12px; }
         
         .user-profile-container { grid-column: 3; display: flex; justify-content: flex-end; }
-        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 6px 15px; border-radius: 30px; border: 1px solid var(--border); }
+        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 6px 15px 6px 15px; border-radius: 30px; border: 1px solid var(--border); }
         .avatar { width: 32px; height: 32px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+        .user-name { font-size: 13px; font-weight: 800; text-transform: uppercase; color: var(--text); }
 
         .main-content { padding: 20px; max-width: 1600px; margin: auto; }
         
+        /* RESTORED: TABS & CUSTOM MATRIX */
         .tabs { display: flex; gap: 10px; justify-content: center; margin: 10px 0 15px 0; flex-wrap: wrap;}
         .tab-btn { display: flex; align-items: center; gap: 8px; padding: 10px 25px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s;}
+        .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
         .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
 
+        #custom-time-matrix { display: none; justify-content: center; align-items: center; gap: 15px; margin-bottom: 25px; background: var(--surface); padding: 15px; border: 1px solid var(--border); border-radius: 8px; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .matrix-group { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border); }
+        .matrix-group label { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
+        .matrix-group input, .matrix-group select { width: auto; background: transparent; border: none; color: var(--text); font-weight: 700; font-size: 13px; outline: none; padding: 0; margin: 0; cursor: pointer; }
+
+        /* UPDATED: 5-COLUMN KPI GRID */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 20px 15px; border-radius: 12px; text-align: center; position: relative;}
         .kpi-card small { font-size: 11px; text-transform: uppercase; color: var(--text-dim); font-weight: 600; display: block; margin-bottom: 5px; }
         .kpi-card div.val { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+        .variance { font-size: 10px; font-weight: bold; margin-top: 5px; display: inline-block; padding: 2px 6px; border-radius: 4px;}
+        .up { color: var(--success); background: rgba(16, 185, 129, 0.1); } 
+        .down { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
 
-        .chart-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        @media (max-width: 1200px) { .chart-row { grid-template-columns: 1fr; } }
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        @media (max-width: 1100px) { .chart-row { grid-template-columns: 1fr; } }
         .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
 
         .admin-form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
-        .downtime-grid, .qc-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 15px; border-radius: 8px; margin-bottom: 10px;}
-        .downtime-grid { background: rgba(37, 99, 235, 0.05); border: 1px dashed var(--accent); }
-        .qc-grid { background: rgba(239, 68, 68, 0.05); border: 1px dashed var(--danger); grid-template-columns: repeat(3, 1fr);}
-        
-        .downtime-grid div, .qc-grid div { display: flex; flex-direction: column; }
-        @media (max-width: 900px) { .admin-form-grid { grid-template-columns: repeat(2, 1fr); } .downtime-grid, .qc-grid { grid-template-columns: repeat(2, 1fr); } }
+        .downtime-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 15px; background: rgba(37, 99, 235, 0.05); border: 1px dashed var(--accent); border-radius: 8px; margin-bottom: 10px;}
+        .downtime-grid div { display: flex; flex-direction: column; }
+        @media (max-width: 900px) { .admin-form-grid { grid-template-columns: repeat(2, 1fr); } .downtime-grid { grid-template-columns: repeat(3, 1fr); } }
 
         input, select, textarea { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; margin-bottom: 5px; font-family: inherit; font-size: 13px;}
-        .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; text-transform: uppercase; font-size: 12px; width: 100%;}
-        .btn-primary { background: var(--accent); color: white; }
-        
-        table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: center;}
-        th { padding: 12px 10px; border-bottom: 2px solid var(--border); color: var(--text-dim); text-transform: uppercase; position: sticky; top: 0; background: var(--surface); }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
+        .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-size: 12px;}
+        .btn-primary { background: var(--accent); color: white; width: 100%; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { text-align: left; padding: 12px 10px; border-bottom: 2px solid var(--border); color: var(--text-dim); text-transform: uppercase; position: sticky; top: 0; background: var(--surface); z-index: 10;}
         td { padding: 12px 10px; border-bottom: 1px solid var(--border); }
         .admin-only { display: none; }
+        .action-cell { display: flex; gap: 10px; }
+        .icon-btn { background: none; border: none; font-size: 14px; cursor: pointer; opacity: 0.6; transition: 0.2s; color: var(--text);}
+        .icon-btn:hover { opacity: 1; transform: scale(1.2); }
 
         .chat-container { height: 250px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 10px; font-size: 13px; display: flex; flex-direction: column; gap: 8px; }
         .chat-msg { padding: 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); position: relative; }
-        
-        .fab { position: fixed; bottom: 30px; right: 30px; width: 55px; height: 55px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; color: white; font-size: 24px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); }
-        #system-menu { position: fixed; top: 0; right: -420px; width: 400px; height: 100%; background: var(--surface); border-left: 1px solid var(--border); z-index: 2001; transition: 0.4s; padding: 30px; box-sizing: border-box; visibility: hidden; overflow-y: auto; }
+        .chat-msg b { color: var(--accent); display: block; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; }
+        .del-msg-btn { position: absolute; right: 5px; top: 5px; background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 12px; }
+
+        /* RESTORED: MENU & MODALS */
+        .fab { position: fixed; bottom: 30px; right: 30px; width: 55px; height: 55px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; color: white; font-size: 24px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); transition: 0.3s; }
+        .fab:hover { transform: rotate(90deg); }
+        #system-menu { position: fixed; top: 0; right: -420px; width: 400px; height: 100%; background: var(--surface); border-left: 1px solid var(--border); z-index: 2001; transition: 0.4s; padding: 30px; box-sizing: border-box; visibility: hidden; overflow-y: auto; box-shadow: -5px 0 25px rgba(0,0,0,0.2);}
         #system-menu.active { right: 0; visibility: visible; }
         .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; }
+
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 12px; z-index: 3000; box-shadow: 0 15px 40px rgba(0,0,0,0.5); width: 90%; max-width: 650px; max-height: 90vh; overflow-y: auto;}
+        .modal-content-box { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 15px; border-radius: 8px; margin: 15px 0; max-height: 400px; overflow-y: auto; font-size: 13px; line-height: 1.6; border: 1px solid var(--border); white-space: pre-wrap;}
+        
+        @media print { 
+            body { background: white; color: black; font-size: 10px;} 
+            .fab, .cloud-status, .menu-overlay, #system-menu, .chat-panel, .admin-only, #admin-form-container, .tabs, #custom-time-matrix, #andon-banner, .header-spacer, .user-profile-container { display: none !important; } 
+            .header-banner { border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 15px; }
+            .main-content { padding: 0; max-width: 100%; }
+            .kpi-grid { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
+            .kpi-card { width: 18%; padding: 10px; box-shadow: none; border: 1px solid #ccc; }
+            .chart-row { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 15px; page-break-inside: avoid; }
+            .panel { width: 48%; box-shadow: none; border: 1px solid #ccc; padding: 10px; }
+            .panel div { height: 160px !important; } 
+        }
     </style>
 </head>
 <body>
 
-    <div id="andon-siren" onclick="dismissAndon()">🚨 ANDON ALERT: MECHANICAL DOWNTIME EXCEEDS 30 MINUTES 🚨 (Click to Dismiss)</div>
+    <div id="andon-siren" onclick="dismissAndon()">🚨 ANDON ALERT: MECHANICAL DOWNTIME EXCEEDS 30 MIN LIMIT 🚨<br><span style="font-size:10px;">(Click to Dismiss)</span></div>
 
-    <div class="cloud-status" id="cloud-status-box"><div id="cloud-dot" class="status-dot dot-offline"></div><span id="cloud-text">CONNECTING...</span></div>
+    <div class="cloud-status" id="cloud-status-box">
+        <div id="cloud-dot" class="status-dot dot-offline"></div>
+        <span id="cloud-text">CONNECTING...</span>
+    </div>
 
     <div id="portal-overlay">
         <div class="auth-card" id="auth-card">
             <h2 style="margin:0 0 5px 0; font-weight: 800; font-size: 28px;">RCC BODYLINE OS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">INDUSTRY 4.0 | v19.0</p>
+            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">PRODUCTION OS v19.1</p>
             <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
-            <button class="btn btn-primary" onclick="authorize()">🔒 SECURE LOGIN</button>
-            <button class="btn" onclick="guestLogin()" style="margin-top:15px; background:transparent; border:1px solid var(--border); color:var(--text-dim);">👀 VIEW AS GUEST</button>
+            <button class="btn btn-primary" id="login-btn" onclick="authorize()">🔒 SECURE LOGIN</button>
+            <button class="btn-guest" onclick="guestLogin()" style="margin-top:15px; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:10px; width:100%; border-radius:8px; cursor:pointer;">👀 VIEW AS GUEST</button>
         </div>
     </div>
 
     <div class="header-banner">
         <div class="header-spacer"><a href="index.html" style="text-decoration:none; color:var(--text-dim); font-size:12px; font-weight:bold;">← HUB</a></div> 
-        <div class="header-title"><h1>RCC BODYLINE PRODUCTION</h1><span id="live-clock"></span></div>
-        <div class="user-profile-container"><div class="user-profile"><span class="user-name" id="user-display">LOCKED</span><div class="avatar" id="user-avatar">?</div></div></div>
+        <div class="header-title">
+            <h1>RCC BODYLINE PRODUCTION</h1>
+            <span id="live-clock"></span>
+        </div>
+        <div class="user-profile-container">
+            <div class="user-profile">
+                <div class="user-info">
+                    <span class="user-name" id="user-display">LOCKED</span>
+                </div>
+                <div class="avatar" id="user-avatar">?</div>
+            </div>
+        </div>
     </div>
 
     <div class="tabs">
         <button class="tab-btn active" onclick="setMode('daily', this)">📊 Today</button>
         <button class="tab-btn" onclick="setMode('weekly', this)">📅 This Week</button>
         <button class="tab-btn" onclick="setMode('monthly', this)">📈 This Month</button>
+        <button class="tab-btn" onclick="setMode('yearly', this)">📆 This Year</button>
+        <button class="tab-btn" onclick="setMode('custom', this)">🔍 Custom Date</button>
+    </div>
+
+    <div id="custom-time-matrix">
+        <div class="matrix-group">
+            <label>Mode</label>
+            <select id="custom-mode" onchange="toggleCustomInputs()">
+                <option value="range">Specific Date Range</option>
+                <option value="week">Specific Week</option>
+                <option value="month">Specific Month</option>
+            </select>
+        </div>
+        <div id="input-range" class="matrix-group">
+            <label>From</label><input type="date" id="date-start" onchange="processData()">
+            <label>To</label><input type="date" id="date-end" onchange="processData()">
+        </div>
+        <div id="input-week" class="matrix-group" style="display:none;">
+            <label>Select Week</label><input type="week" id="date-week" onchange="processData()">
+        </div>
+        <div id="input-month" class="matrix-group" style="display:none;">
+            <label>Select Month</label><input type="month" id="date-month" onchange="processData()">
+        </div>
     </div>
 
     <div class="main-content">
         <div class="kpi-grid">
-            <div class="kpi-card"><small>📦 Total Yield</small><div id="kpi-yield" class="val">0</div></div>
-            <div class="kpi-card"><small>🎯 Total Target</small><div id="kpi-target" class="val">0</div></div>
-            <div class="kpi-card"><small>⚡ Avg Efficiency</small><div id="kpi-eff" class="val">0%</div></div>
-            <div class="kpi-card"><small>🗑️ Total QC Scrap</small><div id="kpi-scrap" class="val" style="color:var(--danger)">0</div></div>
+            <div class="kpi-card"><small>📦 Total Yield</small><div id="kpi-yield" class="val">0</div><div id="var-yield" class="variance">--</div></div>
+            <div class="kpi-card"><small>🎯 Total Target</small><div id="kpi-target" class="val">0</div><div id="var-target" class="variance">--</div></div>
+            <div class="kpi-card"><small>⚡ Avg Efficiency</small><div id="kpi-eff" class="val">0%</div><div id="var-eff" class="variance">--</div></div>
+            <div class="kpi-card"><small>⚠️ Total Downtime</small><div id="kpi-down" class="val">0 m</div><div id="var-down" class="variance">--</div></div>
+            <div class="kpi-card"><small>🗑️ Total QC Scrap</small><div id="kpi-scrap" class="val" style="color:var(--danger)">0</div><div id="var-scrap" class="variance">--</div></div>
         </div>
 
         <div class="chart-row">
-            <div class="panel"><h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color:var(--text-dim);">Historical Performance Trend</h3><div style="height: 200px;"><canvas id="prodChart"></canvas></div></div>
-            <div class="panel"><h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color:var(--text-dim);">Downtime Root Cause</h3><div style="height: 200px;"><canvas id="utilChart"></canvas></div></div>
-            <div class="panel"><h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color:var(--danger);">QC Scrap Pareto Matrix</h3><div style="height: 200px;"><canvas id="qcChart"></canvas></div></div>
+            <div class="panel"><h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color:var(--text-dim);">Historical Performance Trend</h3><div style="height: 220px;"><canvas id="prodChart"></canvas></div></div>
+            <div class="panel"><h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color:var(--text-dim);">Downtime Root Cause (Minutes Lost)</h3><div style="height: 220px;"><canvas id="utilChart"></canvas></div></div>
         </div>
 
-        <div class="chart-row admin-only" style="grid-template-columns: 1fr;" id="admin-form-container">
-            <div class="panel" id="admin-form" style="border: 1px solid var(--accent); background: var(--bg);">
+        <div class="chart-row">
+            <div class="panel"><h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color: var(--text-dim);">Day Shift Efficiency</h3><div style="height: 180px;"><canvas id="effChartDay"></canvas></div></div>
+            <div class="panel"><h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color: var(--text-dim);">Night Shift Efficiency</h3><div style="height: 180px;"><canvas id="effChartNight"></canvas></div></div>
+        </div>
+
+        <div class="chart-row">
+            <div class="panel"><h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color:var(--text-dim);">Shift Output Comparison</h3><div style="height: 180px;"><canvas id="shiftCompChart"></canvas></div></div>
+            <div class="panel"><h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color:var(--danger);">QC Scrap Pareto Matrix</h3><div style="height: 180px;"><canvas id="qcChart"></canvas></div></div>
+        </div>
+
+        <div class="chart-row admin-only" id="admin-form-container">
+            <div class="panel" id="admin-form" style="grid-column: span 2; border: 1px solid var(--accent); background: var(--bg);">
                 <h3 style="margin:0 0 15px 0; color:var(--accent); font-size: 13px; text-transform: uppercase;">⚙️ Data Acquisition Terminal</h3>
                 
                 <div class="admin-form-grid">
@@ -131,54 +212,66 @@
                     <div><label style="font-size:10px; font-weight:bold; color:var(--text-dim);">MACHINE ASSET</label>
                         <select id="f-line">
                             <option>Line 1 / SOUCAN 640</option>
+                            <option>Line 1 / FREI-APC & YUAN-ROX OVEN</option>
                             <option>Line 2 / CANMAN X-7</option>
+                            <option>Line 2 / FREI-EPC & YUAN-ROX OVEN</option>
                             <option>Line 3 / SOUCAN 650</option>
+                            <option>Line 3 / FREI-CPC & YUAN-ROX OVEN</option>
                             <option>Line 4 / FBB 5600 KM 13697</option>
+                            <option>Line 4 / FREI-EPC & FREI-PCA OVEN</option>
                             <option>Line 5 / FBB 5600 KM 13640</option>
+                            <option>Line 5 / YUAN-ROX OVEN</option>
                             <option>Line 6 / SOUCAN 650</option>
+                            <option>Line 6 / FREI-CPC & YUAN-ROX OVEN</option>
                             <option>SLITTER / MAWAG</option>
                             <option>SLITTER / S-B34</option>
                         </select>
                     </div>
                     <div><label style="font-size:10px; font-weight:bold; color:var(--text-dim);">RUN TIME (MIN)</label><input type="number" id="f-run" value="480"></div>
+                    
                     <div><label style="font-size:10px; font-weight:bold; color:var(--text-dim);">TARGET OUTPUT</label><input type="number" id="f-target" placeholder="0"></div>
                     <div><label style="font-size:10px; font-weight:bold; color:var(--text-dim);">ACTUAL OUTPUT</label><input type="number" id="f-actual" placeholder="0"></div>
                 </div>
 
                 <label style="font-size:11px; font-weight:bold; color:var(--accent); display:block; margin-bottom:5px;">DOWNTIME ALLOCATION (MINUTES)</label>
                 <div class="downtime-grid">
-                    <div><label style="font-size:10px;">⚙️ MECHANICAL</label><input type="number" id="f-mech" placeholder="0"></div>
-                    <div><label style="font-size:10px;">⚡ ELECTRICAL</label><input type="number" id="f-elec" placeholder="0"></div>
-                    <div><label style="font-size:10px;">📦 MATERIAL</label><input type="number" id="f-mat" placeholder="0"></div>
-                    <div><label style="font-size:10px;">🔬 QC / QUALITY</label><input type="number" id="f-qc" placeholder="0"></div>
-                    <div><label style="font-size:10px;">🧍 PACKER / OPS</label><input type="number" id="f-pack" placeholder="0"></div>
+                    <div><label style="font-size:10px; color:var(--text-dim);">⚙️ MECHANICAL</label><input type="number" id="f-mech" placeholder="0"></div>
+                    <div><label style="font-size:10px; color:var(--text-dim);">⚡ ELECTRICAL</label><input type="number" id="f-elec" placeholder="0"></div>
+                    <div><label style="font-size:10px; color:var(--text-dim);">📦 MATERIAL</label><input type="number" id="f-mat" placeholder="0"></div>
+                    <div><label style="font-size:10px; color:var(--text-dim);">🔬 QC / QUALITY</label><input type="number" id="f-qc" placeholder="0"></div>
+                    <div><label style="font-size:10px; color:var(--text-dim);">🧍 PACKER / OPS</label><input type="number" id="f-pack" placeholder="0"></div>
                 </div>
 
-                <label style="font-size:11px; font-weight:bold; color:var(--danger); display:block; margin-bottom:5px;">QC SCRAP MATRIX (CANS LOST)</label>
-                <div class="qc-grid">
-                    <div><label style="font-size:10px;">❌ BAD WELDS</label><input type="number" id="f-scrap-weld" placeholder="0"></div>
-                    <div><label style="font-size:10px;">🔪 SCRATCHES</label><input type="number" id="f-scrap-scratch" placeholder="0"></div>
-                    <div><label style="font-size:10px;">🥫 FLANGING ERRORS</label><input type="number" id="f-scrap-flange" placeholder="0"></div>
+                <label style="font-size:11px; font-weight:bold; color:var(--danger); display:block; margin-bottom:5px; margin-top:10px;">QC SCRAP MATRIX (CANS LOST)</label>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; padding:15px; background: rgba(239, 68, 68, 0.05); border: 1px dashed var(--danger); border-radius: 8px; margin-bottom: 10px;">
+                    <div><label style="font-size:10px; color:var(--text-dim);">❌ BAD WELDS</label><input type="number" id="f-scrap-weld" placeholder="0"></div>
+                    <div><label style="font-size:10px; color:var(--text-dim);">🔪 SCRATCHES</label><input type="number" id="f-scrap-scratch" placeholder="0"></div>
+                    <div><label style="font-size:10px; color:var(--text-dim);">🥫 FLANGING ERRORS</label><input type="number" id="f-scrap-flange" placeholder="0"></div>
                 </div>
 
-                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()">☁️ TRANSMIT PRODUCTION RECORD</button>
+                <textarea id="f-comment" placeholder="Input specific trouble, jamming details, or actions taken..." rows="2" style="margin-top:10px;"></textarea>
+                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()" style="margin-top:10px;">☁️ TRANSMIT RECORD</button>
             </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
-            <div class="panel">
+            <div class="panel" id="log-table-container">
                 <h3 style="margin:0 0 15px 0; font-size:13px; text-transform:uppercase; color:var(--text-dim);">🗄️ Filtered Production Log</h3>
-                <div style="overflow-y:auto; height: 300px;">
+                <div style="overflow-y:auto; height: 400px;">
                     <table id="log-table">
-                        <thead><tr><th>Date</th><th>Asset</th><th>Actual</th><th>Eff%</th><th>Down</th><th>Scrap</th><th class="admin-only">Del</th></tr></thead>
+                        <thead><tr><th>Date</th><th>Shift</th><th>Asset</th><th>Actual</th><th>Target</th><th>Eff%</th><th>Total Down</th><th>Scrap</th><th class="admin-only">Action</th></tr></thead>
                         <tbody id="log-body"></tbody>
                     </table>
                 </div>
             </div>
+
             <div class="panel chat-panel">
                 <h3 style="margin:0 0 15px 0; font-size:13px; text-transform:uppercase; color: var(--accent);">💬 Shift Comms</h3>
-                <div id="chat-box" class="chat-container" style="height: 210px;"></div>
-                <div style="display: flex; gap: 8px;"><input type="text" id="chat-input" placeholder="Type message..." style="margin:0;" onkeypress="if(event.key === 'Enter') sendComment()"><button class="btn btn-primary" onclick="sendComment()" style="width: auto; padding: 0 20px;">SEND</button></div>
+                <div id="chat-box" class="chat-container"></div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="chat-input" placeholder="Type message..." style="margin:0;" onkeypress="if(event.key === 'Enter') sendComment()">
+                    <button class="btn btn-primary" onclick="sendComment()" style="width: auto; padding: 0 20px;">SEND</button>
+                </div>
             </div>
         </div>
     </div>
@@ -187,8 +280,62 @@
     <div class="menu-overlay" onclick="toggleMenu()" id="main-overlay"></div>
     <div id="system-menu">
         <h2 style="font-weight: 800; color: var(--text); margin-top: 0;">RCC CONTROLS</h2>
-        <button class="btn" style="width:100%; margin-bottom:20px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="toggleTheme()">🌓 TOGGLE DARK MODE</button>
+        <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="toggleTheme()">🌓 TOGGLE DARK MODE</button>
+        
+        <div class="admin-only" style="margin-top: 20px;">
+            <h4 style="color:var(--accent); font-size: 11px; text-transform: uppercase; margin-bottom: 10px;">Admin Tools</h4>
+            <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="exportExcel()">🟩 EXCEL (CURRENT VIEW)</button>
+            <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="window.print()">🖨️ PDF (PRINT VIEW)</button>
+            <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" onclick="generateSmartReport()">📋 TIME-MATRIX REPORT</button>
+        </div>
+        
+        <h4 style="color:var(--text-dim); font-size: 11px; text-transform: uppercase; margin-bottom: 5px;">📝 Production Notepad</h4>
+        <textarea id="prod-notepad" placeholder="Shift Reminders (Auto-Saves)..." oninput="saveNotes()" style="height: 100px; margin-bottom: 20px;"></textarea>
+
+        <div id="access-log-section" style="margin-top: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                <h4 style="color:var(--text-dim); font-size: 11px; text-transform: uppercase; margin:0;">🔒 Access Logs</h4>
+                <button onclick="fetchAccessLogs()" style="background:var(--accent); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:9px; cursor:pointer; font-weight:bold;">↻ REFRESH</button>
+            </div>
+            <div id="access-log-display" style="font-family:monospace; font-size:10px; height:120px; overflow-y:auto; background:var(--bg); padding:10px; border-radius: 6px; border: 1px solid var(--border);"></div>
+        </div>
+
         <button class="btn" style="width:100%; margin-top:20px; background: var(--border); color: var(--text);" onclick="toggleMenu()">CLOSE MENU</button>
+    </div>
+
+    <div id="report-modal" class="modal">
+        <h2 style="margin:0 0 15px 0; font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; color: var(--text);">📋 EXECUTIVE TIME-MATRIX SUMMARY</h2>
+        <div id="report-content" class="modal-content-box" style="white-space: pre-wrap;">Analyzing specific timeframe...</div>
+        <button class="btn btn-primary" onclick="downloadReport()" style="margin-bottom: 10px;">💾 DOWNLOAD REPORT</button>
+        <button class="btn" style="width:100%; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="closeModals()">CLOSE</button>
+    </div>
+
+    <div id="edit-modal" class="modal">
+        <h2 style="margin:0 0 15px 0; font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; color: var(--text);">✏️ EDIT PRODUCTION RECORD</h2>
+        <input type="hidden" id="edit-id">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+            <div><label style="font-size:10px; color:var(--text-dim);">TARGET</label><input type="number" id="edit-target"></div>
+            <div><label style="font-size:10px; color:var(--text-dim);">ACTUAL</label><input type="number" id="edit-actual"></div>
+        </div>
+        <label style="font-size:11px; font-weight:bold; color:var(--accent); display:block; margin-bottom:5px;">EDIT DOWNTIME (MINUTES)</label>
+        <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px; background:var(--bg); padding:10px; border-radius:6px; margin-bottom:10px;">
+            <div><label style="font-size:9px;">MECH</label><input type="number" id="edit-mech"></div>
+            <div><label style="font-size:9px;">ELEC</label><input type="number" id="edit-elec"></div>
+            <div><label style="font-size:9px;">MATL</label><input type="number" id="edit-mat"></div>
+            <div><label style="font-size:9px;">QC</label><input type="number" id="edit-qc"></div>
+            <div><label style="font-size:9px;">PACK</label><input type="number" id="edit-pack"></div>
+        </div>
+        <label style="font-size:11px; font-weight:bold; color:var(--danger); display:block; margin-bottom:5px;">EDIT QC SCRAP (CANS)</label>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px; background:var(--bg); padding:10px; border-radius:6px; margin-bottom:10px;">
+            <div><label style="font-size:9px;">WELDS</label><input type="number" id="edit-scrap-weld"></div>
+            <div><label style="font-size:9px;">SCRATCH</label><input type="number" id="edit-scrap-scratch"></div>
+            <div><label style="font-size:9px;">FLANGE</label><input type="number" id="edit-scrap-flange"></div>
+        </div>
+        <textarea id="edit-comment" rows="2" placeholder="Update comments..."></textarea>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn btn-primary" onclick="submitEdit()">💾 SAVE CHANGES</button>
+            <button class="btn" style="background:transparent; border:1px solid var(--border); color:var(--text); width:100%;" onclick="closeModals()">CANCEL</button>
+        </div>
     </div>
 
     <script>
@@ -196,129 +343,451 @@
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
-        let rawData = []; let filteredData = []; let isEngineer = false; let currentUser = "GUEST"; let charts = {}; let currentMode = 'daily';
-        Chart.defaults.font.family = "'Inter', sans-serif"; Chart.defaults.color = '#64748b';
+        let rawData = []; let filteredData = []; let previousData = [];
+        let isEngineer = false; let currentUser = "GUEST"; let charts = {}; let currentMode = 'daily';
+        
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
 
         async function authorize() {
-            const pin = document.getElementById('access-code').value.trim();
-            const { data } = await sb.from('user_roles').select('*').eq('pin', pin).single();
-            if(data || pin === "122022") {
-                currentUser = data ? data.user_name : "Engr. Pinapit";
-                isEngineer = true; localStorage.setItem('rcc_user', currentUser); localStorage.setItem('rcc_role', 'admin');
-                unlockSystem();
-            } else { document.getElementById('access-code').value = ''; }
+            try {
+                const pin = document.getElementById('access-code').value.trim();
+                const { data, error } = await sb.from('user_roles').select('*').eq('pin', pin).single();
+                
+                if(data || pin === "122022") {
+                    currentUser = data ? data.user_name : "Engr. Pinapit";
+                    isEngineer = data ? (data.role === 'Admin' || data.role === 'admin') : true;
+                    
+                    localStorage.setItem('rcc_user', currentUser);
+                    localStorage.setItem('rcc_role', isEngineer ? 'admin' : 'viewer');
+                    
+                    unlockSystem();
+                    recordAccess(`Admin: ${currentUser} Logged In`);
+                } else { triggerError(document.getElementById('auth-card')); }
+            } catch (err) {
+                console.error(err);
+                triggerError(document.getElementById('auth-card'));
+            }
         }
-        function guestLogin() { currentUser = "Viewer"; isEngineer = false; unlockSystem(); }
+
+        function triggerError(card) { document.getElementById('access-code').value = ''; card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 400); }
+
+        function guestLogin() { 
+            let name = prompt("Enter your Name for Live Chat:"); 
+            currentUser = name || "Anonymous Viewer"; 
+            isEngineer = false; 
+            localStorage.setItem('rcc_user', currentUser);
+            localStorage.setItem('rcc_role', 'viewer');
+            unlockSystem(); 
+            recordAccess(`Viewer: ${currentUser} Joined`);
+        }
 
         function unlockSystem() {
-            document.getElementById('user-display').innerText = currentUser;
-            document.getElementById('user-avatar').innerText = currentUser.charAt(0).toUpperCase();
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = isEngineer ? 'block' : 'none');
-            document.getElementById('portal-overlay').style.display = 'none';
-            setupRealtime(); initCharts(); fetchData(); fetchComments();
-            setMode('daily', document.querySelector('.tab-btn')); 
+            try {
+                const safeUser = currentUser || "Operator";
+                document.getElementById('user-display').innerText = safeUser;
+                document.getElementById('user-avatar').innerText = safeUser.charAt(0).toUpperCase();
+                
+                document.querySelectorAll('.admin-only').forEach(el => {
+                    el.style.display = isEngineer ? 'block' : 'none';
+                });
+                
+                document.getElementById('portal-overlay').style.display = 'none';
+                
+                setupRealtime();
+                initCharts(); fetchData(); fetchComments(); loadNotes(); 
+                
+                setMode('daily', document.querySelector('.tab-btn')); 
+            } catch (e) {
+                console.error("Critical error unlocking system:", e);
+            }
+        }
+
+        async function recordAccess(msg) { 
+            try {
+                const { error } = await sb.from('access_logs').insert([{ user_name: msg }]); 
+                if(error) console.error("Access Log Insert Error:", error.message);
+            } catch(e) {
+                console.error("Access Log System Failure:", e);
+            }
         }
 
         function setupRealtime() {
-            sb.channel('global-sync')
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => fetchData())
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'live_comments' }, () => fetchComments())
-              .subscribe((s) => { document.getElementById('cloud-dot').className = s === 'SUBSCRIBED' ? "status-dot dot-online" : "status-dot dot-offline"; });
+            const dot = document.getElementById('cloud-dot');
+            const text = document.getElementById('cloud-text');
+            
+            try {
+                sb.channel('global-sync')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => fetchData())
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'live_comments' }, () => fetchComments())
+                  .subscribe((status) => {
+                      if(status === 'SUBSCRIBED') { dot.className = "status-dot dot-online"; text.innerText = "LIVE SYNC ACTIVE"; } 
+                      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') { dot.className = "status-dot dot-offline"; text.innerText = "SYNC ERROR"; }
+                  });
+            } catch (e) {
+                dot.className = "status-dot dot-offline"; text.innerText = "SYNC OFFLINE";
+            }
         }
 
-        async function fetchData() { const { data } = await sb.from('production_logs').select('*').order('date', {ascending:false}); if(data) { rawData = data; filterAndRender(); } }
+        async function fetchData() {
+            const { data } = await sb.from('production_logs').select('*').order('date', {ascending:false});
+            if(data) { rawData = data; processData(); }
+        }
 
-        function setMode(mode, btn) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); currentMode = mode; filterAndRender(); }
+        function setMode(mode, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            currentMode = mode;
+            if(mode === 'custom') { document.getElementById('custom-time-matrix').style.display = 'flex'; toggleCustomInputs(); } 
+            else { document.getElementById('custom-time-matrix').style.display = 'none'; calculateDatesAndProcess(); }
+        }
 
-        function filterAndRender() {
-            const today = new Date().toISOString().split('T')[0];
-            filteredData = rawData.filter(r => r.date === today); // Simplified to Today for brevity in this snippet
+        function toggleCustomInputs() {
+            const subMode = document.getElementById('custom-mode').value;
+            ['range', 'week', 'month'].forEach(m => { document.getElementById(`input-${m}`).style.display = (m === subMode) ? 'flex' : 'none'; });
+            processData(); 
+        }
+
+        function calculateDatesAndProcess() {
+            const today = new Date(); const yyyy = today.getFullYear(); const mm = String(today.getMonth() + 1).padStart(2, '0'); const dd = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${yyyy}-${mm}-${dd}`; let start, end, prevStart, prevEnd;
+
+            if(currentMode === 'daily') { start = end = todayStr; let yest = new Date(today); yest.setDate(yest.getDate() - 1); prevStart = prevEnd = yest.toISOString().split('T')[0]; } 
+            else if(currentMode === 'weekly') {
+                let day = today.getDay(); let diff = today.getDate() - day + (day === 0 ? -6 : 1); 
+                let mon = new Date(today.setDate(diff)); let sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+                start = mon.toISOString().split('T')[0]; end = sun.toISOString().split('T')[0];
+                let pMon = new Date(mon); pMon.setDate(pMon.getDate() - 7); let pSun = new Date(sun); pSun.setDate(pSun.getDate() - 7);
+                prevStart = pMon.toISOString().split('T')[0]; prevEnd = pSun.toISOString().split('T')[0];
+            }
+            else if(currentMode === 'monthly') {
+                start = `${yyyy}-${mm}-01`; let lastDay = new Date(yyyy, today.getMonth() + 1, 0); end = `${yyyy}-${mm}-${lastDay.getDate()}`;
+                let prevMonth = today.getMonth() === 0 ? 12 : today.getMonth(); let prevYear = today.getMonth() === 0 ? yyyy - 1 : yyyy;
+                let pmm = String(prevMonth).padStart(2, '0'); prevStart = `${prevYear}-${pmm}-01`;
+                let prevLastDay = new Date(prevYear, prevMonth, 0); prevEnd = `${prevYear}-${pmm}-${prevLastDay.getDate()}`;
+            }
+            else if(currentMode === 'yearly') { start = `${yyyy}-01-01`; end = `${yyyy}-12-31`; prevStart = `${yyyy-1}-01-01`; prevEnd = `${yyyy-1}-12-31`; }
+            filterAndRender(start, end, prevStart, prevEnd);
+        }
+
+        function processData() {
+            if(currentMode !== 'custom') return; 
+            const subMode = document.getElementById('custom-mode').value; let start, end;
+            if (subMode === 'range') { start = document.getElementById('date-start').value; end = document.getElementById('date-end').value; } 
+            else if (subMode === 'week') {
+                const weekVal = document.getElementById('date-week').value; if(!weekVal) return;
+                let [y, w] = weekVal.split('-W'); let simple = new Date(y, 0, 1 + (w - 1) * 7);
+                let day = simple.getDay(); let diff = simple.getDate() - day + (day === 0 ? -6 : 1); 
+                let mon = new Date(simple.setDate(diff)); let sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+                start = mon.toISOString().split('T')[0]; end = sun.toISOString().split('T')[0];
+            } else if (subMode === 'month') {
+                const monVal = document.getElementById('date-month').value; if(!monVal) return;
+                start = monVal + "-01"; let d = new Date(monVal.split('-')[0], monVal.split('-')[1], 0); end = monVal + "-" + d.getDate();
+            }
+            filterAndRender(start, end, start, end); 
+        }
+
+        function getTotalDown(r) { return (r.down_mech || 0) + (r.down_elec || 0) + (r.down_mat || 0) + (r.down_qc || 0) + (r.down_pack || 0); }
+        function getTotalScrap(r) { return (r.defect_weld || 0) + (r.defect_scratch || 0) + (r.defect_flange || 0); }
+
+        function filterAndRender(start, end, pStart, pEnd) {
+            filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
+            previousData = pStart ? rawData.filter(r => r && r.date && r.date >= pStart && r.date <= pEnd) : [];
             
-            let tYield=0, tTarget=0, tDown=0, tScrap=0;
-            filteredData.forEach(r => { 
-                tYield += r.actual||0; tTarget += r.target||0; 
-                tDown += (r.down_mech||0)+(r.down_elec||0)+(r.down_mat||0)+(r.down_qc||0)+(r.down_pack||0);
-                tScrap += (r.defect_weld||0)+(r.defect_scratch||0)+(r.defect_flange||0);
-            });
-            
-            document.getElementById('kpi-yield').innerText = tYield;
-            document.getElementById('kpi-target').innerText = tTarget;
-            document.getElementById('kpi-eff').innerText = tTarget > 0 ? (tYield/tTarget*100).toFixed(1) + "%" : "0%";
-            document.getElementById('kpi-scrap').innerText = tScrap;
+            try { updateKPIs(); } catch (e) { console.error(e); }
+            try { renderTable(); } catch (e) { console.error(e); }
+            try { updateCharts(); } catch (e) { console.error(e); }
+        }
 
+        function updateKPIs() {
+            const calc = (data) => {
+                const t = data.reduce((acc, r) => { acc.a += (r.actual||0); acc.t += (r.target||0); acc.d += getTotalDown(r); acc.s += getTotalScrap(r); return acc; }, {a:0, t:0, d:0, s:0});
+                const eff = t.t > 0 ? (t.a/t.t*100) : 0; return { yield: t.a, target: t.t, down: t.d, eff, scrap: t.s };
+            };
+            const curr = calc(filteredData); const prev = calc(previousData);
+
+            document.getElementById('kpi-yield').innerText = curr.yield.toLocaleString();
+            document.getElementById('kpi-target').innerText = curr.target.toLocaleString();
+            document.getElementById('kpi-eff').innerText = curr.eff.toFixed(1) + "%";
+            document.getElementById('kpi-down').innerText = curr.down + " m";
+            document.getElementById('kpi-scrap').innerText = curr.scrap.toLocaleString();
+
+            const setVar = (id, c, p, isPct = false, reverse = false) => {
+                const el = document.getElementById(id);
+                if(!el) return; // safeguard if element doesn't exist
+                if (currentMode === 'custom' || !p || p === 0) { el.innerText = "--"; el.className = "variance"; return; }
+                const diff = isPct ? (c - p) : ((c - p) / p * 100); const sym = diff >= 0 ? "↑" : "↓";
+                el.innerText = `${sym} ${Math.abs(diff).toFixed(1)}${isPct?'':'%'}`;
+                let isGood = diff >= 0; if(reverse) isGood = diff <= 0; el.className = `variance ${isGood ? 'up' : 'down'}`;
+            };
+            setVar('var-yield', curr.yield, prev.yield); setVar('var-eff', curr.eff, prev.eff, true); setVar('var-down', curr.down, prev.down, false, true); setVar('var-scrap', curr.scrap, prev.scrap, false, true);
+        }
+
+        function renderTable() {
             document.getElementById('log-body').innerHTML = filteredData.map(r => {
-                let scrap = (r.defect_weld||0)+(r.defect_scratch||0)+(r.defect_flange||0);
-                return `<tr><td>${r.date}</td><td style="font-size:10px;"><b>${r.line}</b></td><td>${r.actual}</td>
-                <td style="color:${(r.actual/r.target*100)<80 ? 'var(--danger)' : 'var(--success)'}">${(r.actual/r.target*100).toFixed(1)}%</td>
-                <td>${(r.down_mech||0)+(r.down_elec||0)}m</td><td>${scrap}</td>
-                <td class="admin-only" style="display:${isEngineer?'table-cell':'none'}"><button style="color:red; background:none; border:none; cursor:pointer;" onclick="deleteLog(${r.id})">✖</button></td></tr>`;
+                let safeShift = r.shift ? r.shift[0] : '-';
+                let safeLine = r.line || 'Unknown Asset';
+                let safeActual = r.actual || 0;
+                let safeTarget = r.target || 0;
+                let safeEff = safeTarget > 0 ? (safeActual/safeTarget*100).toFixed(1) : '0.0';
+                let safeColor = (safeTarget > 0 && (safeActual/safeTarget*100) < 80) ? 'var(--danger)' : 'var(--success)';
+                
+                return `<tr>
+                    <td>${r.date}</td><td>${safeShift}</td><td style="font-size:10px;"><b>${safeLine}</b></td><td>${safeActual}</td><td>${safeTarget}</td>
+                    <td style="font-weight:bold; color:${safeColor}">${safeEff}%</td><td>${getTotalDown(r)}m</td><td><b>${getTotalScrap(r)}</b></td>
+                    <td class="admin-only" style="display:${isEngineer?'table-cell':'none'}">
+                        <div class="action-cell"><button class="icon-btn" onclick="openEditModal(${r.id})">✏️</button><button class="icon-btn" style="color:var(--danger)" onclick="deleteLog(${r.id})">🗑</button></div>
+                    </td>
+                </tr>`;
             }).join('');
-            
-            updateCharts();
         }
 
         async function saveData() {
-            const mech = parseInt(document.getElementById('f-mech').value) || 0;
-            if(mech >= 30) triggerAndonAlert();
+            const btn = document.getElementById('transmit-btn'); 
+            
+            // ANDON ALERT CHECK
+            const mechDown = parseInt(document.getElementById('f-mech').value) || 0;
+            if(mechDown >= 30) {
+                document.getElementById('andon-siren').style.display = 'block';
+                console.log("WEBHOOK TRIGGERED: High Mechanical Downtime");
+            }
 
             const entry = {
                 date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
                 shift: document.getElementById('f-shift').value, line: document.getElementById('f-line').value,
                 target: parseInt(document.getElementById('f-target').value) || 0, actual: parseInt(document.getElementById('f-actual').value) || 0, 
-                down_mech: mech, down_elec: parseInt(document.getElementById('f-elec').value) || 0,
-                defect_weld: parseInt(document.getElementById('f-scrap-weld').value) || 0, 
-                defect_scratch: parseInt(document.getElementById('f-scrap-scratch').value) || 0, 
+                run: parseInt(document.getElementById('f-run').value) || 480, 
+                down_mech: mechDown, down_elec: parseInt(document.getElementById('f-elec').value) || 0,
+                down_mat: parseInt(document.getElementById('f-mat').value) || 0, down_qc: parseInt(document.getElementById('f-qc').value) || 0, down_pack: parseInt(document.getElementById('f-pack').value) || 0,
+                defect_weld: parseInt(document.getElementById('f-scrap-weld').value) || 0,
+                defect_scratch: parseInt(document.getElementById('f-scrap-scratch').value) || 0,
                 defect_flange: parseInt(document.getElementById('f-scrap-flange').value) || 0,
+                comment: document.getElementById('f-comment').value, created_at: new Date().toISOString()
             };
-            await sb.from('production_logs').insert([entry]);
-            ['f-actual', 'f-mech', 'f-scrap-weld', 'f-scrap-scratch', 'f-scrap-flange'].forEach(id => document.getElementById(id).value = '');
-            fetchData();
+            if (entry.target === 0 || entry.actual === 0) { alert("Target and Actual required."); return; }
+            btn.innerText = "UPLOADING...";
+            const { error } = await sb.from('production_logs').insert([entry]);
+            if(!error) { 
+                await fetchData(); btn.innerText = "SUCCESS"; setTimeout(() => { btn.innerText = "☁️ TRANSMIT RECORD"; }, 2000);
+                ['f-actual', 'f-mech', 'f-elec', 'f-mat', 'f-qc', 'f-pack', 'f-scrap-weld', 'f-scrap-scratch', 'f-scrap-flange', 'f-comment'].forEach(id => document.getElementById(id).value = '');
+            } else { alert("DB Error: Verify 'defect_' columns exist in Supabase."); btn.innerText = "☁️ TRANSMIT RECORD"; }
         }
 
-        async function deleteLog(id) { if(confirm("Delete log?")) { await sb.from('production_logs').delete().eq('id', id); fetchData(); } }
-
-        function triggerAndonAlert() {
-            const siren = document.getElementById('andon-siren');
-            siren.style.display = 'block';
-            // In a real backend, this triggers an SMS API. Here we simulate the enterprise webhook.
-            console.log("WEBHOOK TRIGGERED: Sending SMS to Plant Manager: Machine down > 30 mins.");
+        function openEditModal(id) {
+            const log = rawData.find(r => r.id === id); if(!log) return;
+            document.getElementById('edit-id').value = id; document.getElementById('edit-target').value = log.target; document.getElementById('edit-actual').value = log.actual;
+            document.getElementById('edit-mech').value = log.down_mech || 0; document.getElementById('edit-elec').value = log.down_elec || 0; document.getElementById('edit-mat').value = log.down_mat || 0;
+            document.getElementById('edit-qc').value = log.down_qc || 0; document.getElementById('edit-pack').value = log.down_pack || 0; 
+            document.getElementById('edit-scrap-weld').value = log.defect_weld || 0; document.getElementById('edit-scrap-scratch').value = log.defect_scratch || 0; document.getElementById('edit-scrap-flange').value = log.defect_flange || 0;
+            document.getElementById('edit-comment').value = log.comment || '';
+            document.getElementById('edit-modal').style.display = 'block'; document.getElementById('main-overlay').style.display = 'block';
         }
+
+        async function submitEdit() {
+            const id = document.getElementById('edit-id').value;
+            const updates = { 
+                target: parseInt(document.getElementById('edit-target').value)||0, actual: parseInt(document.getElementById('edit-actual').value)||0, 
+                down_mech: parseInt(document.getElementById('edit-mech').value)||0, down_elec: parseInt(document.getElementById('edit-elec').value)||0, down_mat: parseInt(document.getElementById('edit-mat').value)||0, down_qc: parseInt(document.getElementById('edit-qc').value)||0, down_pack: parseInt(document.getElementById('edit-pack').value)||0, 
+                defect_weld: parseInt(document.getElementById('edit-scrap-weld').value)||0, defect_scratch: parseInt(document.getElementById('edit-scrap-scratch').value)||0, defect_flange: parseInt(document.getElementById('edit-scrap-flange').value)||0,
+                comment: document.getElementById('edit-comment').value 
+            };
+            const { error } = await sb.from('production_logs').update(updates).eq('id', id);
+            if(!error) { closeModals(); await fetchData(); } else { alert("Failed to update."); }
+        }
+
+        async function deleteLog(id) { if(confirm("Delete this log?")) { await sb.from('production_logs').delete().eq('id', id); fetchData(); } }
+
         function dismissAndon() { document.getElementById('andon-siren').style.display = 'none'; }
 
         function initCharts() {
-            charts.prod = new Chart(document.getElementById('prodChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#2563eb', data: [] }] }, options: { maintainAspectRatio: false } });
-            charts.util = new Chart(document.getElementById('utilChart'), { type: 'doughnut', data: { labels: ['Mech', 'Elec', 'Mat', 'QC', 'Pack'], datasets: [{ data: [0,0,0,0,0], backgroundColor: ['#ef4444', '#f59e0b', '#2563eb', '#64748b', '#10b981'] }] }, options: { maintainAspectRatio: false } });
-            charts.qc = new Chart(document.getElementById('qcChart'), { type: 'bar', data: { labels: ['Bad Welds', 'Scratches', 'Flanging'], datasets: [{ label: 'Cans Lost', backgroundColor: '#ef4444', data: [0,0,0] }] }, options: { maintainAspectRatio: false } });
+            const cleanScales = { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(100,116,139,0.1)' } } };
+            const barScales = { x: { grid: { display: false } }, y: { max: 100, grid: { color: 'rgba(100,116,139,0.1)' } } };
+            const animCfg = { duration: 600, easing: 'easeOutQuart' };
+
+            charts.prod = new Chart(document.getElementById('prodChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.05)', fill: true, tension: 0.3, data: [] }, { label: 'Target', borderColor: '#94a3b8', borderDash:[4,4], data: [] }]}, options: { responsive: true, maintainAspectRatio: false, animation: animCfg, plugins: { legend: { position: 'top', align: 'end' } }, scales: cleanScales } });
+            charts.util = new Chart(document.getElementById('utilChart'), { type: 'doughnut', data: { labels: ['Mechanical', 'Electrical', 'Material', 'QC', 'Packer'], datasets: [{ data: [0,0,0,0,0], backgroundColor: ['#ef4444', '#f59e0b', '#2563eb', '#64748b', '#10b981'], borderWidth: 0 }]}, options: { responsive: true, maintainAspectRatio: false, cutout:'70%', plugins: { legend: { position: 'right' } } } });
+            
+            const groupLabels = ['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5', 'Line 6', 'SLITTER'];
+            charts.effDay = new Chart(document.getElementById('effChartDay'), { type: 'bar', data: { labels: groupLabels, datasets: [{ label: 'Eff %', data: [], backgroundColor: '#10b981', borderRadius: 4 }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: barScales } });
+            charts.effNight = new Chart(document.getElementById('effChartNight'), { type: 'bar', data: { labels: groupLabels, datasets: [{ label: 'Eff %', data: [], backgroundColor: '#2563eb', borderRadius: 4 }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: barScales } });
+            charts.shiftComp = new Chart(document.getElementById('shiftCompChart'), { type: 'bar', data: { labels: ['Day Shift', 'Night Shift'], datasets: [{ label: 'Total Output', backgroundColor: ['#f59e0b', '#2563eb'], data: [0, 0], borderRadius: 4 }]}, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(100,116,139,0.1)' } }, y: { grid: { display: false } } } } });
+            
+            charts.qc = new Chart(document.getElementById('qcChart'), { type: 'bar', data: { labels: ['Bad Welds', 'Scratches', 'Flanging'], datasets: [{ label: 'Cans Lost', backgroundColor: '#ef4444', borderRadius: 4, data: [0,0,0] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: cleanScales } });
         }
 
         function updateCharts() {
             if(!charts.prod) return;
             const labels = [...new Set(filteredData.map(r => r.date))].sort();
-            charts.prod.data.labels = labels; charts.prod.data.datasets[0].data = labels.map(d => filteredData.filter(r => r.date === d).reduce((s,r)=>s+(r.actual||0),0)); charts.prod.update();
+            charts.prod.data.labels = labels; charts.prod.data.datasets[0].data = labels.map(d => filteredData.filter(r => r.date === d).reduce((s,r)=>s+(r.actual||0),0)); charts.prod.data.datasets[1].data = labels.map(d => filteredData.filter(r => r.date === d).reduce((s,r)=>s+(r.target||0),0)); charts.prod.update();
 
-            let m=0, e=0, mt=0, q=0, p=0, w=0, s=0, f=0;
-            filteredData.forEach(r => { m+=r.down_mech||0; e+=r.down_elec||0; w+=r.defect_weld||0; s+=r.defect_scratch||0; f+=r.defect_flange||0; });
-            charts.util.data.datasets[0].data = [m, e, mt, q, p]; charts.util.update();
-            
-            // QC Pareto Sorting
+            const reasons = { "Mechanical": 0, "Electrical": 0, "Material": 0, "QC": 0, "Packer": 0 };
+            let w=0, s=0, f=0;
+            filteredData.forEach(r => { 
+                reasons.Mechanical += (r.down_mech || 0); reasons.Electrical += (r.down_elec || 0); reasons.Material += (r.down_mat || 0); reasons.QC += (r.down_qc || 0); reasons.Packer += (r.down_pack || 0); 
+                w += (r.defect_weld||0); s += (r.defect_scratch||0); f += (r.defect_flange||0);
+            });
+            charts.util.data.datasets[0].data = Object.values(reasons); charts.util.update();
+
             let qcData = [{n:'Bad Welds', v:w}, {n:'Scratches', v:s}, {n:'Flanging', v:f}].sort((a,b)=>b.v - a.v);
-            charts.qc.data.labels = qcData.map(d=>d.n); charts.qc.data.datasets[0].data = qcData.map(d=>d.v); charts.qc.update();
+            charts.qc.data.labels = qcData.map(d=>d.n);
+            charts.qc.data.datasets[0].data = qcData.map(d=>d.v);
+            charts.qc.update();
+
+            const groupLabels = ['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5', 'Line 6', 'SLITTER'];
+            const updateShift = (chart, shift) => {
+                const vals = groupLabels.map(baseLine => { 
+                    const rs = filteredData.filter(x => x.line && x.line.startsWith(baseLine) && x.shift === shift); 
+                    const a = rs.reduce((sum,x)=>sum+(x.actual||0),0), t = rs.reduce((sum,x)=>sum+(x.target||0),0); 
+                    return t > 0 ? (a/t*100) : 0; 
+                });
+                chart.data.datasets[0].data = vals; chart.data.datasets[0].backgroundColor = vals.map(e => e === 0 ? '#e2e8f0' : (e < 65 ? '#ef4444' : (e < 80 ? '#f59e0b' : '#10b981'))); chart.update();
+            }
+            updateShift(charts.effDay, "Day Shift"); updateShift(charts.effNight, "Night Shift");
+
+            charts.shiftComp.data.datasets[0].data = [ filteredData.filter(r => r.shift === "Day Shift").reduce((sum,r)=>sum+(r.actual||0),0), filteredData.filter(r => r.shift === "Night Shift").reduce((sum,r)=>sum+(r.actual||0),0) ]; charts.shiftComp.update();
+        }
+
+        function generateSmartReport() {
+            if(filteredData.length === 0) { alert("No data found for this timeframe."); return; }
+            let modeText = currentMode === 'custom' ? "CUSTOM RANGE" : currentMode.toUpperCase();
+            const yield = filteredData.reduce((s,r)=>s+(r.actual||0),0); const target = filteredData.reduce((s,r)=>s+(r.target||0),0); const down = filteredData.reduce((s,r)=>s+getTotalDown(r),0);
+            const eff = target > 0 ? (yield/target*100).toFixed(1) : 0;
+
+            let text = `========================================\nRCC EXECUTIVE ${modeText} SUMMARY\n========================================\n\n`;
+            text += `[ KEY METRICS ]\nTotal Yield: ${yield.toLocaleString()}\nTarget: ${target.toLocaleString()}\nEfficiency: ${eff}%\nTotal Downtime: ${down} minutes\n\n`;
+            
+            let lines = {}; const reasons = { "Mechanical": 0, "Electrical": 0, "Material": 0, "QC": 0, "Packer": 0 };
+            filteredData.forEach(r => { 
+                const safeLine = r.line || "Unknown Asset";
+                if(!lines[safeLine]) lines[safeLine] = {a:0, t:0}; lines[safeLine].a += (r.actual||0); lines[safeLine].t += (r.target||0); 
+                reasons.Mechanical += (r.down_mech || 0); reasons.Electrical += (r.down_elec || 0); reasons.Material += (r.down_mat || 0); reasons.QC += (r.down_qc || 0); reasons.Packer += (r.down_pack || 0);
+            });
+            
+            let worst = Object.keys(lines).length > 0 ? Object.keys(lines).reduce((a,b) => (lines[a].a/lines[a].t) < (lines[b].a/lines[b].t) ? a : b) : "None";
+            let topReason = Object.keys(reasons).reduce((a,b) => reasons[a] > reasons[b] ? a : b);
+            
+            text += `[ ANALYSIS ]\n> The plant operated at ${eff}% efficiency for this selected period.\n`;
+            if(worst !== "None") text += `> Underperforming Asset: ${worst} showed the lowest efficiency of ${(lines[worst].a/lines[worst].t*100).toFixed(1)}%.\n`;
+            if(reasons[topReason] > 0) text += `> Primary Bottleneck: ${topReason} delays caused the majority of lost time (${reasons[topReason]} mins).\n`;
+            text += `\n[ RECOMMENDATION ]\n> Target the root cause of ${topReason} downtime on ${worst} to recover lost yield.\n`;
+
+            document.getElementById('report-content').innerText = text;
+            document.getElementById('system-menu').classList.remove('active'); document.getElementById('main-overlay').style.display = 'block'; document.getElementById('report-modal').style.display = 'block';
         }
 
         async function fetchComments() {
-            const { data } = await sb.from('live_comments').select('*').eq('module', 'production').order('created_at', {ascending: true}).limit(20);
-            if(data) {
-                document.getElementById('chat-box').innerHTML = data.map(c => `<div class="chat-msg"><b>${c.user_name}</b> <br>${c.message}</div>`).join('');
-                document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+            try {
+                const { data, error } = await sb.from('live_comments').select('*').eq('module', 'production').order('created_at', {ascending: true}).limit(50);
+                if (error) throw error;
+                
+                if(data) {
+                    document.getElementById('chat-box').innerHTML = data.map(c => {
+                        const safeUser = c.user_name || "Unknown";
+                        const isAdmin = safeUser.toLowerCase().includes("admin") || safeUser.toLowerCase().includes("engr");
+                        const canDelete = (safeUser === currentUser) || isEngineer;
+                        const delBtn = canDelete ? `<button class="del-msg-btn" onclick="deleteComment(${c.id})">✖</button>` : '';
+                        return `<div class="chat-msg" style="${isAdmin ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}">${delBtn} <b>${safeUser}</b> <span style="display:block; margin-top:4px;">${c.message}</span></div>`;
+                    }).join('');
+                    document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+                }
+            } catch (err) {
+                document.getElementById('chat-box').innerHTML = `<div style="color:var(--danger); font-size:11px; padding:10px; border:1px dashed var(--danger);"><b>DATABASE ERROR:</b> ${err.message}.</div>`;
             }
         }
-        async function sendComment() { const i = document.getElementById('chat-input'); if(i.value) { await sb.from('live_comments').insert([{ user_name: currentUser, message: i.value, module: 'production' }]); i.value = ''; fetchComments(); } }
+        
+        async function sendComment() { 
+            try {
+                const i = document.getElementById('chat-input'); 
+                const msg = i.value.trim();
+                
+                if(msg) { 
+                    const safeUser = currentUser || "Operator";
+                    const isAdmin = safeUser.toLowerCase().includes("admin") || safeUser.toLowerCase().includes("engr");
+                    
+                    const chatBox = document.getElementById('chat-box');
+                    const newDiv = document.createElement('div');
+                    newDiv.className = 'chat-msg';
+                    newDiv.style.borderLeftColor = isAdmin ? 'var(--accent)' : 'var(--border)';
+                    newDiv.innerHTML = `<button class="del-msg-btn" disabled>⏳</button> <b>${safeUser}</b> <span style="display:block; margin-top:4px;">${msg}</span>`;
+                    chatBox.appendChild(newDiv);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    i.value = ''; 
+                    
+                    const { error } = await sb.from('live_comments').insert([{ user_name: safeUser, message: msg, module: 'production' }]); 
+                    if(error) throw error;
+                    
+                    fetchComments(); 
+                } 
+            } catch (err) {
+                alert("Failed to send message: " + err.message);
+            }
+        }
 
-        function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); document.getElementById('main-overlay').style.display = document.getElementById('system-menu').classList.contains('active') ? 'block' : 'none'; }
-        function toggleTheme() { document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light'); }
+        async function deleteComment(id) { if(confirm("Remove this message?")) { await sb.from('live_comments').delete().eq('id', id); fetchComments(); } }
+
+        function saveNotes() { localStorage.setItem('bodyline_notes', document.getElementById('prod-notepad').value); }
+        function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('bodyline_notes') || ""; }
+
+        async function fetchAccessLogs() {
+            const display = document.getElementById('access-log-display'); 
+            if(!display) return;
+            
+            display.innerHTML = "<span style='color:var(--accent); font-weight:bold;'>↻ Pinging Supabase for logs...</span>";
+            
+            try {
+                const { data, error } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(50);
+                
+                if(error) throw error;
+                
+                if(data && data.length > 0) { 
+                    display.innerHTML = data.map(l => `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--text-dim); font-size:10px;">[${new Date(l.created_at).toLocaleTimeString()}]</span> <b style="color:var(--text); font-size:11px; margin-left:5px;">${l.user_name || 'Unknown'}</b></div>`).join(''); 
+                } else { 
+                    display.innerHTML = "<span style='color:var(--text-dim);'>No access logs recorded yet in database.</span>"; 
+                }
+            } catch(err) {
+                display.innerHTML = `<span style='color:var(--danger);'><b>DB ERROR:</b> ${err.message}<br><br><i>Action: Ensure 'access_logs' table exists and RLS is disabled in Supabase.</i></span>`;
+            }
+        }
+
+        function exportExcel() {
+            if(filteredData.length === 0) return alert("No data to export.");
+            const wsData = filteredData.map(r => ({ "Date": r.date, "Shift": r.shift, "Asset": r.line, "Actual": r.actual, "Target": r.target, "Eff %": r.target>0?(r.actual/r.target*100).toFixed(1):0, "Total Down (min)": getTotalDown(r), "Mech (m)": r.down_mech||0, "Elec (m)": r.down_elec||0, "Mat (m)": r.down_mat||0, "QC (m)": r.down_qc||0, "Pack (m)": r.down_pack||0, "Bad Welds": r.defect_weld||0, "Scratches": r.defect_scratch||0, "Flanging": r.defect_flange||0, "Comment": r.comment }));
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(wsData), "Filtered Logs");
+            XLSX.writeFile(wb, `RCC_Filtered_Report.xlsx`);
+        }
+
+        function toggleMenu() { 
+            const menu = document.getElementById('system-menu');
+            menu.classList.toggle('active'); 
+            document.getElementById('main-overlay').style.display = menu.classList.contains('active') ? 'block' : 'none'; 
+            
+            if(menu.classList.contains('active')) {
+                fetchAccessLogs();
+            }
+        }
+        
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); document.getElementById('main-overlay').style.display = 'none'; }
+        function toggleTheme() { document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light'); if(charts.prod){ Chart.defaults.color = document.body.classList.contains('dark-mode') ? '#94a3b8' : '#64748b'; Object.values(charts).forEach(c => c.update()); } }
+        function downloadReport() { const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([document.getElementById('report-content').innerText], { type: 'text/plain' })); a.download = `RCC_Summary.txt`; a.click(); }
         
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
-        window.onload = () => { const savedUser = localStorage.getItem('rcc_user'); if(savedUser) { currentUser = savedUser; isEngineer = (localStorage.getItem('rcc_role') === 'admin'); unlockSystem(); } else { document.getElementById('access-code').focus(); } };
+        
+        window.onload = () => { 
+            const savedUser = localStorage.getItem('rcc_user');
+            const savedRole = localStorage.getItem('rcc_role');
+            
+            if(savedUser && savedUser !== "GUEST VIEWER" && savedUser !== "null") { 
+                currentUser = savedUser; 
+                isEngineer = (savedRole === 'admin' || savedUser.toLowerCase().includes('admin') || savedUser.toLowerCase().includes('engr')); 
+                document.getElementById('portal-overlay').style.display = 'none'; 
+                unlockSystem(); 
+                
+                recordAccess(`Admin: ${currentUser} Restored Session`);
+            } else { 
+                document.getElementById('access-code').focus(); 
+            }
+            if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark-mode'); 
+        };
     </script>
 </body>
 </html>
