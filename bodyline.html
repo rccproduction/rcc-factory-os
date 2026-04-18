@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v19.1 Fully Restored Enterprise</title>
+    <title>RCC Bodyline OS | v19.2 Auto-Sync Comm Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -15,7 +15,6 @@
         body.dark-mode { --bg: #0f172a; --surface: #1e293b; --accent: #3b82f6; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
 
-        /* RESTORED: ANDON SIREN */
         #andon-siren { display: none; width: 100%; background: var(--danger); color: white; text-align: center; font-weight: 800; padding: 15px; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; z-index: 9000; position: sticky; top: 0; animation: flashSiren 1s infinite; cursor: pointer; box-shadow: 0 4px 15px rgba(239,68,68,0.5);}
         @keyframes flashSiren { 0%, 100% { background: #ef4444; } 50% { background: #b91c1c; } }
 
@@ -42,7 +41,6 @@
 
         .main-content { padding: 20px; max-width: 1600px; margin: auto; }
         
-        /* RESTORED: TABS & CUSTOM MATRIX */
         .tabs { display: flex; gap: 10px; justify-content: center; margin: 10px 0 15px 0; flex-wrap: wrap;}
         .tab-btn { display: flex; align-items: center; gap: 8px; padding: 10px 25px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s;}
         .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -54,7 +52,6 @@
         .matrix-group label { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
         .matrix-group input, .matrix-group select { width: auto; background: transparent; border: none; color: var(--text); font-weight: 700; font-size: 13px; outline: none; padding: 0; margin: 0; cursor: pointer; }
 
-        /* UPDATED: 5-COLUMN KPI GRID */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 20px 15px; border-radius: 12px; text-align: center; position: relative;}
         .kpi-card small { font-size: 11px; text-transform: uppercase; color: var(--text-dim); font-weight: 600; display: block; margin-bottom: 5px; }
@@ -87,11 +84,10 @@
         .icon-btn:hover { opacity: 1; transform: scale(1.2); }
 
         .chat-container { height: 250px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 10px; font-size: 13px; display: flex; flex-direction: column; gap: 8px; }
-        .chat-msg { padding: 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); position: relative; }
+        .chat-msg { padding: 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); position: relative; transition: 0.2s;}
         .chat-msg b { color: var(--accent); display: block; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; }
         .del-msg-btn { position: absolute; right: 5px; top: 5px; background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 12px; }
 
-        /* RESTORED: MENU & MODALS */
         .fab { position: fixed; bottom: 30px; right: 30px; width: 55px; height: 55px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; color: white; font-size: 24px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); transition: 0.3s; }
         .fab:hover { transform: rotate(90deg); }
         #system-menu { position: fixed; top: 0; right: -420px; width: 400px; height: 100%; background: var(--surface); border-left: 1px solid var(--border); z-index: 2001; transition: 0.4s; padding: 30px; box-sizing: border-box; visibility: hidden; overflow-y: auto; box-shadow: -5px 0 25px rgba(0,0,0,0.2);}
@@ -126,7 +122,7 @@
     <div id="portal-overlay">
         <div class="auth-card" id="auth-card">
             <h2 style="margin:0 0 5px 0; font-weight: 800; font-size: 28px;">RCC BODYLINE OS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">PRODUCTION OS v19.1</p>
+            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">PRODUCTION OS v19.2</p>
             <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()">🔒 SECURE LOGIN</button>
             <button class="btn-guest" onclick="guestLogin()" style="margin-top:15px; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:10px; width:100%; border-radius:8px; cursor:pointer;">👀 VIEW AS GUEST</button>
@@ -266,7 +262,7 @@
             </div>
 
             <div class="panel chat-panel">
-                <h3 style="margin:0 0 15px 0; font-size:13px; text-transform:uppercase; color: var(--accent);">💬 Shift Comms</h3>
+                <h3 style="margin:0 0 15px 0; font-size:13px; text-transform:uppercase; color: var(--accent);">💬 Production Comments</h3>
                 <div id="chat-box" class="chat-container"></div>
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="chat-input" placeholder="Type message..." style="margin:0;" onkeypress="if(event.key === 'Enter') sendComment()">
@@ -397,6 +393,9 @@
                 setupRealtime();
                 initCharts(); fetchData(); fetchComments(); loadNotes(); 
                 
+                // THE FOOLPROOF AUTO-SYNC CHAT ENGINE (Every 3 Seconds)
+                setInterval(fetchComments, 3000);
+
                 setMode('daily', document.querySelector('.tab-btn')); 
             } catch (e) {
                 console.error("Critical error unlocking system:", e);
@@ -419,7 +418,6 @@
             try {
                 sb.channel('global-sync')
                   .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => fetchData())
-                  .on('postgres_changes', { event: '*', schema: 'public', table: 'live_comments' }, () => fetchComments())
                   .subscribe((status) => {
                       if(status === 'SUBSCRIBED') { dot.className = "status-dot dot-online"; text.innerText = "LIVE SYNC ACTIVE"; } 
                       else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') { dot.className = "status-dot dot-offline"; text.innerText = "SYNC ERROR"; }
@@ -514,7 +512,7 @@
 
             const setVar = (id, c, p, isPct = false, reverse = false) => {
                 const el = document.getElementById(id);
-                if(!el) return; // safeguard if element doesn't exist
+                if(!el) return;
                 if (currentMode === 'custom' || !p || p === 0) { el.innerText = "--"; el.className = "variance"; return; }
                 const diff = isPct ? (c - p) : ((c - p) / p * 100); const sym = diff >= 0 ? "↑" : "↓";
                 el.innerText = `${sym} ${Math.abs(diff).toFixed(1)}${isPct?'':'%'}`;
@@ -549,7 +547,6 @@
             const mechDown = parseInt(document.getElementById('f-mech').value) || 0;
             if(mechDown >= 30) {
                 document.getElementById('andon-siren').style.display = 'block';
-                console.log("WEBHOOK TRIGGERED: High Mechanical Downtime");
             }
 
             const entry = {
@@ -675,23 +672,38 @@
             document.getElementById('system-menu').classList.remove('active'); document.getElementById('main-overlay').style.display = 'block'; document.getElementById('report-modal').style.display = 'block';
         }
 
+        // ==========================================
+        // V19.2 FOOLPROOF AUTO-SYNC CHAT ENGINE
+        // ==========================================
         async function fetchComments() {
             try {
                 const { data, error } = await sb.from('live_comments').select('*').eq('module', 'production').order('created_at', {ascending: true}).limit(50);
                 if (error) throw error;
                 
                 if(data) {
-                    document.getElementById('chat-box').innerHTML = data.map(c => {
+                    const chatBox = document.getElementById('chat-box');
+                    
+                    // Smart scroll detection
+                    const isScrolledToBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 20;
+                    
+                    const newHTML = data.map(c => {
                         const safeUser = c.user_name || "Unknown";
                         const isAdmin = safeUser.toLowerCase().includes("admin") || safeUser.toLowerCase().includes("engr");
                         const canDelete = (safeUser === currentUser) || isEngineer;
                         const delBtn = canDelete ? `<button class="del-msg-btn" onclick="deleteComment(${c.id})">✖</button>` : '';
                         return `<div class="chat-msg" style="${isAdmin ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}">${delBtn} <b>${safeUser}</b> <span style="display:block; margin-top:4px;">${c.message}</span></div>`;
                     }).join('');
-                    document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+
+                    // Only update the DOM if there are new messages (prevents flickering/highlight loss)
+                    if (chatBox.innerHTML !== newHTML) {
+                        chatBox.innerHTML = newHTML;
+                        if (isScrolledToBottom) {
+                            chatBox.scrollTop = chatBox.scrollHeight;
+                        }
+                    }
                 }
             } catch (err) {
-                document.getElementById('chat-box').innerHTML = `<div style="color:var(--danger); font-size:11px; padding:10px; border:1px dashed var(--danger);"><b>DATABASE ERROR:</b> ${err.message}.</div>`;
+                console.error("Chat Error:", err.message);
             }
         }
         
@@ -704,6 +716,7 @@
                     const safeUser = currentUser || "Operator";
                     const isAdmin = safeUser.toLowerCase().includes("admin") || safeUser.toLowerCase().includes("engr");
                     
+                    // 1. INSTANT UI APPEND (Optimistic Update)
                     const chatBox = document.getElementById('chat-box');
                     const newDiv = document.createElement('div');
                     newDiv.className = 'chat-msg';
@@ -713,10 +726,12 @@
                     chatBox.scrollTop = chatBox.scrollHeight;
                     i.value = ''; 
                     
+                    // 2. DATABASE SAVE
                     const { error } = await sb.from('live_comments').insert([{ user_name: safeUser, message: msg, module: 'production' }]); 
                     if(error) throw error;
                     
-                    fetchComments(); 
+                    // 3. RAPID SERVER VERIFICATION
+                    setTimeout(fetchComments, 400); 
                 } 
             } catch (err) {
                 alert("Failed to send message: " + err.message);
