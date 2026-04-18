@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v18.0 Production Tracking</title>
+    <title>RCC Bodyline OS | v18.1 Fast-Sync Production</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -107,7 +107,7 @@
     <div id="portal-overlay">
         <div class="auth-card" id="auth-card">
             <h2 style="margin:0 0 5px 0; font-weight: 800; font-size: 28px;">RCC BODYLINE OS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">PRODUCTION TRACKING v18.0</p>
+            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">FAST-SYNC PRODUCTION v18.1</p>
             <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()">🔒 SECURE LOGIN</button>
             <button class="btn-guest" onclick="guestLogin()" style="margin-top:15px; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:10px; width:100%; border-radius:8px; cursor:pointer;">👀 VIEW AS GUEST</button>
@@ -304,7 +304,6 @@
         let rawData = []; let filteredData = []; let previousData = [];
         let isEngineer = false; let currentUser = "GUEST"; let charts = {}; let currentMode = 'daily';
         
-        // Comprehensive Asset Array mapped for Production
         const LINE_LIST = [
             'Line 1 / SOUCAN 640', 'Line 1 / FREI-APC & YUAN-ROX OVEN',
             'Line 2 / CANMAN X-7', 'Line 2 / FREI-EPC & YUAN-ROX OVEN',
@@ -558,59 +557,60 @@
             document.getElementById('system-menu').classList.remove('active'); document.getElementById('main-overlay').style.display = 'block'; document.getElementById('report-modal').style.display = 'block';
         }
 
+        // ==========================================
+        // FAST-SYNC CHAT ENGINE WITH OPTIMISTIC UI
+        // ==========================================
         async function fetchComments() {
             const { data, error } = await sb.from('live_comments').select('*').eq('module', 'production').order('created_at', {ascending: true}).limit(50);
-            if (error) { document.getElementById('chat-box').innerHTML = `<div style="color:var(--danger); font-size:11px; padding:10px; border:1px dashed var(--danger);"><b>DATABASE ERROR:</b> Cannot find 'module' column. Please run the SQL command in Supabase.</div>`; return; }
+            
+            if (error) { 
+                document.getElementById('chat-box').innerHTML = `<div style="color:var(--danger); font-size:11px; padding:10px; border:1px dashed var(--danger);"><b>DATABASE ERROR:</b> Cannot find 'module' column. Please run the SQL command in Supabase.</div>`; 
+                return; 
+            }
+            
             if(data) {
                 document.getElementById('chat-box').innerHTML = data.map(c => {
                     const isAdmin = c.user_name.includes("Admin") || c.user_name.includes("Engr.");
                     const canDelete = (c.user_name === currentUser) || isEngineer;
                     const delBtn = canDelete ? `<button class="del-msg-btn" onclick="deleteComment(${c.id})">✖</button>` : '';
-                    return `<div class="chat-msg" style="${isAdmin ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}">${delBtn} <b>${c.user_name}</b> <span>${c.message}</span></div>`;
+                    return `<div class="chat-msg" style="${isAdmin ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}">${delBtn} <b>${c.user_name}</b> <span style="display:block; margin-top:4px;">${c.message}</span></div>`;
                 }).join('');
                 document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
             }
         }
         
-      async function sendComment() { 
+        async function sendComment() { 
             const i = document.getElementById('chat-input'); 
             const msg = i.value.trim();
             
             if(msg) { 
-                // 1. INSTANT UI UPDATE (No waiting for the cloud)
+                // 1. INSTANT UI UPDATE
                 const chatBox = document.getElementById('chat-box');
                 const isAdmin = currentUser.includes("Admin") || currentUser.includes("Engr.");
-                chatBox.innerHTML += `
-                    <div class="chat-msg" style="${isAdmin ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}">
-                        <button class="del-msg-btn">⏳</button> 
-                        <b>${currentUser}</b> <span>${msg}</span>
-                    </div>`;
-                chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
+                chatBox.innerHTML += `<div class="chat-msg" style="${isAdmin ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}"><button class="del-msg-btn" disabled>⏳</button> <b>${currentUser}</b> <span style="display:block; margin-top:4px;">${msg}</span></div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
                 i.value = ''; 
-
-                // 2. BACKGROUND CLOUD SAVE
-                const { error } = await sb.from('live_comments').insert([{ 
-                    user_name: currentUser, 
-                    message: msg, 
-                    module: 'production' 
-                }]); 
                 
-                // 3. SYNC CONFIRMATION
-                if(!error) {
-                    fetchComments(); 
-                } else {
-                    alert("Message failed to send. Check your connection.");
-                }
+                // 2. BACKGROUND CLOUD SAVE
+                const { error } = await sb.from('live_comments').insert([{ user_name: currentUser, message: msg, module: 'production' }]); 
+                if(!error) { fetchComments(); } else { alert("Message failed to send. Check connection."); }
             } 
         }
+
         async function deleteComment(id) { if(confirm("Remove this message?")) { await sb.from('live_comments').delete().eq('id', id); fetchComments(); } }
 
         function saveNotes() { localStorage.setItem('bodyline_notes', document.getElementById('prod-notepad').value); }
         function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('bodyline_notes') || ""; }
 
+        // ==========================================
+        // ACCESS LOG ENGINE
+        // ==========================================
         async function fetchAccessLogs() {
-            const display = document.getElementById('access-log-display'); display.innerHTML = "<span style='color:var(--accent); font-weight:bold;'>↻ Fetching live security logs...</span>";
+            const display = document.getElementById('access-log-display'); 
+            display.innerHTML = "<span style='color:var(--accent); font-weight:bold;'>↻ Fetching live security logs...</span>";
+            
             const { data, error } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(50);
+            
             if(error) { display.innerHTML = `<span style='color:var(--danger);'><b>Error:</b> Database disconnected or RLS is blocking access.</span>`; return; }
             if(data && data.length > 0) { display.innerHTML = data.map(l => `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--text-dim); font-size:10px;">[${new Date(l.created_at).toLocaleTimeString()}]</span> <b style="color:var(--text); font-size:11px; margin-left:5px;">${l.user_name}</b></div>`).join(''); } 
             else { display.innerHTML = "<span style='color:var(--text-dim);'>No access logs recorded yet.</span>"; }
