@@ -558,8 +558,15 @@
             document.getElementById('system-menu').classList.remove('active'); document.getElementById('main-overlay').style.display = 'block'; document.getElementById('report-modal').style.display = 'block';
         }
 
+     // 1. UPGRADED CHAT ENGINE (WITH ERROR DETECTION)
         async function fetchComments() {
-            const { data } = await sb.from('live_comments').select('*').eq('module', 'production').order('created_at', {ascending: true}).limit(50);
+            const { data, error } = await sb.from('live_comments').select('*').eq('module', 'production').order('created_at', {ascending: true}).limit(50);
+            
+            if (error) {
+                document.getElementById('chat-box').innerHTML = `<div style="color:var(--danger); font-size:11px; padding:10px; border:1px dashed var(--danger);"><b>DATABASE ERROR:</b> Cannot find 'module' column. Please run the SQL command in Supabase.</div>`;
+                return;
+            }
+            
             if(data) {
                 document.getElementById('chat-box').innerHTML = data.map(c => {
                     const isAdmin = c.user_name.includes("Admin") || c.user_name.includes("Engr.");
@@ -568,6 +575,37 @@
                     return `<div class="chat-msg" style="${isAdmin ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}">${delBtn} <b>${c.user_name}</b> <span>${c.message}</span></div>`;
                 }).join('');
                 document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+            }
+        }
+
+        // 2. UPGRADED ACCESS LOG (WITH REFRESH TRIGGER)
+        async function fetchAccessLogs() {
+            const display = document.getElementById('access-log-display'); 
+            display.innerHTML = "<span style='color:var(--accent); font-weight:bold;'>↻ Fetching live security logs...</span>";
+            
+            const { data, error } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(50);
+            
+            if(error) { 
+                display.innerHTML = `<span style='color:var(--danger);'><b>Error:</b> Database disconnected or RLS is blocking access.</span>`; 
+                return; 
+            }
+            
+            if(data && data.length > 0) { 
+                display.innerHTML = data.map(l => `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--text-dim); font-size:10px;">[${new Date(l.created_at).toLocaleTimeString()}]</span> <b style="color:var(--text); font-size:11px; margin-left:5px;">${l.user_name}</b></div>`).join(''); 
+            } else { 
+                display.innerHTML = "<span style='color:var(--text-dim);'>No access logs recorded yet.</span>"; 
+            }
+        }
+
+        // 3. UPGRADED MENU TOGGLE (FORCES LOG REFRESH WHEN CLICKED)
+        function toggleMenu() { 
+            const menu = document.getElementById('system-menu');
+            menu.classList.toggle('active'); 
+            document.getElementById('main-overlay').style.display = menu.classList.contains('active') ? 'block' : 'none'; 
+            
+            // Force fetch logs every time the admin opens the gear menu
+            if(isEngineer && menu.classList.contains('active')) {
+                fetchAccessLogs();
             }
         }
         
