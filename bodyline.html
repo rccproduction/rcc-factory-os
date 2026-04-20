@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v21.0 Autonomous Plant</title>
+    <title>RCC Bodyline OS | v21.1 Report Dispatcher</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -122,7 +122,7 @@
     <div id="portal-overlay">
         <div class="auth-card" id="auth-card">
             <h2 style="margin:0 0 5px 0; font-weight: 800; font-size: 28px;">RCC BODYLINE OS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">AUTONOMOUS PLANT v21.0</p>
+            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">AUTONOMOUS PLANT v21.1</p>
             <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()">🔒 SECURE LOGIN</button>
             <button class="btn-guest" onclick="guestLogin()" style="margin-top:15px; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:10px; width:100%; border-radius:8px; cursor:pointer;">👀 VIEW AS GUEST</button>
@@ -203,7 +203,6 @@
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
                     <h3 style="margin:0; color:var(--accent); font-size: 13px; text-transform: uppercase;">⚙️ Data Acquisition Terminal</h3>
-                    
                     <div style="display:flex; align-items:center; gap:8px; background:rgba(16, 185, 129, 0.1); padding:5px 12px; border-radius:20px; border:1px solid var(--success);">
                         <input type="checkbox" id="ai-qc-toggle" style="width:14px; height:14px; margin:0;" onchange="toggleAIQC()"> 
                         <label style="font-size:10px; font-weight:800; color:var(--success); cursor:pointer;" for="ai-qc-toggle">📷 ENABLE AI VISION AUTO-QC</label>
@@ -292,19 +291,23 @@
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="window.print()">🖨️ PDF (PRINT VIEW)</button>
             <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" onclick="generateSmartReport()">📋 TIME-MATRIX REPORT</button>
             
-            <h4 style="color:var(--accent); font-size: 11px; text-transform: uppercase; margin-bottom: 5px;">✉️ Auto-Report Settings</h4>
+            <h4 style="color:var(--accent); font-size: 11px; text-transform: uppercase; margin-bottom: 5px;">✉️ Report Dispatcher</h4>
             <div style="background:var(--bg); padding:15px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 20px;">
                 <label style="font-size:9px; font-weight:bold; color:var(--text-dim);">SEND TO (COMMA SEPARATED)</label>
                 <input type="text" id="email-list" placeholder="manager@rcc.com, ceo@rcc.com" style="margin-bottom:10px; padding:10px; font-size:11px;">
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <div style="flex:1;"><label style="font-size:9px; color:var(--text-dim);">DAY SHIFT TRIGGER</label><input type="time" id="email-time-day" style="padding:10px; font-size:11px;"></div>
-                    <div style="flex:1;"><label style="font-size:9px; color:var(--text-dim);">NIGHT SHIFT TRIGGER</label><input type="time" id="email-time-night" style="padding:10px; font-size:11px;"></div>
+                    <div style="flex:1;"><label style="font-size:9px; color:var(--text-dim);">DAY SHIFT AUTO</label><input type="time" id="email-time-day" style="padding:10px; font-size:11px;"></div>
+                    <div style="flex:1;"><label style="font-size:9px; color:var(--text-dim);">NIGHT SHIFT AUTO</label><input type="time" id="email-time-night" style="padding:10px; font-size:11px;"></div>
                 </div>
-                <div style="display:flex; align-items:center; gap:10px; padding:5px 0;">
+                <div style="display:flex; align-items:center; gap:10px; padding:5px 0; margin-bottom: 10px;">
                     <input type="checkbox" id="email-toggle" style="width:16px; height:16px; margin:0;"> 
-                    <label style="font-size:11px; font-weight:bold; cursor:pointer;" for="email-toggle">Enable Auto-Emailing</label>
+                    <label style="font-size:11px; font-weight:bold; cursor:pointer;" for="email-toggle">Enable Auto-Trigger</label>
                 </div>
-                <button class="btn btn-primary" onclick="saveEmailSettings()" style="margin-top:10px; padding:10px; font-size:10px; background:var(--accent);">💾 SAVE CONFIGURATION</button>
+                <button class="btn btn-primary" onclick="saveEmailSettings()" style="margin-bottom:5px; padding:10px; font-size:10px; background:var(--accent);">💾 SAVE CONFIGURATION</button>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                    <button class="btn" onclick="sendEmailNow()" style="background:var(--success); color:white; padding:10px; font-size:10px;">📧 DRAFT EMAIL NOW</button>
+                    <button class="btn" onclick="copyReportNow()" style="background:var(--warning); color:white; padding:10px; font-size:10px;">📋 COPY TO CLIPBOARD</button>
+                </div>
             </div>
         </div>
         
@@ -407,26 +410,17 @@
             } catch (e) { console.error("Critical error unlocking system:", e); }
         }
 
-        // --- NEW: AI CAMERA TOGGLE LOGIC ---
         function toggleAIQC() {
             const isEnabled = document.getElementById('ai-qc-toggle').checked;
             const inputs = ['f-scrap-weld', 'f-scrap-scratch', 'f-scrap-flange'];
             inputs.forEach(id => {
-                const el = document.getElementById(id);
-                el.disabled = isEnabled;
-                if(isEnabled) {
-                    el.style.backgroundColor = "rgba(16, 185, 129, 0.1)";
-                    el.value = "";
-                    el.placeholder = "AI CONTROLLED";
-                } else {
-                    el.style.backgroundColor = "var(--bg)";
-                    el.placeholder = "0";
-                }
+                const el = document.getElementById(id); el.disabled = isEnabled;
+                if(isEnabled) { el.style.backgroundColor = "rgba(16, 185, 129, 0.1)"; el.value = ""; el.placeholder = "AI CONTROLLED"; } 
+                else { el.style.backgroundColor = "var(--bg)"; el.placeholder = "0"; }
             });
             if(isEnabled) alert("Edge AI Vision Mode Enabled. Camera feeds are now monitoring the line. Manual QC entry is locked.");
         }
 
-        // --- NEW: EMAIL SETTINGS LOGIC ---
         function saveEmailSettings() {
             autoEmailConfig.emails = document.getElementById('email-list').value;
             autoEmailConfig.dayTrigger = document.getElementById('email-time-day').value;
@@ -453,7 +447,6 @@
             const currentTime = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' });
             const todayStr = now.toISOString().split('T')[0];
 
-            // Avoid sending multiple times in the same minute
             if (autoEmailConfig.lastSent === `${todayStr}-${currentTime}`) return;
 
             if (currentTime === autoEmailConfig.dayTrigger || currentTime === autoEmailConfig.nightTrigger) {
@@ -592,14 +585,9 @@
             }).join('');
         }
 
-        // --- NEW: AUTO-GENERATE CMMS WORK ORDER ---
         async function autoGenerateWorkOrder(lineName, commentText) {
             const warningMsg = `🚨 URGENT WORK ORDER GENERATED: ${lineName} experienced critical mechanical failure. Supervisor Note: "${commentText}"`;
-            
-            // 1. Post to Shift Comms so everyone sees it
             await sb.from('live_comments').insert([{ user_name: 'SYSTEM 🤖', message: warningMsg, module: 'production' }]);
-            
-            // (If we had the CMMS table open, we would insert it there too: sb.from('work_orders').insert(...))
             console.log("CMMS Work Order Created:", warningMsg);
         }
 
@@ -609,10 +597,8 @@
             const assetLine = document.getElementById('f-line').value;
             const comment = document.getElementById('f-comment').value;
 
-            // NEW: AUTOMATION TRIGGER
             if(mechDown >= 30) { 
                 document.getElementById('andon-siren').style.display = 'block'; 
-                // Trigger Auto CMMS Work Order
                 autoGenerateWorkOrder(assetLine, comment || "No specific comment provided by operator.");
             }
 
@@ -705,14 +691,15 @@
             charts.shiftComp.data.datasets[0].data = [ filteredData.filter(r => r.shift === "Day Shift").reduce((sum,r)=>sum+(r.actual||0),0), filteredData.filter(r => r.shift === "Night Shift").reduce((sum,r)=>sum+(r.actual||0),0) ]; charts.shiftComp.update();
         }
 
-        function generateSmartReport() {
-            if(filteredData.length === 0) { alert("No data found for this timeframe."); return; }
+        // --- NEW: REPORT DISPATCHER TEXT GENERATOR ---
+        function generateSmartReportText() {
+            if(filteredData.length === 0) return "No production data found for the selected timeframe.";
             let modeText = currentMode === 'custom' ? "CUSTOM RANGE" : currentMode.toUpperCase();
             const yield = filteredData.reduce((s,r)=>s+(r.actual||0),0); const target = filteredData.reduce((s,r)=>s+(r.target||0),0); const down = filteredData.reduce((s,r)=>s+getTotalDown(r),0);
             const eff = target > 0 ? (yield/target*100).toFixed(1) : 0;
 
             let text = `========================================\nRCC EXECUTIVE ${modeText} SUMMARY\n========================================\n\n`;
-            text += `[ KEY METRICS ]\nTotal Yield: ${yield.toLocaleString()}\nTarget: ${target.toLocaleString()}\nEfficiency: ${eff}%\nTotal Downtime: ${down} minutes\n\n`;
+            text += `[ KEY METRICS ]\nTotal Yield: ${yield.toLocaleString()} cans\nTarget: ${target.toLocaleString()} cans\nEfficiency: ${eff}%\nTotal Downtime: ${down} minutes\n\n`;
             
             let lines = {}; const reasons = { "Mechanical": 0, "Electrical": 0, "Material": 0, "QC": 0, "Packer": 0 };
             filteredData.forEach(r => { 
@@ -728,9 +715,31 @@
             if(worst !== "None") text += `> Underperforming Asset: ${worst} showed the lowest efficiency of ${(lines[worst].a/lines[worst].t*100).toFixed(1)}%.\n`;
             if(reasons[topReason] > 0) text += `> Primary Bottleneck: ${topReason} delays caused the majority of lost time (${reasons[topReason]} mins).\n`;
             text += `\n[ RECOMMENDATION ]\n> Target the root cause of ${topReason} downtime on ${worst} to recover lost yield.\n`;
+            return text;
+        }
 
-            document.getElementById('report-content').innerText = text;
+        function generateSmartReport() {
+            if(filteredData.length === 0) { alert("No data found for this timeframe."); return; }
+            document.getElementById('report-content').innerText = generateSmartReportText();
             document.getElementById('system-menu').classList.remove('active'); document.getElementById('main-overlay').style.display = 'block'; document.getElementById('report-modal').style.display = 'block';
+        }
+
+        // --- NEW: MANUAL DRAFT EMAIL FUNCTION ---
+        function sendEmailNow() {
+            if(filteredData.length === 0) { alert("No data to email for this timeframe."); return; }
+            const emails = document.getElementById('email-list').value;
+            if(!emails) { alert("Please enter recipient emails in the input box above first."); return; }
+            const subject = encodeURIComponent(`RCC Production Report - ${currentMode.toUpperCase()}`);
+            const body = encodeURIComponent(generateSmartReportText());
+            window.location.href = `mailto:${emails}?subject=${subject}&body=${body}`;
+        }
+
+        // --- NEW: MANUAL COPY TEXT FUNCTION ---
+        function copyReportNow() {
+            if(filteredData.length === 0) { alert("No data to copy."); return; }
+            navigator.clipboard.writeText(generateSmartReportText()).then(() => { 
+                alert("Report copied to clipboard! You can now paste it into Viber, Slack, or any Email."); 
+            }).catch(err => { alert("Copy failed: " + err); });
         }
 
         async function fetchComments() {
@@ -746,7 +755,6 @@
                         const canDelete = (safeUser === currentUser) || isEngineer;
                         const delBtn = canDelete ? `<button class="del-msg-btn" onclick="deleteComment(${c.id})">✖</button>` : '';
                         
-                        // Style SYSTEM bot messages differently
                         if(safeUser === 'SYSTEM 🤖') {
                             return `<div class="chat-msg" style="border-left-color:var(--danger); background:rgba(239, 68, 68, 0.05);">${delBtn} <b style="color:var(--danger);">${safeUser}</b> <span style="display:block; margin-top:4px; font-weight:bold; color:var(--danger);">${c.message}</span></div>`;
                         }
@@ -805,10 +813,8 @@
         function toggleTheme() { document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light'); if(charts.prod){ Chart.defaults.color = document.body.classList.contains('dark-mode') ? '#94a3b8' : '#64748b'; Object.values(charts).forEach(c => c.update()); } }
         function downloadReport() { const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([document.getElementById('report-content').innerText], { type: 'text/plain' })); a.download = `RCC_Summary.txt`; a.click(); }
         
-        // --- NEW: CLOCK ENGINE WITH AUTOMATION HOOKS ---
         setInterval(() => { 
             document.getElementById('live-clock').innerText = new Date().toLocaleString(); 
-            // Only checks the clock logic every second, doesn't freeze the UI
             checkAutomations();
         }, 1000);
         
