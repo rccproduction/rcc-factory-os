@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v19.2 Auto-Sync Comm Engine</title>
+    <title>RCC Bodyline OS | v20.0 True OEE Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -122,7 +122,7 @@
     <div id="portal-overlay">
         <div class="auth-card" id="auth-card">
             <h2 style="margin:0 0 5px 0; font-weight: 800; font-size: 28px;">RCC BODYLINE OS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">PRODUCTION OS v19.2</p>
+            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">PREDICTIVE FACTORY v20.0</p>
             <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()">🔒 SECURE LOGIN</button>
             <button class="btn-guest" onclick="guestLogin()" style="margin-top:15px; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:10px; width:100%; border-radius:8px; cursor:pointer;">👀 VIEW AS GUEST</button>
@@ -353,29 +353,19 @@
                 if(data || pin === "122022") {
                     currentUser = data ? data.user_name : "Engr. Pinapit";
                     isEngineer = data ? (data.role === 'Admin' || data.role === 'admin') : true;
-                    
-                    localStorage.setItem('rcc_user', currentUser);
-                    localStorage.setItem('rcc_role', isEngineer ? 'admin' : 'viewer');
-                    
-                    unlockSystem();
-                    recordAccess(`Admin: ${currentUser} Logged In`);
+                    localStorage.setItem('rcc_user', currentUser); localStorage.setItem('rcc_role', isEngineer ? 'admin' : 'viewer');
+                    unlockSystem(); recordAccess(`Admin: ${currentUser} Logged In`);
                 } else { triggerError(document.getElementById('auth-card')); }
-            } catch (err) {
-                console.error(err);
-                triggerError(document.getElementById('auth-card'));
-            }
+            } catch (err) { triggerError(document.getElementById('auth-card')); }
         }
 
         function triggerError(card) { document.getElementById('access-code').value = ''; card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 400); }
 
         function guestLogin() { 
             let name = prompt("Enter your Name for Live Chat:"); 
-            currentUser = name || "Anonymous Viewer"; 
-            isEngineer = false; 
-            localStorage.setItem('rcc_user', currentUser);
-            localStorage.setItem('rcc_role', 'viewer');
-            unlockSystem(); 
-            recordAccess(`Viewer: ${currentUser} Joined`);
+            currentUser = name || "Anonymous Viewer"; isEngineer = false; 
+            localStorage.setItem('rcc_user', currentUser); localStorage.setItem('rcc_role', 'viewer');
+            unlockSystem(); recordAccess(`Viewer: ${currentUser} Joined`);
         }
 
         function unlockSystem() {
@@ -383,38 +373,19 @@
                 const safeUser = currentUser || "Operator";
                 document.getElementById('user-display').innerText = safeUser;
                 document.getElementById('user-avatar').innerText = safeUser.charAt(0).toUpperCase();
-                
-                document.querySelectorAll('.admin-only').forEach(el => {
-                    el.style.display = isEngineer ? 'block' : 'none';
-                });
-                
+                document.querySelectorAll('.admin-only').forEach(el => { el.style.display = isEngineer ? 'block' : 'none'; });
                 document.getElementById('portal-overlay').style.display = 'none';
                 
-                setupRealtime();
-                initCharts(); fetchData(); fetchComments(); loadNotes(); 
-                
-                // THE FOOLPROOF AUTO-SYNC CHAT ENGINE (Every 3 Seconds)
+                setupRealtime(); initCharts(); fetchData(); fetchComments(); loadNotes(); 
                 setInterval(fetchComments, 3000);
-
                 setMode('daily', document.querySelector('.tab-btn')); 
-            } catch (e) {
-                console.error("Critical error unlocking system:", e);
-            }
+            } catch (e) { console.error("Critical error unlocking system:", e); }
         }
 
-        async function recordAccess(msg) { 
-            try {
-                const { error } = await sb.from('access_logs').insert([{ user_name: msg }]); 
-                if(error) console.error("Access Log Insert Error:", error.message);
-            } catch(e) {
-                console.error("Access Log System Failure:", e);
-            }
-        }
+        async function recordAccess(msg) { try { await sb.from('access_logs').insert([{ user_name: msg }]); } catch(e) { console.error(e); } }
 
         function setupRealtime() {
-            const dot = document.getElementById('cloud-dot');
-            const text = document.getElementById('cloud-text');
-            
+            const dot = document.getElementById('cloud-dot'); const text = document.getElementById('cloud-text');
             try {
                 sb.channel('global-sync')
                   .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => fetchData())
@@ -422,28 +393,20 @@
                       if(status === 'SUBSCRIBED') { dot.className = "status-dot dot-online"; text.innerText = "LIVE SYNC ACTIVE"; } 
                       else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') { dot.className = "status-dot dot-offline"; text.innerText = "SYNC ERROR"; }
                   });
-            } catch (e) {
-                dot.className = "status-dot dot-offline"; text.innerText = "SYNC OFFLINE";
-            }
+            } catch (e) { dot.className = "status-dot dot-offline"; text.innerText = "SYNC OFFLINE"; }
         }
 
-        async function fetchData() {
-            const { data } = await sb.from('production_logs').select('*').order('date', {ascending:false});
-            if(data) { rawData = data; processData(); }
-        }
+        async function fetchData() { const { data } = await sb.from('production_logs').select('*').order('date', {ascending:false}); if(data) { rawData = data; processData(); } }
 
         function setMode(mode, btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-            currentMode = mode;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); currentMode = mode;
             if(mode === 'custom') { document.getElementById('custom-time-matrix').style.display = 'flex'; toggleCustomInputs(); } 
             else { document.getElementById('custom-time-matrix').style.display = 'none'; calculateDatesAndProcess(); }
         }
 
         function toggleCustomInputs() {
             const subMode = document.getElementById('custom-mode').value;
-            ['range', 'week', 'month'].forEach(m => { document.getElementById(`input-${m}`).style.display = (m === subMode) ? 'flex' : 'none'; });
-            processData(); 
+            ['range', 'week', 'month'].forEach(m => { document.getElementById(`input-${m}`).style.display = (m === subMode) ? 'flex' : 'none'; }); processData(); 
         }
 
         function calculateDatesAndProcess() {
@@ -474,15 +437,13 @@
             if (subMode === 'range') { start = document.getElementById('date-start').value; end = document.getElementById('date-end').value; } 
             else if (subMode === 'week') {
                 const weekVal = document.getElementById('date-week').value; if(!weekVal) return;
-                let [y, w] = weekVal.split('-W'); let simple = new Date(y, 0, 1 + (w - 1) * 7);
-                let day = simple.getDay(); let diff = simple.getDate() - day + (day === 0 ? -6 : 1); 
+                let [y, w] = weekVal.split('-W'); let simple = new Date(y, 0, 1 + (w - 1) * 7); let day = simple.getDay(); let diff = simple.getDate() - day + (day === 0 ? -6 : 1); 
                 let mon = new Date(simple.setDate(diff)); let sun = new Date(mon); sun.setDate(mon.getDate() + 6);
                 start = mon.toISOString().split('T')[0]; end = sun.toISOString().split('T')[0];
             } else if (subMode === 'month') {
                 const monVal = document.getElementById('date-month').value; if(!monVal) return;
                 start = monVal + "-01"; let d = new Date(monVal.split('-')[0], monVal.split('-')[1], 0); end = monVal + "-" + d.getDate();
-            }
-            filterAndRender(start, end, start, end); 
+            } filterAndRender(start, end, start, end); 
         }
 
         function getTotalDown(r) { return (r.down_mech || 0) + (r.down_elec || 0) + (r.down_mat || 0) + (r.down_qc || 0) + (r.down_pack || 0); }
@@ -491,28 +452,47 @@
         function filterAndRender(start, end, pStart, pEnd) {
             filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
             previousData = pStart ? rawData.filter(r => r && r.date && r.date >= pStart && r.date <= pEnd) : [];
-            
             try { updateKPIs(); } catch (e) { console.error(e); }
             try { renderTable(); } catch (e) { console.error(e); }
             try { updateCharts(); } catch (e) { console.error(e); }
         }
 
+        // ==========================================
+        // V20.0 TRUE OEE ALGORITHM INJECTION
+        // ==========================================
         function updateKPIs() {
             const calc = (data) => {
-                const t = data.reduce((acc, r) => { acc.a += (r.actual||0); acc.t += (r.target||0); acc.d += getTotalDown(r); acc.s += getTotalScrap(r); return acc; }, {a:0, t:0, d:0, s:0});
-                const eff = t.t > 0 ? (t.a/t.t*100) : 0; return { yield: t.a, target: t.t, down: t.d, eff, scrap: t.s };
+                const t = data.reduce((acc, r) => { 
+                    acc.a += (r.actual||0); acc.t += (r.target||0); 
+                    acc.d += getTotalDown(r); acc.s += getTotalScrap(r); 
+                    acc.run += (r.run || 480); // Total scheduled mins
+                    return acc; 
+                }, {a:0, t:0, d:0, s:0, run:0});
+                
+                const eff = t.t > 0 ? (t.a/t.t*100) : 0; 
+                
+                // True OEE Math
+                let availability = t.run > 0 ? (t.run - t.d) / t.run : 0;
+                let performance = t.t > 0 ? t.a / t.t : 0; // Using Target as ideal rate
+                let quality = t.a > 0 ? Math.max(0, t.a - t.s) / t.a : 0;
+                let trueOEE = (availability * performance * quality) * 100;
+
+                return { yield: t.a, target: t.t, down: t.d, eff, scrap: t.s, oee: trueOEE };
             };
+            
             const curr = calc(filteredData); const prev = calc(previousData);
 
             document.getElementById('kpi-yield').innerText = curr.yield.toLocaleString();
             document.getElementById('kpi-target').innerText = curr.target.toLocaleString();
-            document.getElementById('kpi-eff').innerText = curr.eff.toFixed(1) + "%";
             document.getElementById('kpi-down').innerText = curr.down + " m";
             document.getElementById('kpi-scrap').innerText = curr.scrap.toLocaleString();
 
+            // Inject the OEE Badge without breaking the UI layout
+            const effEl = document.getElementById('kpi-eff');
+            effEl.innerHTML = `${curr.eff.toFixed(1)}% <span style="font-size:11px; background:var(--accent); color:white; padding:3px 8px; border-radius:6px; vertical-align:middle; margin-left:8px; display:inline-block; font-weight:bold; letter-spacing:1px; box-shadow: 0 2px 5px rgba(37,99,235,0.3);">OEE: ${curr.oee.toFixed(1)}%</span>`;
+
             const setVar = (id, c, p, isPct = false, reverse = false) => {
-                const el = document.getElementById(id);
-                if(!el) return;
+                const el = document.getElementById(id); if(!el) return;
                 if (currentMode === 'custom' || !p || p === 0) { el.innerText = "--"; el.className = "variance"; return; }
                 const diff = isPct ? (c - p) : ((c - p) / p * 100); const sym = diff >= 0 ? "↑" : "↓";
                 el.innerText = `${sym} ${Math.abs(diff).toFixed(1)}${isPct?'':'%'}`;
@@ -523,31 +503,23 @@
 
         function renderTable() {
             document.getElementById('log-body').innerHTML = filteredData.map(r => {
-                let safeShift = r.shift ? r.shift[0] : '-';
-                let safeLine = r.line || 'Unknown Asset';
-                let safeActual = r.actual || 0;
-                let safeTarget = r.target || 0;
+                let safeShift = r.shift ? r.shift[0] : '-'; let safeLine = r.line || 'Unknown Asset';
+                let safeActual = r.actual || 0; let safeTarget = r.target || 0;
                 let safeEff = safeTarget > 0 ? (safeActual/safeTarget*100).toFixed(1) : '0.0';
                 let safeColor = (safeTarget > 0 && (safeActual/safeTarget*100) < 80) ? 'var(--danger)' : 'var(--success)';
                 
                 return `<tr>
                     <td>${r.date}</td><td>${safeShift}</td><td style="font-size:10px;"><b>${safeLine}</b></td><td>${safeActual}</td><td>${safeTarget}</td>
                     <td style="font-weight:bold; color:${safeColor}">${safeEff}%</td><td>${getTotalDown(r)}m</td><td><b>${getTotalScrap(r)}</b></td>
-                    <td class="admin-only" style="display:${isEngineer?'table-cell':'none'}">
-                        <div class="action-cell"><button class="icon-btn" onclick="openEditModal(${r.id})">✏️</button><button class="icon-btn" style="color:var(--danger)" onclick="deleteLog(${r.id})">🗑</button></div>
-                    </td>
+                    <td class="admin-only" style="display:${isEngineer?'table-cell':'none'}"><div class="action-cell"><button class="icon-btn" onclick="openEditModal(${r.id})">✏️</button><button class="icon-btn" style="color:var(--danger)" onclick="deleteLog(${r.id})">🗑</button></div></td>
                 </tr>`;
             }).join('');
         }
 
         async function saveData() {
             const btn = document.getElementById('transmit-btn'); 
-            
-            // ANDON ALERT CHECK
             const mechDown = parseInt(document.getElementById('f-mech').value) || 0;
-            if(mechDown >= 30) {
-                document.getElementById('andon-siren').style.display = 'block';
-            }
+            if(mechDown >= 30) { document.getElementById('andon-siren').style.display = 'block'; }
 
             const entry = {
                 date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
@@ -556,9 +528,7 @@
                 run: parseInt(document.getElementById('f-run').value) || 480, 
                 down_mech: mechDown, down_elec: parseInt(document.getElementById('f-elec').value) || 0,
                 down_mat: parseInt(document.getElementById('f-mat').value) || 0, down_qc: parseInt(document.getElementById('f-qc').value) || 0, down_pack: parseInt(document.getElementById('f-pack').value) || 0,
-                defect_weld: parseInt(document.getElementById('f-scrap-weld').value) || 0,
-                defect_scratch: parseInt(document.getElementById('f-scrap-scratch').value) || 0,
-                defect_flange: parseInt(document.getElementById('f-scrap-flange').value) || 0,
+                defect_weld: parseInt(document.getElementById('f-scrap-weld').value) || 0, defect_scratch: parseInt(document.getElementById('f-scrap-scratch').value) || 0, defect_flange: parseInt(document.getElementById('f-scrap-flange').value) || 0,
                 comment: document.getElementById('f-comment').value, created_at: new Date().toISOString()
             };
             if (entry.target === 0 || entry.actual === 0) { alert("Target and Actual required."); return; }
@@ -593,7 +563,6 @@
         }
 
         async function deleteLog(id) { if(confirm("Delete this log?")) { await sb.from('production_logs').delete().eq('id', id); fetchData(); } }
-
         function dismissAndon() { document.getElementById('andon-siren').style.display = 'none'; }
 
         function initCharts() {
@@ -608,7 +577,6 @@
             charts.effDay = new Chart(document.getElementById('effChartDay'), { type: 'bar', data: { labels: groupLabels, datasets: [{ label: 'Eff %', data: [], backgroundColor: '#10b981', borderRadius: 4 }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: barScales } });
             charts.effNight = new Chart(document.getElementById('effChartNight'), { type: 'bar', data: { labels: groupLabels, datasets: [{ label: 'Eff %', data: [], backgroundColor: '#2563eb', borderRadius: 4 }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: barScales } });
             charts.shiftComp = new Chart(document.getElementById('shiftCompChart'), { type: 'bar', data: { labels: ['Day Shift', 'Night Shift'], datasets: [{ label: 'Total Output', backgroundColor: ['#f59e0b', '#2563eb'], data: [0, 0], borderRadius: 4 }]}, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(100,116,139,0.1)' } }, y: { grid: { display: false } } } } });
-            
             charts.qc = new Chart(document.getElementById('qcChart'), { type: 'bar', data: { labels: ['Bad Welds', 'Scratches', 'Flanging'], datasets: [{ label: 'Cans Lost', backgroundColor: '#ef4444', borderRadius: 4, data: [0,0,0] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: cleanScales } });
         }
 
@@ -626,9 +594,7 @@
             charts.util.data.datasets[0].data = Object.values(reasons); charts.util.update();
 
             let qcData = [{n:'Bad Welds', v:w}, {n:'Scratches', v:s}, {n:'Flanging', v:f}].sort((a,b)=>b.v - a.v);
-            charts.qc.data.labels = qcData.map(d=>d.n);
-            charts.qc.data.datasets[0].data = qcData.map(d=>d.v);
-            charts.qc.update();
+            charts.qc.data.labels = qcData.map(d=>d.n); charts.qc.data.datasets[0].data = qcData.map(d=>d.v); charts.qc.update();
 
             const groupLabels = ['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5', 'Line 6', 'SLITTER'];
             const updateShift = (chart, shift) => {
@@ -672,20 +638,13 @@
             document.getElementById('system-menu').classList.remove('active'); document.getElementById('main-overlay').style.display = 'block'; document.getElementById('report-modal').style.display = 'block';
         }
 
-        // ==========================================
-        // V19.2 FOOLPROOF AUTO-SYNC CHAT ENGINE
-        // ==========================================
         async function fetchComments() {
             try {
                 const { data, error } = await sb.from('live_comments').select('*').eq('module', 'production').order('created_at', {ascending: true}).limit(50);
                 if (error) throw error;
-                
                 if(data) {
                     const chatBox = document.getElementById('chat-box');
-                    
-                    // Smart scroll detection
                     const isScrolledToBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 20;
-                    
                     const newHTML = data.map(c => {
                         const safeUser = c.user_name || "Unknown";
                         const isAdmin = safeUser.toLowerCase().includes("admin") || safeUser.toLowerCase().includes("engr");
@@ -693,75 +652,39 @@
                         const delBtn = canDelete ? `<button class="del-msg-btn" onclick="deleteComment(${c.id})">✖</button>` : '';
                         return `<div class="chat-msg" style="${isAdmin ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}">${delBtn} <b>${safeUser}</b> <span style="display:block; margin-top:4px;">${c.message}</span></div>`;
                     }).join('');
-
-                    // Only update the DOM if there are new messages (prevents flickering/highlight loss)
-                    if (chatBox.innerHTML !== newHTML) {
-                        chatBox.innerHTML = newHTML;
-                        if (isScrolledToBottom) {
-                            chatBox.scrollTop = chatBox.scrollHeight;
-                        }
-                    }
+                    if (chatBox.innerHTML !== newHTML) { chatBox.innerHTML = newHTML; if (isScrolledToBottom) { chatBox.scrollTop = chatBox.scrollHeight; } }
                 }
-            } catch (err) {
-                console.error("Chat Error:", err.message);
-            }
+            } catch (err) { console.error("Chat Error:", err.message); }
         }
         
         async function sendComment() { 
             try {
-                const i = document.getElementById('chat-input'); 
-                const msg = i.value.trim();
-                
+                const i = document.getElementById('chat-input'); const msg = i.value.trim();
                 if(msg) { 
-                    const safeUser = currentUser || "Operator";
-                    const isAdmin = safeUser.toLowerCase().includes("admin") || safeUser.toLowerCase().includes("engr");
-                    
-                    // 1. INSTANT UI APPEND (Optimistic Update)
-                    const chatBox = document.getElementById('chat-box');
-                    const newDiv = document.createElement('div');
-                    newDiv.className = 'chat-msg';
-                    newDiv.style.borderLeftColor = isAdmin ? 'var(--accent)' : 'var(--border)';
+                    const safeUser = currentUser || "Operator"; const isAdmin = safeUser.toLowerCase().includes("admin") || safeUser.toLowerCase().includes("engr");
+                    const chatBox = document.getElementById('chat-box'); const newDiv = document.createElement('div');
+                    newDiv.className = 'chat-msg'; newDiv.style.borderLeftColor = isAdmin ? 'var(--accent)' : 'var(--border)';
                     newDiv.innerHTML = `<button class="del-msg-btn" disabled>⏳</button> <b>${safeUser}</b> <span style="display:block; margin-top:4px;">${msg}</span>`;
-                    chatBox.appendChild(newDiv);
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                    i.value = ''; 
-                    
-                    // 2. DATABASE SAVE
+                    chatBox.appendChild(newDiv); chatBox.scrollTop = chatBox.scrollHeight; i.value = ''; 
                     const { error } = await sb.from('live_comments').insert([{ user_name: safeUser, message: msg, module: 'production' }]); 
-                    if(error) throw error;
-                    
-                    // 3. RAPID SERVER VERIFICATION
-                    setTimeout(fetchComments, 400); 
+                    if(error) throw error; setTimeout(fetchComments, 400); 
                 } 
-            } catch (err) {
-                alert("Failed to send message: " + err.message);
-            }
+            } catch (err) { alert("Failed to send message: " + err.message); }
         }
 
         async function deleteComment(id) { if(confirm("Remove this message?")) { await sb.from('live_comments').delete().eq('id', id); fetchComments(); } }
-
         function saveNotes() { localStorage.setItem('bodyline_notes', document.getElementById('prod-notepad').value); }
         function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('bodyline_notes') || ""; }
 
         async function fetchAccessLogs() {
-            const display = document.getElementById('access-log-display'); 
-            if(!display) return;
-            
+            const display = document.getElementById('access-log-display'); if(!display) return;
             display.innerHTML = "<span style='color:var(--accent); font-weight:bold;'>↻ Pinging Supabase for logs...</span>";
-            
             try {
                 const { data, error } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(50);
-                
                 if(error) throw error;
-                
-                if(data && data.length > 0) { 
-                    display.innerHTML = data.map(l => `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--text-dim); font-size:10px;">[${new Date(l.created_at).toLocaleTimeString()}]</span> <b style="color:var(--text); font-size:11px; margin-left:5px;">${l.user_name || 'Unknown'}</b></div>`).join(''); 
-                } else { 
-                    display.innerHTML = "<span style='color:var(--text-dim);'>No access logs recorded yet in database.</span>"; 
-                }
-            } catch(err) {
-                display.innerHTML = `<span style='color:var(--danger);'><b>DB ERROR:</b> ${err.message}<br><br><i>Action: Ensure 'access_logs' table exists and RLS is disabled in Supabase.</i></span>`;
-            }
+                if(data && data.length > 0) { display.innerHTML = data.map(l => `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--text-dim); font-size:10px;">[${new Date(l.created_at).toLocaleTimeString()}]</span> <b style="color:var(--text); font-size:11px; margin-left:5px;">${l.user_name || 'Unknown'}</b></div>`).join(''); } 
+                else { display.innerHTML = "<span style='color:var(--text-dim);'>No access logs recorded yet in database.</span>"; }
+            } catch(err) { display.innerHTML = `<span style='color:var(--danger);'><b>DB ERROR:</b> ${err.message}<br><br><i>Action: Ensure 'access_logs' table exists and RLS is disabled in Supabase.</i></span>`; }
         }
 
         function exportExcel() {
@@ -772,13 +695,9 @@
         }
 
         function toggleMenu() { 
-            const menu = document.getElementById('system-menu');
-            menu.classList.toggle('active'); 
+            const menu = document.getElementById('system-menu'); menu.classList.toggle('active'); 
             document.getElementById('main-overlay').style.display = menu.classList.contains('active') ? 'block' : 'none'; 
-            
-            if(menu.classList.contains('active')) {
-                fetchAccessLogs();
-            }
+            if(menu.classList.contains('active')) fetchAccessLogs();
         }
         
         function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); document.getElementById('main-overlay').style.display = 'none'; }
@@ -788,19 +707,12 @@
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
         
         window.onload = () => { 
-            const savedUser = localStorage.getItem('rcc_user');
-            const savedRole = localStorage.getItem('rcc_role');
-            
+            const savedUser = localStorage.getItem('rcc_user'); const savedRole = localStorage.getItem('rcc_role');
             if(savedUser && savedUser !== "GUEST VIEWER" && savedUser !== "null") { 
-                currentUser = savedUser; 
-                isEngineer = (savedRole === 'admin' || savedUser.toLowerCase().includes('admin') || savedUser.toLowerCase().includes('engr')); 
-                document.getElementById('portal-overlay').style.display = 'none'; 
-                unlockSystem(); 
-                
+                currentUser = savedUser; isEngineer = (savedRole === 'admin' || savedUser.toLowerCase().includes('admin') || savedUser.toLowerCase().includes('engr')); 
+                document.getElementById('portal-overlay').style.display = 'none'; unlockSystem(); 
                 recordAccess(`Admin: ${currentUser} Restored Session`);
-            } else { 
-                document.getElementById('access-code').focus(); 
-            }
+            } else { document.getElementById('access-code').focus(); }
             if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark-mode'); 
         };
     </script>
