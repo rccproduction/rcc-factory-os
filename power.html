@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>RCC | Facility Power Grid</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        :root { --bg: #f8fafc; --surface: #ffffff; --accent: #2563eb; --text: #0f172a; --text-dim: #64748b; --border: #e2e8f0; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; }
+        body.dark-mode { --bg: #0f172a; --surface: #1e293b; --accent: #3b82f6; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+        .header-banner { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 15px 30px; background: var(--surface); border-bottom: 1px solid var(--border); }
+        .header-title { grid-column: 2; text-align: center; } .header-title h1 { margin: 0; font-size: 22px; font-weight: 800; color: #f59e0b; }
+        .main-content { padding: 30px; max-width: 1400px; margin: auto; }
+        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom:20px; }
+        .grid-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); margin-bottom: 10px; box-sizing: border-box; }
+        .btn { padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color:white; width: 100%; background: #f59e0b;}
+        table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+        th { padding: 10px; border-bottom: 2px solid var(--border); color: var(--text-dim); }
+        td { padding: 10px; border-bottom: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+    <div class="header-banner">
+        <div><a href="index.html" style="text-decoration:none; color:var(--text-dim); font-weight:bold;">← HUB</a></div>
+        <div class="header-title"><h1>⚡ FACILITY POWER GRID</h1></div>
+        <div style="text-align:right;"><button onclick="document.body.classList.toggle('dark-mode')" style="padding:5px 10px;">🌓</button></div>
+    </div>
+    <div class="main-content">
+        <div class="grid-layout">
+            <div class="panel">
+                <h3 style="margin-top:0; color:var(--warning);">Log Power Status</h3>
+                <label style="font-size:10px;">DATE & TIME</label>
+                <div style="display:flex; gap:10px;"><input type="date" id="f-date"><input type="time" id="f-time"></div>
+                <label style="font-size:10px;">GENSET STATUS</label>
+                <select id="f-genset"><option>Utility (Meralco)</option><option>Genset Online</option><option>Genset Maintenance</option></select>
+                <label style="font-size:10px;">DIESEL FUEL LEVEL (%)</label>
+                <input type="number" id="f-fuel" placeholder="e.g. 85">
+                <label style="font-size:10px;">TOTAL PLANT LOAD (kW)</label>
+                <input type="number" id="f-kw" placeholder="e.g. 1200">
+                <button class="btn" onclick="savePower()">⚡ LOG POWER METRICS</button>
+            </div>
+            <div class="panel">
+                <h3 style="margin-top:0; color:var(--text-dim);">Plant Load Trend (kW)</h3>
+                <div style="height:300px;"><canvas id="powerChart"></canvas></div>
+            </div>
+        </div>
+        <div class="panel">
+            <table>
+                <thead><tr><th>Date & Time</th><th>Source</th><th>Fuel Level</th><th>Plant Load</th><th>Recorded By</th></tr></thead>
+                <tbody id="log-body"></tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        const sb = supabase.createClient("https://ywjnbslxdssyriokcdws.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg");
+        Chart.defaults.color = '#64748b'; let pChart;
+
+        async function fetchPower() {
+            const { data } = await sb.from('power_logs').select('*').order('created_at', {ascending: false});
+            if(data) {
+                document.getElementById('log-body').innerHTML = data.map(r => `<tr><td>${r.date} ${r.time}</td><td><b>${r.genset_status}</b></td><td>${r.fuel_level}%</td><td><b>${r.total_kw} kW</b></td><td>${r.recorded_by}</td></tr>`).join('');
+                
+                let chartData = data.slice(0,15).reverse(); // Last 15 readings
+                if(pChart) pChart.destroy();
+                pChart = new Chart(document.getElementById('powerChart'), {
+                    type: 'line', data: { labels: chartData.map(d => d.time), datasets: [{ label: 'Total kW', data: chartData.map(d => d.total_kw), borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3 }] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid:{display:false} } } }
+                });
+            }
+        }
+        async function savePower() {
+            const user = localStorage.getItem('rcc_user') || 'Admin';
+            const entry = {
+                date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
+                time: document.getElementById('f-time').value || new Date().toTimeString().substring(0,5),
+                genset_status: document.getElementById('f-genset').value,
+                fuel_level: parseInt(document.getElementById('f-fuel').value)||0,
+                total_kw: parseInt(document.getElementById('f-kw').value)||0,
+                recorded_by: user
+            };
+            await sb.from('power_logs').insert([entry]); fetchPower();
+            ['f-fuel', 'f-kw'].forEach(id => document.getElementById(id).value = '');
+        }
+        window.onload = () => { fetchPower(); if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark-mode'); };
+    </script>
+</body>
+</html>
