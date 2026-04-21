@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v23.2 Master Key</title>
+    <title>RCC Bodyline OS | v23.3 Single Sign-On</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -13,16 +13,11 @@
         
         :root { --bg: #f8fafc; --surface: #ffffff; --accent: #2563eb; --text: #0f172a; --text-dim: #64748b; --border: #e2e8f0; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; }
         body.dark-mode { --bg: #0f172a; --surface: #1e293b; --accent: #3b82f6; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; display: none; } /* HIDDEN UNTIL AUTH CHECKED */
 
         #andon-siren { display: none; width: 100%; background: var(--danger); color: white; text-align: center; font-weight: 800; padding: 15px; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; z-index: 9000; position: sticky; top: 0; animation: flashSiren 1s infinite; cursor: pointer; box-shadow: 0 4px 15px rgba(239,68,68,0.5);}
         @keyframes flashSiren { 0%, 100% { background: #ef4444; } 50% { background: #b91c1c; } }
 
-        #portal-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease, visibility 0.5s; }
-        .auth-card { background: var(--surface); padding: 50px; border-radius: 12px; border: 1px solid var(--border); width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .auth-card input { width: 100%; padding: 12px; background: var(--bg); border: 2px solid var(--border); color: var(--text); font-size: 14px; text-align: left; border-radius: 8px; margin-bottom: 15px; outline: none; font-weight: bold; }
-        .auth-card input:focus { border-color: var(--accent); }
-        
         .cloud-status { position: fixed; top: 15px; left: 15px; font-size: 11px; display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 8px 16px; border-radius: 20px; z-index: 5000; border: 1px solid var(--border); font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; }
         .dot-offline { background: var(--warning); }
@@ -78,7 +73,7 @@
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th { text-align: left; padding: 12px 10px; border-bottom: 2px solid var(--border); color: var(--text-dim); text-transform: uppercase; position: sticky; top: 0; background: var(--surface); z-index: 10;}
         td { padding: 12px 10px; border-bottom: 1px solid var(--border); }
-        .admin-only { display: none; } /* HIDDEN BY DEFAULT */
+        .admin-only { display: none; }
         .action-cell { display: flex; gap: 10px; }
         .icon-btn { background: none; border: none; font-size: 14px; cursor: pointer; opacity: 0.6; transition: 0.2s; color: var(--text);}
         .icon-btn:hover { opacity: 1; transform: scale(1.2); }
@@ -99,6 +94,18 @@
         
         .audit-record { background: var(--bg); border-left: 4px solid #8b5cf6; padding: 12px; margin-bottom: 10px; font-family: monospace; font-size: 11px; border-radius: 4px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
         .audit-record b { color: #8b5cf6; }
+
+        @media print { 
+            body { background: white; color: black; font-size: 10px; display: block;} 
+            .fab, .cloud-status, .menu-overlay, #system-menu, .chat-panel, .admin-only, #admin-form-container, .tabs, #custom-time-matrix, #andon-banner, .header-spacer, .user-profile-container { display: none !important; } 
+            .header-banner { border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 15px; }
+            .main-content { padding: 0; max-width: 100%; }
+            .kpi-grid { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
+            .kpi-card { width: 18%; padding: 10px; box-shadow: none; border: 1px solid #ccc; }
+            .chart-row { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 15px; page-break-inside: avoid; }
+            .panel { width: 48%; box-shadow: none; border: 1px solid #ccc; padding: 10px; }
+            .panel div { height: 160px !important; } 
+        }
     </style>
 </head>
 <body>
@@ -108,24 +115,6 @@
     <div class="cloud-status" id="cloud-status-box">
         <div id="cloud-dot" class="status-dot dot-offline"></div>
         <span id="cloud-text">CONNECTING...</span>
-    </div>
-
-    <div id="portal-overlay">
-        <div class="auth-card" id="auth-card">
-            <h2 style="margin:0 0 5px 0; font-weight: 800; font-size: 28px;">RCC BODYLINE OS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; margin-bottom: 25px; font-weight: 600; letter-spacing: 1px;">SECURE VAULT v23.2</p>
-            
-            <label style="font-size:10px; color:var(--text-dim); display:block; text-align:left; margin-bottom:5px; font-weight:bold;">EMAIL ADDRESS</label>
-            <input type="email" id="auth-email" placeholder="name@rcc.com">
-            
-            <label style="font-size:10px; color:var(--text-dim); display:block; text-align:left; margin-bottom:5px; font-weight:bold;">PASSWORD</label>
-            <input type="password" id="auth-pass" placeholder="••••••••" onkeypress="if(event.key === 'Enter') handleAuthAction()">
-            
-            <div id="auth-mode-text" style="font-size:11px; color:var(--accent); cursor:pointer; margin-bottom:15px; font-weight:bold; text-align:right;" onclick="toggleAuthMode()">Need an account? Create one here.</div>
-            
-            <button class="btn btn-primary" id="login-btn" onclick="handleAuthAction()" style="margin-top:10px;">🔒 SECURE LOGIN</button>
-            <button class="btn-guest" onclick="guestLogin()" style="margin-top:15px; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:10px; width:100%; border-radius:8px; cursor:pointer;">👀 VIEW AS GUEST (READ ONLY)</button>
-        </div>
     </div>
 
     <div class="header-banner">
@@ -389,101 +378,38 @@
         let isEngineer = false; let currentUser = "GUEST"; let charts = {}; let currentMode = 'daily';
         
         let autoEmailConfig = { enabled: false, emails: '', dayTrigger: '18:05', nightTrigger: '06:05', lastSent: null };
-        let isSignUpMode = false;
 
         Chart.defaults.font.family = "'Inter', sans-serif";
         Chart.defaults.color = '#64748b';
 
-        // ---------------------------------------------------------
-        // RBAC CHECK: Are they the Master Admin?
-        // ---------------------------------------------------------
         function applyRBAC(userEmail) {
             currentUser = userEmail;
-            
-            // If their email matches your Master Key, they are Admin. Otherwise, they are a standard Operator/Viewer.
             if (userEmail.toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase()) {
-                isEngineer = true;
-                localStorage.setItem('rcc_role', 'admin');
+                isEngineer = true; localStorage.setItem('rcc_role', 'admin');
             } else {
-                isEngineer = false;
-                localStorage.setItem('rcc_role', 'operator');
+                isEngineer = false; localStorage.setItem('rcc_role', 'operator');
             }
-            
             localStorage.setItem('rcc_user', currentUser);
         }
 
-        function toggleAuthMode() {
-            isSignUpMode = !isSignUpMode;
-            const btn = document.getElementById('login-btn');
-            const modeText = document.getElementById('auth-mode-text');
-            if(isSignUpMode) {
-                btn.innerText = "📝 CREATE ACCOUNT"; modeText.innerText = "Already have an account? Login here.";
-            } else {
-                btn.innerText = "🔒 SECURE LOGIN"; modeText.innerText = "Need an account? Create one here.";
-            }
-        }
-
-        async function handleAuthAction() {
-            if(isSignUpMode) await registerAccount();
-            else await authorize();
-        }
-
-        async function registerAccount() {
-            const email = document.getElementById('auth-email').value.trim();
-            const pass = document.getElementById('auth-pass').value.trim();
-            const btn = document.getElementById('login-btn');
-            
-            if(!email || !pass) { triggerError(document.getElementById('auth-card')); return; }
-            
-            btn.innerText = "CREATING...";
-            const { data, error } = await sb.auth.signUp({ email: email, password: pass });
-            
-            if (error) { 
-                alert("SIGN UP FAILED: " + error.message);
-                btn.innerText = "📝 CREATE ACCOUNT";
-                triggerError(document.getElementById('auth-card')); 
-            } else {
-                applyRBAC(email);
-                document.getElementById('portal-overlay').style.display = 'none';
-                unlockSystem(); 
-                recordAccess(`New Account Created: ${currentUser}`);
-            }
-        }
-
-        async function authorize() {
-            const email = document.getElementById('auth-email').value.trim();
-            const pass = document.getElementById('auth-pass').value.trim();
-            const btn = document.getElementById('login-btn');
-            
-            if(!email || !pass) { triggerError(document.getElementById('auth-card')); return; }
-            
-            btn.innerText = "VERIFYING...";
-            const { data, error } = await sb.auth.signInWithPassword({ email: email, password: pass });
-            
-            if (error) { 
-                alert("ACCESS DENIED: " + error.message);
-                btn.innerText = "🔒 SECURE LOGIN";
-                triggerError(document.getElementById('auth-card')); 
-            } else {
-                applyRBAC(data.user.email);
-                document.getElementById('portal-overlay').style.display = 'none';
-                unlockSystem(); 
-                recordAccess(`User Logged In: ${currentUser}`);
-            }
-        }
-
+        // ==========================================
+        // V23.3 SSO - SINGLE SIGN ON CHECK
+        // ==========================================
         async function checkSession() {
             const { data: { session } } = await sb.auth.getSession();
             if (session) {
+                // They are logged in at the Hub. Let them in!
                 applyRBAC(session.user.email);
-                document.getElementById('portal-overlay').style.display = 'none';
                 unlockSystem();
             } else {
+                // Are they a guest?
                 if(localStorage.getItem('rcc_role') === 'viewer' || localStorage.getItem('rcc_role') === 'operator') {
                     currentUser = localStorage.getItem('rcc_user') || "Anonymous Viewer";
                     isEngineer = false;
-                    document.getElementById('portal-overlay').style.display = 'none';
                     unlockSystem();
+                } else {
+                    // KICK THEM BACK TO THE HUB. NO LOGIN ALLOWED HERE.
+                    window.location.href = 'index.html';
                 }
             }
         }
@@ -493,42 +419,28 @@
                 await sb.auth.signOut();
                 localStorage.removeItem('rcc_user');
                 localStorage.removeItem('rcc_role');
-                window.location.reload();
-            }
-        }
-
-        function triggerError(card) { document.getElementById('auth-pass').value = ''; card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 400); }
-
-        function guestLogin() { 
-            let name = prompt("Enter your Name for Live Chat:"); 
-            if(name) {
-                currentUser = name; isEngineer = false; 
-                localStorage.setItem('rcc_user', currentUser); localStorage.setItem('rcc_role', 'viewer');
-                document.getElementById('portal-overlay').style.display = 'none';
-                unlockSystem(); 
-                recordAccess(`Viewer Joined: ${currentUser}`);
+                // Kick back to the hub after logout
+                window.location.href = 'index.html';
             }
         }
 
         function unlockSystem() {
             try {
+                // Show the body now that auth is confirmed
+                document.body.style.display = 'block'; 
+                
                 const safeUser = currentUser || "Operator";
                 const displayUser = safeUser.includes('@') ? safeUser.split('@')[0] : safeUser;
                 
                 document.getElementById('user-display').innerText = displayUser;
                 document.getElementById('user-avatar').innerText = displayUser.charAt(0).toUpperCase();
                 
-                // Hide .admin-only elements from everyone EXCEPT the Master Admin
                 document.querySelectorAll('.admin-only').forEach(el => { el.style.display = isEngineer ? 'block' : 'none'; });
                 
                 setupRealtime(); initCharts(); fetchData(); fetchComments(); loadNotes(); loadEmailSettings();
                 setInterval(fetchComments, 3000);
                 setMode('daily', document.querySelector('.tab-btn')); 
             } catch (e) { console.error("Critical error unlocking system:", e); }
-        }
-
-        async function recordAccess(msg) { 
-            try { await sb.from('access_logs').insert([{ user_name: msg }]); } catch(e) { console.error("Access Log failed:", e); } 
         }
 
         function toggleAIQC() {
