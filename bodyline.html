@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v23.0 Secure Vault</title>
+    <title>RCC Bodyline OS | v23.1 Open Gateway</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -113,15 +113,17 @@
     <div id="portal-overlay">
         <div class="auth-card" id="auth-card">
             <h2 style="margin:0 0 5px 0; font-weight: 800; font-size: 28px;">RCC BODYLINE OS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; margin-bottom: 25px; font-weight: 600; letter-spacing: 1px;">SECURE VAULT v23.0</p>
+            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; margin-bottom: 25px; font-weight: 600; letter-spacing: 1px;">SECURE VAULT v23.1</p>
             
             <label style="font-size:10px; color:var(--text-dim); display:block; text-align:left; margin-bottom:5px; font-weight:bold;">EMAIL ADDRESS</label>
             <input type="email" id="auth-email" placeholder="name@rcc.com">
             
             <label style="font-size:10px; color:var(--text-dim); display:block; text-align:left; margin-bottom:5px; font-weight:bold;">PASSWORD</label>
-            <input type="password" id="auth-pass" placeholder="••••••••" onkeypress="if(event.key === 'Enter') authorize()">
+            <input type="password" id="auth-pass" placeholder="••••••••" onkeypress="if(event.key === 'Enter') handleAuthAction()">
             
-            <button class="btn btn-primary" id="login-btn" onclick="authorize()" style="margin-top:10px;">🔒 SECURE LOGIN</button>
+            <div id="auth-mode-text" style="font-size:11px; color:var(--accent); cursor:pointer; margin-bottom:15px; font-weight:bold; text-align:right;" onclick="toggleAuthMode()">Need an account? Create one here.</div>
+            
+            <button class="btn btn-primary" id="login-btn" onclick="handleAuthAction()" style="margin-top:10px;">🔒 SECURE LOGIN</button>
             <button class="btn-guest" onclick="guestLogin()" style="margin-top:15px; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:10px; width:100%; border-radius:8px; cursor:pointer;">👀 VIEW AS GUEST (READ ONLY)</button>
         </div>
     </div>
@@ -282,7 +284,6 @@
         <h2 style="font-weight: 800; color: var(--text); margin-top: 0;">RCC CONTROLS</h2>
         
         <button class="btn" style="width:100%; margin-bottom:20px; background: var(--danger); color: white;" onclick="logoutSecurely()">🔒 SECURE LOGOUT</button>
-
         <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="toggleTheme()">🌓 TOGGLE DARK MODE</button>
         
         <div class="admin-only" style="margin-top: 20px;">
@@ -315,6 +316,14 @@
         
         <h4 style="color:var(--text-dim); font-size: 11px; text-transform: uppercase; margin-bottom: 5px;">📝 Production Notepad</h4>
         <textarea id="prod-notepad" placeholder="Shift Reminders (Auto-Saves)..." oninput="saveNotes()" style="height: 100px; margin-bottom: 20px;"></textarea>
+
+        <div id="access-log-section" style="margin-top: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                <h4 style="color:var(--text-dim); font-size: 11px; text-transform: uppercase; margin:0;">🔒 Access Logs</h4>
+                <button onclick="fetchAccessLogs()" style="background:var(--accent); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:9px; cursor:pointer; font-weight:bold;">↻ REFRESH</button>
+            </div>
+            <div id="access-log-display" style="font-family:monospace; font-size:10px; height:120px; overflow-y:auto; background:var(--bg); padding:10px; border-radius: 6px; border: 1px solid var(--border);"></div>
+        </div>
 
         <button class="btn" style="width:100%; margin-top:20px; background: var(--border); color: var(--text);" onclick="toggleMenu()">CLOSE MENU</button>
     </div>
@@ -374,30 +383,56 @@
         let isEngineer = false; let currentUser = "GUEST"; let charts = {}; let currentMode = 'daily';
         
         let autoEmailConfig = { enabled: false, emails: '', dayTrigger: '18:05', nightTrigger: '06:05', lastSent: null };
+        let isSignUpMode = false; // Tracks if user is trying to login or create account
 
         Chart.defaults.font.family = "'Inter', sans-serif";
         Chart.defaults.color = '#64748b';
 
         // ==========================================
-        // V23.0 TRUE CRYPTOGRAPHIC AUTHENTICATION
+        // V23.1 OPEN GATEWAY & SELF-REGISTRATION
         // ==========================================
-        async function checkSession() {
-            const { data: { session } } = await sb.auth.getSession();
-            if (session) {
-                currentUser = session.user.email;
-                // For this secure vault, we assume if you have a real account, you are Admin.
-                // In future, we can check a profiles table, but this gets us locked down now.
-                isEngineer = true; 
-                document.getElementById('portal-overlay').style.display = 'none';
-                unlockSystem();
+        
+        function toggleAuthMode() {
+            isSignUpMode = !isSignUpMode;
+            const btn = document.getElementById('login-btn');
+            const modeText = document.getElementById('auth-mode-text');
+            if(isSignUpMode) {
+                btn.innerText = "📝 CREATE ACCOUNT";
+                modeText.innerText = "Already have an account? Login here.";
             } else {
-                // Check if they are just a guest viewer
-                if(localStorage.getItem('rcc_role') === 'viewer') {
-                    currentUser = localStorage.getItem('rcc_user') || "Anonymous Viewer";
-                    isEngineer = false;
-                    document.getElementById('portal-overlay').style.display = 'none';
-                    unlockSystem();
-                }
+                btn.innerText = "🔒 SECURE LOGIN";
+                modeText.innerText = "Need an account? Create one here.";
+            }
+        }
+
+        async function handleAuthAction() {
+            if(isSignUpMode) await registerAccount();
+            else await authorize();
+        }
+
+        async function registerAccount() {
+            const email = document.getElementById('auth-email').value.trim();
+            const pass = document.getElementById('auth-pass').value.trim();
+            const btn = document.getElementById('login-btn');
+            
+            if(!email || !pass) { triggerError(document.getElementById('auth-card')); return; }
+            
+            btn.innerText = "CREATING...";
+            
+            const { data, error } = await sb.auth.signUp({ email: email, password: pass });
+            
+            if (error) { 
+                alert("SIGN UP FAILED: " + error.message);
+                btn.innerText = "📝 CREATE ACCOUNT";
+                triggerError(document.getElementById('auth-card')); 
+            } else {
+                currentUser = email;
+                isEngineer = true; // Auto-grant entry
+                localStorage.setItem('rcc_user', currentUser);
+                localStorage.setItem('rcc_role', 'admin');
+                document.getElementById('portal-overlay').style.display = 'none';
+                unlockSystem(); 
+                recordAccess(`New Account Created: ${currentUser}`);
             }
         }
 
@@ -410,7 +445,6 @@
             
             btn.innerText = "VERIFYING...";
             
-            // Talk to Supabase Auth Server securely
             const { data, error } = await sb.auth.signInWithPassword({ email: email, password: pass });
             
             if (error) { 
@@ -425,6 +459,23 @@
                 document.getElementById('portal-overlay').style.display = 'none';
                 unlockSystem(); 
                 recordAccess(`Admin Logged In: ${currentUser}`);
+            }
+        }
+
+        async function checkSession() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) {
+                currentUser = session.user.email;
+                isEngineer = true; 
+                document.getElementById('portal-overlay').style.display = 'none';
+                unlockSystem();
+            } else {
+                if(localStorage.getItem('rcc_role') === 'viewer') {
+                    currentUser = localStorage.getItem('rcc_user') || "Anonymous Viewer";
+                    isEngineer = false;
+                    document.getElementById('portal-overlay').style.display = 'none';
+                    unlockSystem();
+                }
             }
         }
 
@@ -445,14 +496,16 @@
                 currentUser = name; isEngineer = false; 
                 localStorage.setItem('rcc_user', currentUser); localStorage.setItem('rcc_role', 'viewer');
                 document.getElementById('portal-overlay').style.display = 'none';
-                unlockSystem(); recordAccess(`Viewer Joined: ${currentUser}`);
+                unlockSystem(); 
+                
+                // V23.1 RESTORED: Now this successfully logs guests because we updated the SQL rules!
+                recordAccess(`Viewer Joined: ${currentUser}`);
             }
         }
 
         function unlockSystem() {
             try {
                 const safeUser = currentUser || "Operator";
-                // Shorten email for display if needed
                 const displayUser = safeUser.includes('@') ? safeUser.split('@')[0] : safeUser;
                 
                 document.getElementById('user-display').innerText = displayUser;
@@ -463,6 +516,15 @@
                 setInterval(fetchComments, 3000);
                 setMode('daily', document.querySelector('.tab-btn')); 
             } catch (e) { console.error("Critical error unlocking system:", e); }
+        }
+
+        // V23.1 RESTORED ACCESS LOG FUNCTION
+        async function recordAccess(msg) { 
+            try { 
+                // We no longer block this with an 'if(isEngineer)' statement. 
+                // Since you updated the SQL to let 'public' insert, this works for everyone!
+                await sb.from('access_logs').insert([{ user_name: msg }]); 
+            } catch(e) { console.error("Access Log failed:", e); } 
         }
 
         function toggleAIQC() {
@@ -509,13 +571,6 @@
                 sendEmailNow(); 
                 autoEmailConfig.lastSent = `${todayStr}-${currentTime}`;
                 localStorage.setItem('rcc_email_config', JSON.stringify(autoEmailConfig));
-            }
-        }
-
-        async function recordAccess(msg) { 
-            // Only try to record if logged in (RLS blocks guests now)
-            if(isEngineer) {
-                try { await sb.from('access_logs').insert([{ user_name: msg }]); } catch(e) { console.error(e); } 
             }
         }
 
@@ -679,11 +734,7 @@
             if(!error) { 
                 await fetchData(); btn.innerText = "SUCCESS"; setTimeout(() => { btn.innerText = "☁️ TRANSMIT RECORD"; }, 2000);
                 ['f-actual', 'f-mech', 'f-elec', 'f-mat', 'f-qc', 'f-pack', 'f-scrap-weld', 'f-scrap-scratch', 'f-scrap-flange', 'f-comment'].forEach(id => document.getElementById(id).value = '');
-            } else { 
-                // Security Error Handling
-                alert("ACCESS DENIED: Database locked by RLS. Ensure you are logged in with an official email/password, not as a Guest."); 
-                btn.innerText = "☁️ TRANSMIT RECORD"; 
-            }
+            } else { alert("ACCESS DENIED: Database locked by RLS."); btn.innerText = "☁️ TRANSMIT RECORD"; }
         }
 
         function openEditModal(id) {
