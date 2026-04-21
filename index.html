@@ -6,103 +6,193 @@
     <title>RCC Enterprise OS | Central Gateway</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=Orbitron:wght@700&display=swap');
         
-        :root { --bg: #020617; --surface: rgba(15, 23, 42, 0.7); --accent: #3b82f6; --accent-glow: rgba(59, 130, 246, 0.5); --text: #f8fafc; --text-dim: #94a3b8; --border: rgba(51, 65, 85, 0.5); }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
-        
-        #node-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: auto; }
-        
-        .ui-layer { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; backdrop-filter: blur(4px); }
-        
-        #login-screen { 
-            background: #0b1121; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); 
-            width: 320px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); 
-            transition: 0.5s ease-in-out; z-index: 20;
+        :root { 
+            --bg-dark: #13131a; 
+            --bg-panel: #1c1c24; 
+            --input-bg: #252530;
+            --accent: #6366f1; /* Deep modern purple/blue */
+            --accent-hover: #4f46e5;
+            --text-main: #ffffff; 
+            --text-muted: #8b8b9e; 
+            --border-subtle: rgba(255,255,255,0.05);
         }
         
-        .logo-text { margin: 0 0 5px 0; font-size: 32px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #fff; }
-        .sub-text { font-size: 11px; color: #3b82f6; font-weight: 800; letter-spacing: 2px; margin-bottom: 30px; display: block;}
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); overflow: hidden; }
+        
+        /* --- SPLIT SCREEN LOGIN DESIGN --- */
+        #login-screen {
+            position: fixed; inset: 0; display: flex; z-index: 100; transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .image-panel {
+            flex: 1;
+            /* High-quality industrial manufacturing background */
+            background: url('https://images.unsplash.com/photo-1504917595217-d4bf5010cbc2?q=80&w=2070&auto=format&fit=crop') center/cover;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 50px;
+        }
+
+        /* The deep purple/blue tint over the factory image */
+        .image-panel::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(30, 27, 75, 0.85) 0%, rgba(19, 19, 26, 0.95) 100%);
+            z-index: 1;
+        }
+
+        .brand-header, .brand-footer { position: relative; z-index: 2; }
+        
+        .brand-logo { font-family: 'Orbitron', sans-serif; font-size: 36px; font-weight: 700; margin: 0; letter-spacing: 3px; display: flex; align-items: center; gap: 10px; }
+        .brand-badge { font-size: 10px; font-family: 'Inter', sans-serif; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;}
+        
+        .brand-footer h2 { font-size: 42px; font-weight: 800; line-height: 1.1; margin: 0 0 10px 0; letter-spacing: -1px; }
+        .brand-footer p { color: var(--text-muted); font-size: 14px; margin: 0; letter-spacing: 0.5px; }
+
+        .form-panel {
+            width: 500px; background: var(--bg-panel); display: flex; align-items: center; justify-content: center; position: relative; z-index: 2;
+            box-shadow: -20px 0 50px rgba(0,0,0,0.5);
+        }
+
+        .form-container { width: 100%; max-width: 340px; }
+
+        .auth-header { margin-bottom: 40px; }
+        .auth-header h2 { font-size: 28px; font-weight: 600; margin: 0 0 8px 0; letter-spacing: -0.5px; }
+        .auth-header p { font-size: 13px; color: var(--text-muted); margin: 0; }
+        .auth-header span { color: var(--accent); cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .auth-header span:hover { color: var(--text-main); }
+
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         
         .auth-input { 
-            width: 100%; padding: 14px 15px; background: #111827; border: 1px solid #1f2937; 
-            color: #fff; font-size: 14px; text-align: left; border-radius: 8px; margin-bottom: 15px; 
-            outline: none; font-weight: 600; letter-spacing: 1px; transition: 0.3s; box-sizing: border-box; font-family: inherit;
+            width: 100%; padding: 14px 16px; background: var(--input-bg); border: 1px solid transparent; 
+            color: var(--text-main); font-size: 14px; border-radius: 8px; outline: none; transition: 0.3s; box-sizing: border-box;
+            font-family: inherit; font-weight: 500;
         }
-        .auth-input:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
-        
-        .forgot-link { display: block; text-align: left; color: #3b82f6; font-size: 11px; text-decoration: none; cursor: pointer; margin-top: -5px; margin-bottom: 20px; }
-        .forgot-link:hover { text-decoration: underline; }
+        .auth-input:focus { border-color: var(--accent); background: rgba(99, 102, 241, 0.05); }
+        .auth-input::placeholder { color: #525266; }
 
-        .btn-log { width: 100%; padding: 14px; background: #3b82f6; color: white; border-radius: 8px; border: none; font-weight: 800; font-size: 13px; cursor: pointer; margin-bottom: 12px; transition: 0.2s; letter-spacing: 1px;}
-        .btn-log:hover { background: #2563eb; transform: translateY(-1px); }
-        
-        .btn-create, .btn-guest { width: 100%; padding: 14px; background: transparent; color: #f8fafc; border-radius: 8px; border: 1px solid #1f2937; font-weight: 800; font-size: 12px; cursor: pointer; margin-bottom: 12px; transition: 0.2s; letter-spacing: 1px;}
-        .btn-create:hover, .btn-guest:hover { background: rgba(255,255,255,0.05); }
+        .form-options { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; margin-top: -5px; }
+        .forgot-link { color: var(--text-muted); font-size: 11px; text-decoration: none; cursor: pointer; font-weight: 500; transition: 0.2s;}
+        .forgot-link:hover { color: var(--text-main); }
 
-        .footer-terms { font-size: 10px; color: #475569; margin-top: 10px; }
+        .btn-main { width: 100%; padding: 15px; background: var(--accent); color: white; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; letter-spacing: 0.5px; }
+        .btn-main:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
 
-        .shake { animation: shakeError 0.4s forwards; border-color: #ef4444 !important; }
-        @keyframes shakeError { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-10px); } }
+        .divider { display: flex; align-items: center; text-align: center; margin: 30px 0; color: var(--text-muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-subtle); }
+        .divider span { padding: 0 15px; }
+
+        .btn-ghost { width: 100%; padding: 14px; background: transparent; color: var(--text-muted); border-radius: 8px; border: 1px solid var(--border-subtle); font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;}
+        .btn-ghost:hover { background: rgba(255,255,255,0.03); color: var(--text-main); border-color: rgba(255,255,255,0.2); }
+
+        .shake { animation: shakeError 0.4s forwards; border-color: var(--danger) !important; }
+        @keyframes shakeError { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } }
+
+        /* --- HUB SCREEN DESIGN (ADMIN ONLY) --- */
+        #hub-screen { display: none; opacity: 0; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100vh; position: fixed; inset: 0; z-index: 50;}
+        #node-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0.5; }
         
-        #hub-screen { display: none; opacity: 0; flex-direction: column; align-items: center; width: 100%; max-width: 1400px; padding: 20px; transition: opacity 0.6s ease; height: 90vh; overflow-y: auto;}
-        .welcome-banner { text-align: center; margin-bottom: 40px; }
-        .welcome-banner h1 { font-size: 36px; margin: 0 0 10px 0; font-weight: 800; letter-spacing: 1px;}
-        .welcome-banner p { color: var(--text-dim); margin: 0; font-size: 14px; }
+        .hub-content { position: relative; z-index: 2; width: 100%; max-width: 1200px; padding: 20px; }
+        .welcome-banner { text-align: center; margin-bottom: 50px; }
+        .welcome-banner h1 { font-size: 42px; margin: 0 0 10px 0; font-weight: 800; letter-spacing: -1px;}
+        .welcome-banner p { color: var(--text-muted); margin: 0; font-size: 15px; }
         
-        .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; }
-        .app-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-decoration: none; color: var(--text); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: flex-start; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; overflow: hidden; cursor: pointer;}
-        .app-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--text-dim); transition: 0.3s; }
-        .app-card:hover { transform: translateY(-5px); border-color: var(--accent); background: rgba(30, 41, 59, 0.8); }
+        .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px; width: 100%; }
+        .app-card { background: rgba(28, 28, 36, 0.6); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 35px; text-decoration: none; color: var(--text-main); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: flex-start; backdrop-filter: blur(20px); cursor: pointer; position: relative; overflow: hidden;}
+        .app-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: transparent; transition: 0.3s; }
+        .app-card:hover { transform: translateY(-5px); background: rgba(37, 37, 48, 0.9); box-shadow: 0 20px 40px rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.1); }
         .app-card:hover::before { background: var(--accent); }
-        .app-icon { font-size: 40px; margin-bottom: 15px; display: inline-block; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; }
-        .app-title { font-size: 18px; font-weight: 800; margin: 0 0 10px 0; letter-spacing: -0.5px;}
-        .app-desc { font-size: 12px; color: var(--text-dim); margin: 0; line-height: 1.5; }
+        .app-icon { font-size: 32px; margin-bottom: 20px; display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid var(--border-subtle); }
+        .app-title { font-size: 18px; font-weight: 600; margin: 0 0 10px 0; letter-spacing: -0.5px;}
+        .app-desc { font-size: 13px; color: var(--text-muted); margin: 0; line-height: 1.6; }
         
-        .logout-btn { position: absolute; top: 20px; right: 20px; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; letter-spacing: 1px;}
+        .logout-btn { position: absolute; top: 30px; right: 40px; background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 12px; letter-spacing: 0.5px; transition: 0.2s; z-index: 10;}
+        .logout-btn:hover { border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.05); }
+
+        @media (max-width: 900px) {
+            .image-panel { display: none; }
+            .form-panel { width: 100%; }
+        }
     </style>
 </head>
 <body>
-    <canvas id="node-canvas"></canvas>
     
-    <div class="ui-layer">
-        <div id="login-screen">
-            <h1 class="logo-text">RCC OS</h1>
-            <span class="sub-text">INDUSTRY 4.0 HUB</span>
-            
-            <input type="email" class="auth-input" id="auth-email" placeholder="EMAIL">
-            <input type="password" class="auth-input" id="auth-pass" placeholder="PASSWORD" onkeypress="if(event.key === 'Enter') handleAuthAction()">
-            
-            <a class="forgot-link" onclick="resetPassword()">Forgot password?</a>
-            
-            <button class="btn-log" id="login-btn" onclick="handleAuthAction()">LOG IN</button>
-            <div id="auth-mode-text" style="font-size:11px; color:var(--accent); cursor:pointer; margin-bottom:15px; font-weight:bold; text-align:center;" onclick="toggleAuthMode()">Need an account? Create one here.</div>
-            
-            <button class="btn-guest" onclick="guestLogin()">PROCEED AS VIEWER</button>
-            <div class="footer-terms">Strictly Authorized Personnel Only</div>
+    <div id="login-screen">
+        <div class="image-panel">
+            <div class="brand-header">
+                <h1 class="brand-logo">RCC OS <span class="brand-badge">Enterprise</span></h1>
+            </div>
+            <div class="brand-footer">
+                <h2>Manufacturing <br>Intelligence.</h2>
+                <p>Industry 4.0 Central Command & Control System</p>
+            </div>
         </div>
+        
+        <div class="form-panel">
+            <div class="form-container">
+                <div class="auth-header">
+                    <h2 id="form-title">Log in to your account</h2>
+                    <p id="form-subtitle">Don't have an account? <span onclick="toggleAuthMode()">Create one</span></p>
+                </div>
 
-        <div id="hub-screen">
-            <button class="logout-btn" onclick="logoutSecurely()">LOGOUT</button>
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" class="auth-input" id="auth-email" placeholder="name@rcc.com">
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" class="auth-input" id="auth-pass" placeholder="••••••••" onkeypress="if(event.key === 'Enter') handleAuthAction()">
+                </div>
+
+                <div class="form-options">
+                    <div></div> <a class="forgot-link" onclick="resetPassword()">Forgot password?</a>
+                </div>
+
+                <button class="btn-main" id="login-btn" onclick="handleAuthAction()">Sign In</button>
+
+                <div class="divider"><span>Or continue with</span></div>
+
+                <button class="btn-ghost" onclick="guestLogin()">
+                    <span style="font-size:16px;">👀</span> Guest Access (Read Only)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="hub-screen">
+        <canvas id="node-canvas"></canvas>
+        <button class="logout-btn" onclick="logoutSecurely()">Log Out</button>
+        
+        <div class="hub-content">
             <div class="welcome-banner">
                 <h1 id="welcome-text">Welcome, Admin.</h1>
-                <p>Select an Enterprise Module to proceed.</p>
+                <p>Select an operational module to proceed.</p>
             </div>
             <div class="app-grid">
                 <div onclick="accessModule('bodyline.html')" class="app-card">
-                    <span class="app-icon">🏭</span><h2 class="app-title">Bodyline Production</h2>
+                    <div class="app-icon">🏭</div>
+                    <h2 class="app-title">Bodyline Production</h2>
                     <p class="app-desc">Real-time yields, downtime monitoring, and QC Scrap Pareto analytics.</p>
                 </div>
                 <div onclick="accessModule('cmms.html')" class="app-card">
-                    <span class="app-icon">🔧</span><h2 class="app-title">CMMS Maintenance</h2>
+                    <div class="app-icon">🔧</div>
+                    <h2 class="app-title">CMMS Maintenance</h2>
                     <p class="app-desc">Digital Roadmap, interactive PM checklists, and Digital SOPs.</p>
                 </div>
                 <div onclick="accessModule('power.html')" class="app-card">
-                    <span class="app-icon">⚡</span><h2 class="app-title">Facility Power Grid</h2>
+                    <div class="app-icon">⚡</div>
+                    <h2 class="app-title">Facility Power Grid</h2>
                     <p class="app-desc">Genset status, total plant loads, and fuel consumption tracking.</p>
                 </div>
                 <div onclick="accessModule('stockroom.html')" class="app-card">
-                    <span class="app-icon">📦</span><h2 class="app-title">Digital Stockroom</h2>
+                    <div class="app-icon">📦</div>
+                    <h2 class="app-title">Digital Stockroom</h2>
                     <p class="app-desc">Live inventory tracking for spare parts, oils, and machine components.</p>
                 </div>
             </div>
@@ -110,7 +200,11 @@
     </div>
 
     <script>
-        const MASTER_ADMIN_EMAIL = "Engr.Pinapit@rcc.com";
+        // =========================================================================
+        // 🔒 THE MASTER KEY - CHANGE THIS TO YOUR ACTUAL EMAIL ADDRESS
+        // =========================================================================
+        const MASTER_ADMIN_EMAIL = "Engr.Pinapit@rcc.com"; 
+        // =========================================================================
 
         const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
@@ -121,11 +215,9 @@
         // --- SMART ROUTING SYSTEM ---
         function routeUser(email) {
             if(email.toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase()) {
-                // Admin gets the Hub
-                transitionToHub(email);
+                transitionToHub(email); // Admin gets the Hub Menu
             } else {
-                // Everyone else gets instantly shoved to bodyline
-                window.location.href = 'bodyline.html';
+                window.location.href = 'bodyline.html'; // Everyone else goes straight to production
             }
         }
 
@@ -135,41 +227,48 @@
                 localStorage.setItem('rcc_user', session.user.email);
                 routeUser(session.user.email);
             } else if (localStorage.getItem('rcc_role') === 'viewer' || localStorage.getItem('rcc_role') === 'operator') {
-                window.location.href = 'bodyline.html'; // Guests instantly sent to bodyline
+                window.location.href = 'bodyline.html'; // Returning guests go straight to production
             }
         }
 
         function toggleAuthMode() {
             isSignUpMode = !isSignUpMode;
             const btn = document.getElementById('login-btn');
-            const modeText = document.getElementById('auth-mode-text');
+            const title = document.getElementById('form-title');
+            const subtitle = document.getElementById('form-subtitle');
+            
             if(isSignUpMode) {
-                btn.innerText = "CREATE ACCOUNT";
-                btn.style.background = "#10b981"; // Turn green for visual cue
-                modeText.innerText = "Already have an account? Login here.";
+                title.innerText = "Create an account";
+                subtitle.innerHTML = "Already have an account? <span onclick='toggleAuthMode()'>Log in</span>";
+                btn.innerText = "Create Account";
             } else {
-                btn.innerText = "LOG IN";
-                btn.style.background = "#3b82f6";
-                modeText.innerText = "Need an account? Create one here.";
+                title.innerText = "Log in to your account";
+                subtitle.innerHTML = "Don't have an account? <span onclick='toggleAuthMode()'>Create one</span>";
+                btn.innerText = "Sign In";
             }
         }
 
         async function handleAuthAction() {
             const email = document.getElementById('auth-email').value.trim(); 
             const pass = document.getElementById('auth-pass').value.trim();
-            const card = document.getElementById('login-screen');
+            const inputEmail = document.getElementById('auth-email');
+            const inputPass = document.getElementById('auth-pass');
             const btn = document.getElementById('login-btn');
             
-            if(!email || !pass) { triggerError(card); return; }
+            if(!email || !pass) { 
+                inputEmail.classList.add('shake'); inputPass.classList.add('shake');
+                setTimeout(() => { inputEmail.classList.remove('shake'); inputPass.classList.remove('shake'); }, 400);
+                return; 
+            }
             
-            btn.innerText = "PROCESSING...";
+            btn.innerText = "Processing...";
 
             if(isSignUpMode) {
                 // CREATE ACCOUNT
                 const { data, error } = await sb.auth.signUp({ email: email, password: pass });
                 if (error) { 
                     alert("SIGN UP FAILED: " + error.message);
-                    btn.innerText = "CREATE ACCOUNT"; triggerError(card); 
+                    btn.innerText = "Create Account"; 
                 } else {
                     localStorage.setItem('rcc_user', email); 
                     sb.from('access_logs').insert([{ user_name: `New Account Created: ${email}` }]).then();
@@ -180,7 +279,7 @@
                 const { data, error } = await sb.auth.signInWithPassword({ email: email, password: pass });
                 if (error) { 
                     alert("ACCESS DENIED: " + error.message);
-                    btn.innerText = "LOG IN"; triggerError(card); 
+                    btn.innerText = "Sign In"; 
                 } else {
                     localStorage.setItem('rcc_user', data.user.email); 
                     sb.from('access_logs').insert([{ user_name: `User Logged In: ${data.user.email}` }]).then();
@@ -203,7 +302,7 @@
             localStorage.setItem('rcc_user', userName); 
             localStorage.setItem('rcc_role', 'viewer');
             sb.from('access_logs').insert([{ user_name: `Viewer Joined: ${userName}` }]).then();
-            window.location.href = 'bodyline.html'; // Guests instantly sent to bodyline
+            window.location.href = 'bodyline.html'; 
         }
 
         async function logoutSecurely() {
@@ -213,31 +312,31 @@
             window.location.reload();
         }
 
-        function triggerError(card) { document.getElementById('auth-pass').value = ''; card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 400); }
-
         function transitionToHub(userName) {
             const displayUser = userName.includes('@') ? userName.split('@')[0] : userName;
             document.getElementById('welcome-text').innerText = `Welcome, ${displayUser}.`;
             const loginScreen = document.getElementById('login-screen');
-            loginScreen.style.transform = 'scale(0.9)'; loginScreen.style.opacity = '0';
+            loginScreen.style.opacity = '0';
             setTimeout(() => {
                 loginScreen.style.display = 'none';
                 document.getElementById('hub-screen').style.display = 'flex';
                 setTimeout(() => { document.getElementById('hub-screen').style.opacity = '1'; }, 50);
-            }, 500);
+                initCanvas(); initParticles(); animate(); // Start background animation only when hub shows
+            }, 600);
         }
 
         function accessModule(url) { window.location.href = url; }
 
-        // BACKGROUND PARTICLES
+        // --- BACKGROUND PARTICLES (Only for Hub) ---
         const canvas = document.getElementById('node-canvas'); const ctx = canvas.getContext('2d'); let width, height, particles = [];
         function initCanvas() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
-        class Particle { constructor() { this.x = Math.random() * width; this.y = Math.random() * height; this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5; this.radius = Math.random() * 2 + 1; } update() { this.x += this.vx; this.y += this.vy; if (this.x < 0 || this.x > width) this.vx *= -1; if (this.y < 0 || this.y > height) this.vy *= -1; } draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = 'rgba(59, 130, 246, 0.5)'; ctx.fill(); } }
-        function initParticles() { particles = []; let numNodes = Math.floor((width * height) / 15000); if(numNodes > 150) numNodes = 150; for (let i = 0; i < numNodes; i++) particles.push(new Particle()); }
+        class Particle { constructor() { this.x = Math.random() * width; this.y = Math.random() * height; this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5; this.radius = Math.random() * 2 + 1; } update() { this.x += this.vx; this.y += this.vy; if (this.x < 0 || this.x > width) this.vx *= -1; if (this.y < 0 || this.y > height) this.vy *= -1; } draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = 'rgba(99, 102, 241, 0.4)'; ctx.fill(); } }
+        function initParticles() { particles = []; let numNodes = Math.floor((width * height) / 12000); if(numNodes > 120) numNodes = 120; for (let i = 0; i < numNodes; i++) particles.push(new Particle()); }
         let mouse = { x: null, y: null }; window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; }); window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
-        function animate() { ctx.clearRect(0, 0, width, height); particles.forEach(p => { p.update(); p.draw(); }); for (let i = 0; i < particles.length; i++) { if (mouse.x != null) { let dxMouse = particles[i].x - mouse.x; let dyMouse = particles[i].y - mouse.y; let distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse); if (distMouse < 150) { ctx.beginPath(); ctx.strokeStyle = `rgba(59, 130, 246, ${1 - distMouse / 150})`; ctx.lineWidth = 1; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke(); } } for (let j = i; j < particles.length; j++) { let dx = particles[i].x - particles[j].x; let dy = particles[i].y - particles[j].y; let dist = Math.sqrt(dx * dx + dy * dy); if (dist < 120) { ctx.beginPath(); ctx.strokeStyle = `rgba(148, 163, 184, ${0.2 - dist / 120})`; ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke(); } } } requestAnimationFrame(animate); }
-        window.addEventListener('resize', () => { initCanvas(); initParticles(); }); initCanvas(); initParticles(); animate();
+        function animate() { ctx.clearRect(0, 0, width, height); particles.forEach(p => { p.update(); p.draw(); }); for (let i = 0; i < particles.length; i++) { if (mouse.x != null) { let dxMouse = particles[i].x - mouse.x; let dyMouse = particles[i].y - mouse.y; let distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse); if (distMouse < 150) { ctx.beginPath(); ctx.strokeStyle = `rgba(99, 102, 241, ${0.8 - distMouse / 150})`; ctx.lineWidth = 1; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke(); } } for (let j = i; j < particles.length; j++) { let dx = particles[i].x - particles[j].x; let dy = particles[i].y - particles[j].y; let dist = Math.sqrt(dx * dx + dy * dy); if (dist < 100) { ctx.beginPath(); ctx.strokeStyle = `rgba(139, 139, 158, ${0.15 - dist / 100})`; ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke(); } } } requestAnimationFrame(animate); }
+        window.addEventListener('resize', () => { if(document.getElementById('hub-screen').style.display === 'flex') { initCanvas(); initParticles(); }}); 
         
+        // Auto check on load
         window.onload = checkSession;
     </script>
 </body>
