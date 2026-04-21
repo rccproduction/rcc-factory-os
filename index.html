@@ -7,26 +7,64 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
         :root { --bg: #020617; --surface: rgba(15, 23, 42, 0.7); --accent: #3b82f6; --accent-glow: rgba(59, 130, 246, 0.5); --text: #f8fafc; --text-dim: #94a3b8; --border: rgba(51, 65, 85, 0.5); }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+        
         #node-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: auto; }
+        
         .ui-layer { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; backdrop-filter: blur(4px); }
-        #login-screen { background: var(--surface); padding: 50px; border-radius: 16px; border: 1px solid var(--border); width: 350px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05); backdrop-filter: blur(20px); transition: 0.5s ease-in-out; }
-        .logo-text { margin: 0 0 5px 0; font-size: 32px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .sub-text { font-size: 11px; color: var(--accent); font-weight: 600; letter-spacing: 3px; margin-bottom: 30px; display: block;}
-        input { width: 100%; padding: 15px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; font-size: 24px; text-align: center; border-radius: 8px; margin-bottom: 20px; letter-spacing: 8px; outline: none; font-weight: bold; transition: 0.3s; box-sizing: border-box;}
-        input:focus { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
-        .btn { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; font-size: 13px; }
-        .btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow); }
-        .btn-primary:hover { filter: brightness(1.2); transform: translateY(-2px); }
-        .btn-guest { background: transparent; border: 1px solid var(--border); color: var(--text-dim); margin-top: 15px; }
+        
+        /* NEW SECURE LOGIN CARD DESIGN */
+        #login-screen { 
+            background: #0b1121; /* Deep navy from your design */
+            padding: 40px; 
+            border-radius: 16px; 
+            border: 1px solid rgba(255,255,255,0.05); 
+            width: 320px; 
+            text-align: center; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); 
+            transition: 0.5s ease-in-out; 
+            z-index: 20;
+        }
+        
+        .logo-text { margin: 0 0 5px 0; font-size: 32px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #fff; }
+        .sub-text { font-size: 11px; color: #3b82f6; font-weight: 800; letter-spacing: 2px; margin-bottom: 30px; display: block;}
+        
+        .auth-input { 
+            width: 100%; padding: 14px 15px; 
+            background: #111827; 
+            border: 1px solid #1f2937; 
+            color: #fff; font-size: 14px; text-align: left; 
+            border-radius: 8px; margin-bottom: 15px; outline: none; 
+            font-weight: 600; letter-spacing: 1px; transition: 0.3s; box-sizing: border-box;
+            font-family: inherit;
+        }
+        .auth-input:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+        
+        .forgot-link {
+            display: block; text-align: left; color: #3b82f6; font-size: 11px; 
+            text-decoration: none; cursor: pointer; margin-top: -5px; margin-bottom: 20px;
+        }
+        .forgot-link:hover { text-decoration: underline; }
+
+        .btn-log { width: 100%; padding: 14px; background: #3b82f6; color: white; border-radius: 8px; border: none; font-weight: 800; font-size: 13px; cursor: pointer; margin-bottom: 12px; transition: 0.2s; letter-spacing: 1px;}
+        .btn-log:hover { background: #2563eb; transform: translateY(-1px); }
+        
+        .btn-create, .btn-guest { width: 100%; padding: 14px; background: transparent; color: #f8fafc; border-radius: 8px; border: 1px solid #1f2937; font-weight: 800; font-size: 12px; cursor: pointer; margin-bottom: 12px; transition: 0.2s; letter-spacing: 1px;}
+        .btn-create:hover, .btn-guest:hover { background: rgba(255,255,255,0.05); }
+
+        .footer-terms { font-size: 10px; color: #475569; margin-top: 10px; }
+
         .shake { animation: shakeError 0.4s forwards; border-color: #ef4444 !important; }
         @keyframes shakeError { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-10px); } }
         
+        /* HUB SCREEN DESIGN */
         #hub-screen { display: none; opacity: 0; flex-direction: column; align-items: center; width: 100%; max-width: 1400px; padding: 20px; transition: opacity 0.6s ease; height: 90vh; overflow-y: auto;}
         .welcome-banner { text-align: center; margin-bottom: 40px; }
         .welcome-banner h1 { font-size: 36px; margin: 0 0 10px 0; font-weight: 800; letter-spacing: 1px;}
         .welcome-banner p { color: var(--text-dim); margin: 0; font-size: 14px; }
+        
         .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; }
         .app-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-decoration: none; color: var(--text); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: flex-start; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; overflow: hidden; cursor: pointer;}
         .app-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--text-dim); transition: 0.3s; }
@@ -35,20 +73,33 @@
         .app-icon { font-size: 40px; margin-bottom: 15px; display: inline-block; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; }
         .app-title { font-size: 18px; font-weight: 800; margin: 0 0 10px 0; letter-spacing: -0.5px;}
         .app-desc { font-size: 12px; color: var(--text-dim); margin: 0; line-height: 1.5; }
+        
+        .logout-btn { position: absolute; top: 20px; right: 20px; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; letter-spacing: 1px;}
     </style>
 </head>
 <body>
     <canvas id="node-canvas"></canvas>
+    
     <div class="ui-layer">
+        
         <div id="login-screen">
             <h1 class="logo-text">RCC OS</h1>
             <span class="sub-text">INDUSTRY 4.0 HUB</span>
-            <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
-            <button class="btn btn-primary" id="login-btn" onclick="authorize()">AUTHENTICATE</button>
-            <button class="btn btn-guest" onclick="guestLogin()">PROCEED AS VIEWER</button>
+            
+            <input type="email" class="auth-input" id="auth-email" placeholder="EMAIL">
+            <input type="password" class="auth-input" id="auth-pass" placeholder="PASSWORD" onkeypress="if(event.key === 'Enter') authorize()">
+            
+            <a class="forgot-link" onclick="resetPassword()">Forgot password?</a>
+            
+            <button class="btn-log" id="login-btn" onclick="authorize()">LOG IN</button>
+            <button class="btn-create" onclick="registerAccount()">CREATE ACCOUNT</button>
+            <button class="btn-guest" onclick="guestLogin()">PROCEED AS VIEWER</button>
+            
+            <div class="footer-terms">Terms of Service | Privacy Policy</div>
         </div>
 
         <div id="hub-screen">
+            <button class="logout-btn" onclick="logoutSecurely()">LOGOUT</button>
             <div class="welcome-banner">
                 <h1 id="welcome-text">Welcome, Operator.</h1>
                 <p>Select an Enterprise Module to proceed.</p>
@@ -62,17 +113,13 @@
                     <span class="app-icon">🔧</span><h2 class="app-title">CMMS Maintenance</h2>
                     <p class="app-desc">Digital Roadmap, interactive PM checklists, and Digital SOPs. (ADMIN)</p>
                 </div>
-                <div onclick="accessModule('chillers.html', 'admin')" class="app-card">
-                    <span class="app-icon">❄️</span><h2 class="app-title">Chiller Diagnostics</h2>
-                    <p class="app-desc">Thermal variance, amperage tracking, and predictive warnings. (ADMIN)</p>
-                </div>
                 <div onclick="accessModule('power.html', 'admin')" class="app-card">
                     <span class="app-icon">⚡</span><h2 class="app-title">Facility Power Grid</h2>
                     <p class="app-desc">Genset status, total plant loads, and fuel consumption tracking. (ADMIN)</p>
                 </div>
                 <div onclick="accessModule('stockroom.html', 'admin')" class="app-card">
                     <span class="app-icon">📦</span><h2 class="app-title">Digital Stockroom</h2>
-                    <p class="app-desc">Live inventory tracking for spare parts, oils, and machine components. (IN DEV)</p>
+                    <p class="app-desc">Live inventory tracking for spare parts, oils, and machine components. (ADMIN)</p>
                 </div>
             </div>
         </div>
@@ -83,32 +130,98 @@
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
-        async function authorize() {
-            const pin = document.getElementById('access-code').value.trim(); 
-            const card = document.getElementById('login-screen');
-            if(!pin) { triggerError(card); return; }
-            try {
-                const { data } = await sb.from('user_roles').select('*').eq('pin', pin).single();
-                if(data || pin === "122022") {
-                    let userName = data ? data.user_name : "Engr. Pinapit";
-                    let isEng = data ? (data.role.toLowerCase() === 'admin') : true;
-                    localStorage.setItem('rcc_user', userName); localStorage.setItem('rcc_role', isEng ? 'admin' : 'viewer');
-                    transitionToHub(userName);
-                } else { triggerError(card); }
-            } catch (err) { triggerError(card); }
+        // 1. AUTO-CHECK SESSION ON LOAD
+        async function checkSession() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) {
+                localStorage.setItem('rcc_user', session.user.email);
+                localStorage.setItem('rcc_role', 'admin');
+                transitionToHub(session.user.email);
+            } else if (localStorage.getItem('rcc_role') === 'viewer') {
+                transitionToHub(localStorage.getItem('rcc_user') || "Guest Viewer");
+            }
         }
 
+        // 2. LOG IN
+        async function authorize() {
+            const email = document.getElementById('auth-email').value.trim(); 
+            const pass = document.getElementById('auth-pass').value.trim();
+            const card = document.getElementById('login-screen');
+            const btn = document.getElementById('login-btn');
+            
+            if(!email || !pass) { triggerError(card); return; }
+            
+            btn.innerText = "VERIFYING...";
+            const { data, error } = await sb.auth.signInWithPassword({ email: email, password: pass });
+            
+            if (error) { 
+                alert("ACCESS DENIED: " + error.message);
+                btn.innerText = "LOG IN";
+                triggerError(card); 
+            } else {
+                localStorage.setItem('rcc_user', data.user.email); 
+                localStorage.setItem('rcc_role', 'admin');
+                sb.from('access_logs').insert([{ user_name: `Admin Logged In: ${data.user.email}` }]).then();
+                transitionToHub(data.user.email);
+            }
+        }
+
+        // 3. CREATE ACCOUNT
+        async function registerAccount() {
+            const email = document.getElementById('auth-email').value.trim(); 
+            const pass = document.getElementById('auth-pass').value.trim();
+            const card = document.getElementById('login-screen');
+            
+            if(!email || !pass) { alert("Please enter an Email and Password to create an account."); triggerError(card); return; }
+            
+            document.getElementById('login-btn').innerText = "CREATING...";
+            const { data, error } = await sb.auth.signUp({ email: email, password: pass });
+            
+            if (error) { 
+                alert("SIGN UP FAILED: " + error.message);
+                document.getElementById('login-btn').innerText = "LOG IN";
+                triggerError(card); 
+            } else {
+                localStorage.setItem('rcc_user', email); 
+                localStorage.setItem('rcc_role', 'admin');
+                sb.from('access_logs').insert([{ user_name: `New Account Created: ${email}` }]).then();
+                transitionToHub(email);
+            }
+        }
+
+        // 4. FORGOT PASSWORD
+        async function resetPassword() {
+            const email = document.getElementById('auth-email').value.trim();
+            if(!email) { alert("Please enter your Email address first, then click 'Forgot password?'"); return; }
+            
+            const { data, error } = await sb.auth.resetPasswordForEmail(email);
+            if (error) alert("Error: " + error.message);
+            else alert("If an account exists, a password reset link has been sent to " + email);
+        }
+
+        // 5. GUEST LOGIN
         function guestLogin() {
-            let guestName = prompt("Enter your Name:"); 
+            let guestName = prompt("Enter your Name for the Access Log:"); 
             let userName = guestName ? guestName : "Anonymous Viewer";
-            localStorage.setItem('rcc_user', userName); localStorage.setItem('rcc_role', 'viewer');
+            localStorage.setItem('rcc_user', userName); 
+            localStorage.setItem('rcc_role', 'viewer');
+            sb.from('access_logs').insert([{ user_name: `Viewer Joined: ${userName}` }]).then();
             transitionToHub(userName);
         }
 
-        function triggerError(card) { document.getElementById('access-code').value = ''; card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 400); }
+        // 6. LOGOUT
+        async function logoutSecurely() {
+            await sb.auth.signOut();
+            localStorage.removeItem('rcc_user');
+            localStorage.removeItem('rcc_role');
+            window.location.reload();
+        }
+
+        function triggerError(card) { document.getElementById('auth-pass').value = ''; card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 400); }
 
         function transitionToHub(userName) {
-            document.getElementById('welcome-text').innerText = `Welcome, ${userName}.`;
+            const displayUser = userName.includes('@') ? userName.split('@')[0] : userName;
+            document.getElementById('welcome-text').innerText = `Welcome, ${displayUser}.`;
             const loginScreen = document.getElementById('login-screen');
             loginScreen.style.transform = 'scale(0.9)'; loginScreen.style.opacity = '0';
             setTimeout(() => {
@@ -120,11 +233,11 @@
 
         function accessModule(url, requiredRole) {
             const role = localStorage.getItem('rcc_role');
-            if (requiredRole === 'admin' && role !== 'admin') { alert("🛑 ACCESS DENIED: Administrative clearance is required."); return; }
-            if (url === '#') alert('Module is currently syncing with database...'); else window.location.href = url;
+            if (requiredRole === 'admin' && role !== 'admin') { alert("🛑 ACCESS DENIED: Active user account required. Guests cannot enter."); return; }
+            window.location.href = url;
         }
 
-        // Background Particles
+        // BACKGROUND PARTICLES
         const canvas = document.getElementById('node-canvas'); const ctx = canvas.getContext('2d'); let width, height, particles = [];
         function initCanvas() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
         class Particle {
@@ -142,6 +255,8 @@
             } requestAnimationFrame(animate);
         }
         window.addEventListener('resize', () => { initCanvas(); initParticles(); }); initCanvas(); initParticles(); animate();
+        
+        window.onload = checkSession;
     </script>
 </body>
 </html>
