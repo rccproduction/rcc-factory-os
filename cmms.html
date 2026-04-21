@@ -3,230 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC CMMS | Fleet Roadmap</title>
+    <title>RCC Enterprise | CMMS Maintenance</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        :root { --bg: #f8fafc; --surface: #ffffff; --accent: #2563eb; --text: #0f172a; --text-dim: #64748b; --border: #e2e8f0; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; }
-        body.dark-mode { --bg: #0f172a; --surface: #1e293b; --accent: #3b82f6; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
         
+        :root { --bg: #0f172a; --surface: #1e293b; --accent: #8b5cf6; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155; --danger: #ef4444; }
+        
+        /* PAGE IS INVISIBLE UNTIL SECURITY CHECK PASSES */
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: none; }
+
         .header-banner { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 15px 30px; background: var(--surface); border-bottom: 1px solid var(--border); }
+        .header-spacer { grid-column: 1; } 
         .header-title { grid-column: 2; text-align: center; }
-        .header-title h1 { margin: 0; font-size: 22px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;}
-        .header-title span { font-family: monospace; font-weight: 600; color: var(--text-dim); font-size: 12px; }
-
-        .main-content { padding: 30px; max-width: 1400px; margin: auto; }
+        .header-title h1 { margin: 0; letter-spacing: 2px; font-size: 22px; text-transform: uppercase; font-weight: 800; color: var(--text); }
+        .header-title span { font-family: monospace; font-weight: 600; color: var(--accent); font-size: 12px; }
         
-        /* TRUE VISUAL ROADMAP STYLES */
-        .roadmap-container { display: flex; flex-direction: column; gap: 15px; }
-        .roadmap-row { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: grid; grid-template-columns: 3fr 4fr 2fr 2fr; align-items: center; gap: 20px; transition: 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
-        .roadmap-row:hover { border-color: var(--accent); transform: translateX(5px); box-shadow: 0 10px 15px rgba(37, 99, 235, 0.1);}
-        @media (max-width: 900px) { .roadmap-row { grid-template-columns: 1fr; gap: 10px;} }
+        .user-profile-container { grid-column: 3; display: flex; justify-content: flex-end; }
+        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 6px 15px 6px 15px; border-radius: 30px; border: 1px solid var(--border); }
+        .avatar { width: 32px; height: 32px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+        .user-name { font-size: 13px; font-weight: 800; text-transform: uppercase; color: var(--text); }
 
-        .asset-title { font-size: 16px; font-weight: 800; color: var(--text); }
+        .main-content { padding: 40px 20px; max-width: 1200px; margin: auto; text-align: center; }
         
-        /* PROGRESS BAR TIMELINE */
-        .progress-section { width: 100%; }
-        .progress-track { width: 100%; height: 16px; background: var(--bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
-        .progress-fill { height: 100%; transition: width 1s ease-in-out; border-radius: 8px;}
-        .progress-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-dim); margin-top: 5px; font-weight: bold; text-transform: uppercase;}
+        .placeholder-box {
+            background: var(--surface); border: 1px dashed var(--accent); padding: 50px; border-radius: 12px;
+            margin-top: 20px;
+        }
 
-        .status-badge { font-size: 11px; font-weight: 800; padding: 8px 12px; border-radius: 8px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
-        .status-ok { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success); }
-        .status-warn { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid var(--warning); }
-        .status-due { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); animation: pulseRed 2s infinite; }
-        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; z-index: 2000; align-items: center; justify-content: center; }
-        .modal { background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
-        
-        .cl-item { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; padding: 12px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); transition: 0.2s;}
-        .cl-item:hover { border-color: var(--accent); }
-        .cl-item input[type="checkbox"] { width: 22px; height: 22px; margin: 0; cursor: pointer; accent-color: var(--accent); }
-        .cl-item label { font-size: 14px; cursor: pointer; line-height: 1.5; color: var(--text); font-weight: 600;}
-
-        input[type="number"] { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 16px; font-weight: bold;}
-        input:focus { border-color: var(--accent); outline: none; }
-        
-        .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-size: 12px; width: 100%; letter-spacing: 1px;}
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 10px 15px rgba(37,99,235,0.2); }
+        .btn-back { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 12px;}
+        .btn-back:hover { color: var(--text); border-color: var(--text); }
     </style>
 </head>
 <body>
 
     <div class="header-banner">
-        <div class="header-spacer"><a href="index.html" style="text-decoration:none; color:var(--text-dim); font-size:12px; font-weight:bold;">← HUB</a></div> 
+        <div class="header-spacer">
+            <a href="index.html" class="btn-back">← RETURN TO HUB</a>
+        </div> 
         <div class="header-title">
-            <h1>RCC CMMS: FLEET ROADMAP</h1>
-            <span>PREVENTIVE MAINTENANCE TIMELINE</span>
+            <h1>RCC CMMS MAINTENANCE</h1>
+            <span>SECURE ADMIN AREA</span>
         </div>
         <div class="user-profile-container">
-            <button onclick="toggleTheme()" style="background:transparent; border:1px solid var(--border); color:var(--text); padding:8px 15px; border-radius:20px; cursor:pointer; font-weight:bold; font-size:11px;">🌓 THEME</button>
+            <div class="user-profile">
+                <div class="user-info">
+                    <span class="user-name" id="user-display">LOCKED</span>
+                </div>
+                <div class="avatar" id="user-avatar">?</div>
+            </div>
         </div>
     </div>
 
     <div class="main-content">
-        <div class="roadmap-container" id="roadmap-container">
-            </div>
-    </div>
-
-    <div class="modal-overlay" id="modal-overlay">
-        <div class="modal">
-            <h2 id="cl-title" style="margin:0 0 5px 0; font-size: 22px; color: var(--text); font-weight:800; text-transform:uppercase;">MACHINE PM</h2>
-            <p style="font-size:12px; color:var(--text-dim); margin:0 0 20px 0; border-bottom: 1px solid var(--border); padding-bottom: 15px;">Check all task boxes below to electronically sign off on this maintenance order.</p>
-            
-            <div id="cl-items" style="max-height: 350px; overflow-y:auto; margin-bottom: 20px; padding-right:10px;"></div>
-            
-            <div style="background: rgba(37,99,235,0.05); padding: 15px; border-radius: 8px; border: 1px dashed var(--accent); margin-bottom: 20px;">
-                <label style="font-size:11px; font-weight:800; color:var(--accent); display:block; margin-bottom:8px; letter-spacing:1px;">RECORD HOUR METER (MANDATORY)</label>
-                <input type="number" id="cl-hours" placeholder="e.g. 14500" required>
-            </div>
-
-            <button class="btn btn-primary" onclick="submitChecklist()" style="margin-bottom: 10px;">📝 COMPLETE & SIGN OFF</button>
-            <button class="btn" style="background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="closeModal()">CANCEL</button>
+        <h2>Welcome to the Maintenance Command Center</h2>
+        <p style="color: var(--text-dim);">You have successfully bypassed the security gateway using your Master Key.</p>
+        
+        <div class="placeholder-box">
+            <h1 style="font-size: 48px; margin: 0;">🔧</h1>
+            <h3>CMMS Module is Online and Secure.</h3>
+            <p style="color: var(--text-dim); max-width: 600px; margin: auto;">We are ready to begin building the Work Order algorithms, Preventive Maintenance (PM) schedules, and Machine Digital Manuals in this space whenever you are ready.</p>
         </div>
     </div>
 
     <script>
+        // =========================================================================
+        // 🔒 THE MASTER KEY (MUST MATCH EXACTLY)
+        // =========================================================================
+        const MASTER_ADMIN_EMAIL = "Engr.Pinapit@rcc.com"; 
+        // =========================================================================
+
         const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
-        const currentUser = localStorage.getItem('rcc_user') || "Admin";
-
-        // THE USER'S EXACT ASSET LIST
-        const ASSET_LIST = [
-            'Line 1 / SOUCAN 640', 
-            'Line 1 / Frei APC & YUAN-ROX OVEN',
-            'Line 2 / CANMAN X-7', 
-            'Line 2 / FREI-EPC & YUAN-ROX OVEN',
-            'Line 3 / SOUCAN 650', 
-            'Line 3 / FREI-CPC & YUAN-ROX OVEN',
-            'Line 4 / FBB 5600 KM 13697', 
-            'Line 4 / FREI-EPC & FREI-PCA OVEN',
-            'Line 5 / FBB 5600 KM 13640', 
-            'Line 5 / YUAN-ROX OVEN',
-            'Line 6 / SOUCAN 650', 
-            'Line 6 / FREI-CPC & YUAN-ROX OVEN',
-            'SLITTER / MAWAG', 
-            'SLITTER / S-B34'
-        ];
-
-        let pmData = JSON.parse(localStorage.getItem('rcc_cmms_roadmap_v1')) || {};
-        let currentChecklistAsset = "";
-
-        const CHECKLIST_DICT = {
-            'SOUCAN': ["Redress upper and lower welding rollers, setup and test.", "Lubricate roll forming unit, wire chopper, welding force balancer, wire profile, pendulum.", "Remove and clean FREI ORC lacquer container.", "Clean and check cooling water inlet filter."],
-            'CANMAN': ["Redress upper and lower welding rollers, setup and test.", "Lubricate roll forming unit, wire chopper, pendulum, etc.", "Remove and clean FREI ORC lacquer container.", "Change oil of ATLAS COPCO vacuum pump (Multi-lube 100).", "Clean lacquer spray system and ventilator impeller.", "Refill oil in gearboxes and replace leaking seals."],
-            'FBB': ["Redress upper and lower welding rollers, setup and test.", "Lubricate roll forming unit, wire chopper, pendulum assembly.", "Remove and clean FREI ORC lacquer container."],
-            'SLITTER': ["Clean and check air service unit.", "Check for air leaks on pneumatics.", "Check wear on chain conveyor and sprockets.", "Clean oil guide shaft insertion unit.", "Check chain and belt tension, clean and apply grease.", "Check gearbox oil levels and refill if needed."],
-            'FREI': ["POWDER SYS: Check and clean filter cartridges.", "OVEN: Check conveyor roller ball bearings.", "OVEN: Clean conveying system and heating elements.", "OVEN: Check water chiller level & add if required.", "OVEN: Clean air & gas hoses. Blow clogged burner elements."]
-        };
-
-        function getTasks(name) {
-            if(name.includes('SOUCAN')) return CHECKLIST_DICT['SOUCAN'];
-            if(name.includes('CANMAN')) return CHECKLIST_DICT['CANMAN'];
-            if(name.includes('FBB')) return CHECKLIST_DICT['FBB'];
-            if(name.includes('SLITTER')) return CHECKLIST_DICT['SLITTER'];
-            if(name.includes('FREI') || name.includes('OVEN') || name.includes('YUAN-ROX')) return CHECKLIST_DICT['FREI'];
-            return ["Perform standard mechanical inspection.", "Lubricate moving parts.", "Verify safety interlocks."];
-        }
-
-        function renderRoadmap() {
-            const container = document.getElementById('roadmap-container');
-            let html = ""; const now = new Date();
-
-            ASSET_LIST.forEach(asset => {
-                if(!pmData[asset]) { pmData[asset] = now.toISOString(); localStorage.setItem('rcc_cmms_roadmap_v1', JSON.stringify(pmData)); }
-                let diffDays = Math.floor((now - new Date(pmData[asset])) / (1000 * 60 * 60 * 24));
-                
-                // Calculate progress bar width (30-day standard cycle)
-                let pct = (diffDays / 30) * 100;
-                if(pct > 100) pct = 100;
-                
-                let color = 'var(--success)';
-                let statusClass = 'status-ok';
-                let statusText = 'HEALTHY';
-
-                if(pct >= 75 && pct < 100) { color = 'var(--warning)'; statusClass = 'status-warn'; statusText = 'DUE SOON'; }
-                else if(pct >= 100) { color = 'var(--danger)'; statusClass = 'status-due'; statusText = '🚨 PM OVERDUE'; }
-
-                html += `
-                <div class="roadmap-row">
-                    <div class="asset-info">
-                        <div class="asset-title">${asset}</div>
-                        <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">Last PM: <b>${diffDays} days ago</b></div>
-                    </div>
-                    <div class="progress-section">
-                        <div class="progress-track">
-                            <div class="progress-fill" style="width: ${pct}%; background: ${color};"></div>
-                        </div>
-                        <div class="progress-labels">
-                            <span>Day 0</span>
-                            <span>30 Day Limit</span>
-                        </div>
-                    </div>
-                    <div class="status-badge ${statusClass}">${statusText}</div>
-                    <button class="btn btn-primary" onclick="openChecklist('${asset}')">📋 EXECUTE PM</button>
-                </div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        function openChecklist(asset) {
-            currentChecklistAsset = asset;
-            document.getElementById('modal-overlay').style.display = 'flex';
-            document.getElementById('cl-title').innerText = asset;
-            document.getElementById('cl-hours').value = ""; 
-
-            const tasks = getTasks(asset);
-            let html = tasks.map((task, i) => `
-                <div class="cl-item">
-                    <input type="checkbox" id="chk-${i}" class="pm-checkbox">
-                    <label for="chk-${i}">${task}</label>
-                </div>
-            `).join('');
-            document.getElementById('cl-items').innerHTML = html;
-        }
-
-        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-
-        async function submitChecklist() {
-            const checkboxes = document.querySelectorAll('.pm-checkbox');
-            for(let box of checkboxes) { if(!box.checked) { alert("You must check all tasks to digitally sign off."); return; } }
+        // --- STRICT ADMIN ROUTING SYSTEM ---
+        async function checkSession() {
+            const { data: { session } } = await sb.auth.getSession();
             
-            const hours = parseInt(document.getElementById('cl-hours').value);
-            if(!hours || hours <= 0) { alert("Please input a valid Hour Meter reading."); return; }
+            if (session) {
+                // Check if the logged-in user is the Master Admin
+                if(session.user.email.toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase()) {
+                    
+                    // ACCESS GRANTED: Unlock the UI
+                    document.body.style.display = 'block';
+                    
+                    // Update Profile Badge
+                    const displayUser = session.user.email.split('@')[0];
+                    document.getElementById('user-display').innerText = displayUser;
+                    document.getElementById('user-avatar').innerText = displayUser.charAt(0).toUpperCase();
 
-            const { error } = await sb.from('maintenance_records').insert([{
-                asset_name: currentChecklistAsset, hour_meter: hours, technician: currentUser
-            }]);
-
-            if(!error) {
-                pmData[currentChecklistAsset] = new Date().toISOString(); 
-                localStorage.setItem('rcc_cmms_roadmap_v1', JSON.stringify(pmData)); 
-                closeModal(); 
-                renderRoadmap(); // Refresh the progress bars
-            } else { alert("Database Error: Ensure 'maintenance_records' is created in Supabase."); }
-        }
-
-        function toggleTheme() { 
-            document.body.classList.toggle('dark-mode'); 
-            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light'); 
-        }
-        
-        window.onload = () => { 
-            if(localStorage.getItem('rcc_role') !== 'admin') {
-                document.body.innerHTML = "<div style='height:100vh; display:flex; justify-content:center; align-items:center; background:#0f172a; color:#ef4444;'><h1 style='font-family:sans-serif;'>🛑 ACCESS DENIED: ADMIN CLEARANCE REQUIRED</h1></div>";
-                setTimeout(() => { window.location.href = "index.html"; }, 2000); return;
+                } else {
+                    // ACCESS DENIED: They are an Operator. Kick them to Bodyline.
+                    window.location.href = 'bodyline.html';
+                }
+            } else {
+                // ACCESS DENIED: They are not logged in at all. Kick them to the Hub.
+                window.location.href = 'index.html';
             }
-            if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark-mode'); 
-            
-            // Short delay so the CSS transition animates the progress bars filling up smoothly
-            setTimeout(() => { renderRoadmap(); }, 100);
-        };
+        }
+
+        // Run the security check the millisecond the page tries to load
+        window.onload = checkSession;
     </script>
 </body>
 </html>
