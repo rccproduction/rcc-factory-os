@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v21.1 Report Dispatcher</title>
+    <title>RCC Bodyline OS | v21.2 AI Data Analyst</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -122,7 +122,7 @@
     <div id="portal-overlay">
         <div class="auth-card" id="auth-card">
             <h2 style="margin:0 0 5px 0; font-weight: 800; font-size: 28px;">RCC BODYLINE OS</h2>
-            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">AUTONOMOUS PLANT v21.1</p>
+            <p style="font-size: 11px; color:var(--text-dim); margin-top: 0; font-weight: 600; letter-spacing: 1px;">AI DATA ANALYST v21.2</p>
             <input type="password" id="access-code" placeholder="PIN" autofocus onkeypress="if(event.key === 'Enter') authorize()">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()">🔒 SECURE LOGIN</button>
             <button class="btn-guest" onclick="guestLogin()" style="margin-top:15px; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:10px; width:100%; border-radius:8px; cursor:pointer;">👀 VIEW AS GUEST</button>
@@ -289,7 +289,7 @@
             <h4 style="color:var(--accent); font-size: 11px; text-transform: uppercase; margin-bottom: 10px;">Admin Tools</h4>
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="exportExcel()">🟩 EXCEL (CURRENT VIEW)</button>
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="window.print()">🖨️ PDF (PRINT VIEW)</button>
-            <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" onclick="generateSmartReport()">📋 TIME-MATRIX REPORT</button>
+            <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" onclick="generateSmartReport()">📋 AI DATA ANALYST REPORT</button>
             
             <h4 style="color:var(--accent); font-size: 11px; text-transform: uppercase; margin-bottom: 5px;">✉️ Report Dispatcher</h4>
             <div style="background:var(--bg); padding:15px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 20px;">
@@ -326,7 +326,7 @@
     </div>
 
     <div id="report-modal" class="modal">
-        <h2 style="margin:0 0 15px 0; font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; color: var(--text);">📋 EXECUTIVE TIME-MATRIX SUMMARY</h2>
+        <h2 style="margin:0 0 15px 0; font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; color: var(--text);">🤖 AI ANALYST SUMMARY</h2>
         <div id="report-content" class="modal-content-box" style="white-space: pre-wrap;">Analyzing specific timeframe...</div>
         <button class="btn btn-primary" onclick="downloadReport()" style="margin-bottom: 10px;">💾 DOWNLOAD REPORT</button>
         <button class="btn" style="width:100%; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="closeModals()">CLOSE</button>
@@ -450,8 +450,8 @@
             if (autoEmailConfig.lastSent === `${todayStr}-${currentTime}`) return;
 
             if (currentTime === autoEmailConfig.dayTrigger || currentTime === autoEmailConfig.nightTrigger) {
-                console.log(`%c 📧 EDGE FUNCTION TRIGGERED: Generating PDF & Emailing to ${autoEmailConfig.emails} `, 'background: #2563eb; color: white; padding: 5px; font-weight:bold;');
-                alert(`[SYSTEM AUTOMATION]\nExecuting Zero-Click Reporting...\nDispatching PDF to: ${autoEmailConfig.emails}`);
+                console.log(`%c 📧 EDGE FUNCTION TRIGGERED `, 'background: #2563eb; color: white; padding: 5px; font-weight:bold;');
+                sendEmailNow(); // Auto-triggers the email draft
                 autoEmailConfig.lastSent = `${todayStr}-${currentTime}`;
                 localStorage.setItem('rcc_email_config', JSON.stringify(autoEmailConfig));
             }
@@ -554,11 +554,9 @@
 
             document.getElementById('kpi-yield').innerText = curr.yield.toLocaleString();
             document.getElementById('kpi-target').innerText = curr.target.toLocaleString();
+            document.getElementById('kpi-eff').innerText = curr.eff.toFixed(1) + "%";
             document.getElementById('kpi-down').innerText = curr.down + " m";
             document.getElementById('kpi-scrap').innerText = curr.scrap.toLocaleString();
-
-            const effEl = document.getElementById('kpi-eff');
-            effEl.innerHTML = `${curr.eff.toFixed(1)}% <span style="font-size:11px; background:var(--accent); color:white; padding:3px 8px; border-radius:6px; vertical-align:middle; margin-left:8px; display:inline-block; font-weight:bold; letter-spacing:1px; box-shadow: 0 2px 5px rgba(37,99,235,0.3);">OEE: ${curr.oee.toFixed(1)}%</span>`;
 
             const setVar = (id, c, p, isPct = false, reverse = false) => {
                 const el = document.getElementById(id); if(!el) return;
@@ -691,30 +689,86 @@
             charts.shiftComp.data.datasets[0].data = [ filteredData.filter(r => r.shift === "Day Shift").reduce((sum,r)=>sum+(r.actual||0),0), filteredData.filter(r => r.shift === "Night Shift").reduce((sum,r)=>sum+(r.actual||0),0) ]; charts.shiftComp.update();
         }
 
-        // --- NEW: REPORT DISPATCHER TEXT GENERATOR ---
+        // ==========================================
+        // V21.2 AI DATA ANALYST REPORT ENGINE
+        // ==========================================
         function generateSmartReportText() {
             if(filteredData.length === 0) return "No production data found for the selected timeframe.";
+            
+            // Dynamic Timeframe
             let modeText = currentMode === 'custom' ? "CUSTOM RANGE" : currentMode.toUpperCase();
-            const yield = filteredData.reduce((s,r)=>s+(r.actual||0),0); const target = filteredData.reduce((s,r)=>s+(r.target||0),0); const down = filteredData.reduce((s,r)=>s+getTotalDown(r),0);
+            
+            // Aggregations
+            const yield = filteredData.reduce((s,r)=>s+(r.actual||0),0); 
+            const target = filteredData.reduce((s,r)=>s+(r.target||0),0); 
+            const down = filteredData.reduce((s,r)=>s+getTotalDown(r),0);
+            const scrap = filteredData.reduce((s,r)=>s+getTotalScrap(r),0);
             const eff = target > 0 ? (yield/target*100).toFixed(1) : 0;
 
-            let text = `========================================\nRCC EXECUTIVE ${modeText} SUMMARY\n========================================\n\n`;
-            text += `[ KEY METRICS ]\nTotal Yield: ${yield.toLocaleString()} cans\nTarget: ${target.toLocaleString()} cans\nEfficiency: ${eff}%\nTotal Downtime: ${down} minutes\n\n`;
+            let lines = {}; 
+            const downReasons = { "Mechanical": 0, "Electrical": 0, "Material": 0, "QC": 0, "Packer": 0 };
+            const scrapReasons = { "Bad Welds": 0, "Scratches": 0, "Flanging Errors": 0 };
             
-            let lines = {}; const reasons = { "Mechanical": 0, "Electrical": 0, "Material": 0, "QC": 0, "Packer": 0 };
             filteredData.forEach(r => { 
                 const safeLine = r.line || "Unknown Asset";
-                if(!lines[safeLine]) lines[safeLine] = {a:0, t:0}; lines[safeLine].a += (r.actual||0); lines[safeLine].t += (r.target||0); 
-                reasons.Mechanical += (r.down_mech || 0); reasons.Electrical += (r.down_elec || 0); reasons.Material += (r.down_mat || 0); reasons.QC += (r.down_qc || 0); reasons.Packer += (r.down_pack || 0);
+                if(!lines[safeLine]) lines[safeLine] = {a:0, t:0, d:0, s:0}; 
+                lines[safeLine].a += (r.actual||0); lines[safeLine].t += (r.target||0); 
+                
+                downReasons.Mechanical += (r.down_mech || 0); downReasons.Electrical += (r.down_elec || 0); downReasons.Material += (r.down_mat || 0); downReasons.QC += (r.down_qc || 0); downReasons.Packer += (r.down_pack || 0); 
+                scrapReasons["Bad Welds"] += (r.defect_weld||0); scrapReasons["Scratches"] += (r.defect_scratch||0); scrapReasons["Flanging Errors"] += (r.defect_flange||0);
             });
             
-            let worst = Object.keys(lines).length > 0 ? Object.keys(lines).reduce((a,b) => (lines[a].a/lines[a].t) < (lines[b].a/lines[b].t) ? a : b) : "None";
-            let topReason = Object.keys(reasons).reduce((a,b) => reasons[a] > reasons[b] ? a : b);
+            // Find bottlenecks
+            let worstLine = "None"; let worstEff = 100;
+            for(let l in lines) {
+                let lEff = lines[l].t > 0 ? (lines[l].a / lines[l].t * 100) : 100;
+                if(lEff < worstEff) { worstEff = lEff; worstLine = l; }
+            }
+            let topDownReason = Object.keys(downReasons).reduce((a,b) => downReasons[a] > downReasons[b] ? a : b);
+            let topScrapReason = Object.keys(scrapReasons).reduce((a,b) => scrapReasons[a] > scrapReasons[b] ? a : b);
+
+            // Construct Formal Letter
+            let text = `SUBJECT: RCC Production Analytics Report - ${modeText}\n\n`;
+            text += `Dear Management Team,\n\n`;
+            text += `Please find the automated production and performance analysis for the selected timeframe (${modeText}) below.\n\n`;
             
-            text += `[ ANALYSIS ]\n> The plant operated at ${eff}% efficiency for this selected period.\n`;
-            if(worst !== "None") text += `> Underperforming Asset: ${worst} showed the lowest efficiency of ${(lines[worst].a/lines[worst].t*100).toFixed(1)}%.\n`;
-            if(reasons[topReason] > 0) text += `> Primary Bottleneck: ${topReason} delays caused the majority of lost time (${reasons[topReason]} mins).\n`;
-            text += `\n[ RECOMMENDATION ]\n> Target the root cause of ${topReason} downtime on ${worst} to recover lost yield.\n`;
+            text += `📊 1. EXECUTIVE SUMMARY\n`;
+            text += `--------------------------------------------------\n`;
+            text += `• Total Output: ${yield.toLocaleString()} cans\n`;
+            text += `• Target Output: ${target.toLocaleString()} cans\n`;
+            text += `• Plant Efficiency: ${eff}%\n`;
+            text += `• Total Downtime: ${down.toLocaleString()} minutes\n`;
+            text += `• Total QC Scrap: ${scrap.toLocaleString()} cans\n\n`;
+
+            text += `🔬 2. DATA ANALYST INSIGHTS\n`;
+            text += `--------------------------------------------------\n`;
+            text += `Performance Overview: The plant operated at an average efficiency of ${eff}%. `;
+            if(eff >= 90) text += `This indicates excellent operational health.\n`;
+            else if(eff >= 75) text += `This is within acceptable ranges, but leaves room for optimization.\n`;
+            else text += `This is below standard benchmarks, indicating critical bottlenecks.\n`;
+            
+            if(worstLine !== "None") { text += `\nAsset Bottleneck: ${worstLine} was the lowest performing asset, operating at ${worstEff.toFixed(1)}% efficiency.\n`; }
+            if(downReasons[topDownReason] > 0) { text += `Downtime Root Cause: The primary cause of lost production time was ${topDownReason} delays, totaling ${downReasons[topDownReason]} minutes.\n`; }
+            if(scrapReasons[topScrapReason] > 0) { text += `Quality Control Variance: The most frequent defect recorded was ${topScrapReason}, accounting for ${scrapReasons[topScrapReason]} rejected units.\n\n`; }
+
+            text += `🎯 3. STRATEGIC RECOMMENDATIONS\n`;
+            text += `--------------------------------------------------\n`;
+            if(worstLine !== "None" && downReasons[topDownReason] > 0) {
+                if(topDownReason === "Mechanical") text += `• Maintenance Action: Dispatch the engineering team to perform an immediate mechanical audit on ${worstLine} to resolve jamming/wear issues.\n`;
+                else if(topDownReason === "Electrical") text += `• Technical Action: Inspect sensors, PLCs, and wiring harnesses on ${worstLine} to mitigate electrical faults.\n`;
+                else if(topDownReason === "Material") text += `• Supply Chain Action: Review raw material quality (tinplate/wire) feeding into ${worstLine}, as it is causing significant feed delays.\n`;
+                else text += `• Operational Action: Review SOPs and operator training on ${worstLine} to reduce ${topDownReason} delays.\n`;
+            }
+            if(scrapReasons[topScrapReason] > 0) {
+                if(topScrapReason === "Bad Welds") text += `• Quality Action: Check cooling water temperature and redress welding rollers to eliminate Bad Weld defects.\n`;
+                else if(topScrapReason === "Scratches") text += `• Quality Action: Inspect the conveyor guides and Z-bar for burrs causing Scratches on the tinplate.\n`;
+                else if(topScrapReason === "Flanging Errors") text += `• Quality Action: Recalibrate the flanger tooling dies to reduce Flanging Errors.\n`;
+            }
+            
+            text += `\nThank you,\n\n`;
+            text += `RCC Bodyline OS\n`;
+            text += `Automated Analytics Engine\n`;
+
             return text;
         }
 
@@ -724,23 +778,24 @@
             document.getElementById('system-menu').classList.remove('active'); document.getElementById('main-overlay').style.display = 'block'; document.getElementById('report-modal').style.display = 'block';
         }
 
-        // --- NEW: MANUAL DRAFT EMAIL FUNCTION ---
         function sendEmailNow() {
             if(filteredData.length === 0) { alert("No data to email for this timeframe."); return; }
             const emails = document.getElementById('email-list').value;
             if(!emails) { alert("Please enter recipient emails in the input box above first."); return; }
+            
             const subject = encodeURIComponent(`RCC Production Report - ${currentMode.toUpperCase()}`);
             const body = encodeURIComponent(generateSmartReportText());
             window.location.href = `mailto:${emails}?subject=${subject}&body=${body}`;
         }
 
-        // --- NEW: MANUAL COPY TEXT FUNCTION ---
         function copyReportNow() {
             if(filteredData.length === 0) { alert("No data to copy."); return; }
             navigator.clipboard.writeText(generateSmartReportText()).then(() => { 
-                alert("Report copied to clipboard! You can now paste it into Viber, Slack, or any Email."); 
+                alert("Report copied to clipboard! You can now paste it into Viber, Slack, or any Email client."); 
             }).catch(err => { alert("Copy failed: " + err); });
         }
+
+        // ==========================================
 
         async function fetchComments() {
             try {
