@@ -69,42 +69,54 @@
 
     <script>
         // =========================================================================
-        // 🔒 THE MASTER KEY (MUST MATCH EXACTLY)
+        // 🔒 THE MASTER KEY (Forces lowercase for bulletproof checking)
         // =========================================================================
-        const MASTER_ADMIN_EMAIL = "Engr.Pinapit@rcc.com"; 
+        const MASTER_ADMIN_EMAIL = "engr.pinapit@rcc.com"; 
         // =========================================================================
 
         const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
-        // --- STRICT ADMIN ROUTING SYSTEM ---
+        // --- BULLETPROOF ADMIN ROUTING SYSTEM ---
         async function checkSession() {
+            // 1. Try to get the active cryptographic token
             const { data: { session } } = await sb.auth.getSession();
             
-            if (session) {
-                // Check if the logged-in user is the Master Admin
-                if(session.user.email.toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase()) {
+            let activeEmail = null;
+
+            if (session && session.user) {
+                activeEmail = session.user.email;
+            } else {
+                // 2. FALLBACK: If token is slow, check the browser's local memory
+                activeEmail = localStorage.getItem('rcc_user');
+            }
+
+            if (activeEmail) {
+                // 3. Compare the emails (forcing both to lowercase so capitals don't break it)
+                if(activeEmail.toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase()) {
                     
                     // ACCESS GRANTED: Unlock the UI
                     document.body.style.display = 'block';
                     
                     // Update Profile Badge
-                    const displayUser = session.user.email.split('@')[0];
+                    const displayUser = activeEmail.split('@')[0];
                     document.getElementById('user-display').innerText = displayUser;
                     document.getElementById('user-avatar').innerText = displayUser.charAt(0).toUpperCase();
 
                 } else {
-                    // ACCESS DENIED: They are an Operator. Kick them to Bodyline.
+                    // ACCESS DENIED: Show diagnostic alert, then boot them.
+                    alert(`SECURITY BLOCK: Your logged-in email (${activeEmail}) does not match the Master Key.`);
                     window.location.href = 'bodyline.html';
                 }
             } else {
-                // ACCESS DENIED: They are not logged in at all. Kick them to the Hub.
+                // NO SESSION FOUND AT ALL
+                alert("SECURITY BLOCK: No active session or token found. Please log in at the Central Hub first.");
                 window.location.href = 'index.html';
             }
         }
 
-        // Run the security check the millisecond the page tries to load
+        // Run the check instantly
         window.onload = checkSession;
     </script>
 </body>
