@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v26.2 Auto-Targets & Security</title>
+    <title>RCC Bodyline OS | v26.3 Deep Analytics</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -64,9 +64,9 @@
         .twin-overlay p { margin: 5px 0 0 0; font-size: 11px; color: #94a3b8; text-transform: uppercase; }
 
         .admin-form-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 12px; }
-        .downtime-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 15px; background: rgba(37, 99, 235, 0.05); border: 1px dashed var(--accent); border-radius: 8px; margin-bottom: 10px;}
+        .downtime-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 15px; background: rgba(37, 99, 235, 0.05); border: 1px dashed var(--accent); border-radius: 8px; margin-bottom: 10px;}
         .downtime-grid div { display: flex; flex-direction: column; }
-        @media (max-width: 1100px) { .admin-form-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 1100px) { .admin-form-grid { grid-template-columns: repeat(3, 1fr); } .downtime-grid { grid-template-columns: repeat(3, 1fr); } }
 
         input, select, textarea { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; margin-bottom: 5px; font-family: inherit; font-size: 13px;}
         input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
@@ -98,8 +98,6 @@
 
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 12px; z-index: 3000; box-shadow: 0 15px 40px rgba(0,0,0,0.5); width: 90%; max-width: 650px; max-height: 90vh; overflow-y: auto;}
         .modal-content-box { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 15px; border-radius: 8px; margin: 15px 0; max-height: 400px; overflow-y: auto; font-size: 13px; line-height: 1.6; border: 1px solid var(--border); white-space: pre-wrap;}
-        .audit-record { background: var(--bg); border-left: 4px solid #8b5cf6; padding: 12px; margin-bottom: 10px; font-family: monospace; font-size: 11px; border-radius: 4px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .audit-record b { color: #8b5cf6; }
     </style>
 </head>
 <body>
@@ -130,6 +128,17 @@
         <button class="tab-btn" onclick="setMode('weekly', this)">📅 This Week</button>
         <button class="tab-btn" onclick="setMode('monthly', this)">📈 This Month</button>
         <button class="tab-btn" onclick="setMode('custom', this)">🔍 Custom</button>
+        
+        <select id="dashboard-line-filter" class="tab-btn" style="background:var(--surface); border:1px solid var(--accent); color:var(--accent); outline:none; font-weight:bold;" onchange="calculateDatesAndProcess()">
+            <option value="ALL">🌐 ALL LINES</option>
+            <option value="Line 1">Line 1 / SOUCAN 640</option>
+            <option value="Line 2">Line 2 / CANMAN X-7</option>
+            <option value="Line 3">Line 3 / SOUCAN 650</option>
+            <option value="Line 4">Line 4 / FBB 5600 KM 13697</option>
+            <option value="Line 5">Line 5 / FBB 5600 KM 13640</option>
+            <option value="Line 6">Line 6 / SOUCAN 650</option>
+            <option value="SLITTER">SLITTER Lines</option>
+        </select>
     </div>
 
     <div id="custom-time-matrix">
@@ -171,7 +180,7 @@
                 <div class="kpi-card"><small>📦 Total Yield</small><div id="kpi-yield" class="val">0</div></div>
                 <div class="kpi-card"><small>🎯 Total Target</small><div id="kpi-target" class="val">0</div></div>
                 <div class="kpi-card"><small>⚡ Avg Efficiency</small><div id="kpi-eff" class="val">0%</div></div>
-                <div class="kpi-card"><small>⚠️ Total Downtime</small><div id="kpi-down" class="val">0 m</div></div>
+                <div class="kpi-card"><small>⚠️ Total Downtime (Hours)</small><div id="kpi-down" class="val" style="color:var(--warning)">0 hrs</div></div>
                 <div class="kpi-card"><small>🗑️ Total QC Scrap</small><div id="kpi-scrap" class="val" style="color:var(--danger)">0</div></div>
             </div>
 
@@ -258,6 +267,7 @@
                     <div><label style="font-size:10px; color:var(--text-dim);">⚡ WELDING MACHINE</label><input type="number" id="f-down-weld" placeholder="0"></div>
                     <div><label style="font-size:10px; color:var(--text-dim);">⚙️ SEAMER MACHINE</label><input type="number" id="f-down-seam" placeholder="0"></div>
                     <div><label style="font-size:10px; color:var(--text-dim);">🥫 FLANGER & BEADER</label><input type="number" id="f-down-flange" placeholder="0"></div>
+                    <div><label style="font-size:10px; color:var(--text-dim);">📦 PACKING / SORTING</label><input type="number" id="f-down-pack" placeholder="0"></div>
                     <div><label style="font-size:10px; color:var(--text-dim);">🛑 OTHER / OPS DELAY</label><input type="number" id="f-down-other" placeholder="0"></div>
                 </div>
 
@@ -270,7 +280,7 @@
                 <label style="font-size:11px; font-weight:bold; color:var(--warning); display:block; margin-bottom:5px;">REJECT JUSTIFICATION</label>
                 <input type="text" id="f-reject-reason" placeholder="Explain the root cause of the rejected cans..." style="margin-bottom: 15px;">
 
-                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()">☁️ TRANSMIT RECORD (INSTANT POP)</button>
+                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()">☁️ TRANSMIT RECORD (OPTIMISTIC UI)</button>
             </div>
         </div>
 
@@ -331,9 +341,6 @@
                 <button class="btn" onclick="copyReportNow()" style="background:var(--warning); color:white; width:100%; padding:10px; font-size:10px;">📋 COPY TO CLIPBOARD</button>
             </div>
         </div>
-        
-        <h4 style="color:var(--text-dim); font-size: 11px; text-transform: uppercase; margin-bottom: 5px;">📝 Production Notepad</h4>
-        <textarea id="prod-notepad" placeholder="General Shift Reminders..." oninput="saveNotes()" style="height: 100px; margin-bottom: 20px;"></textarea>
 
         <div id="access-log-section" style="margin-top: 20px; margin-bottom: 20px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
@@ -347,7 +354,7 @@
     </div>
 
     <div id="report-modal" class="modal">
-        <h2 style="margin:0 0 15px 0; font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; color: var(--text);">🤖 AI ANALYST SUMMARY</h2>
+        <h2 style="margin:0 0 15px 0; font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; color: var(--text);">🤖 AI DEEP ANALYST SUMMARY</h2>
         <div id="report-content" class="modal-content-box"></div>
         <button class="btn btn-primary" onclick="downloadReport()" style="margin-bottom: 10px;">💾 DOWNLOAD REPORT</button>
         <button class="btn" style="width:100%; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="closeModals()">CLOSE</button>
@@ -375,10 +382,11 @@
         </div>
 
         <label style="font-size:11px; font-weight:bold; color:var(--accent); display:block; margin-bottom:5px;">EDIT MACHINE DOWNTIME (MINS)</label>
-        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; background:var(--bg); padding:10px; border-radius:6px; margin-bottom:10px;">
+        <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px; background:var(--bg); padding:10px; border-radius:6px; margin-bottom:10px;">
             <div><label style="font-size:9px;">WELDER</label><input type="number" id="edit-weld" style="padding:10px;"></div>
             <div><label style="font-size:9px;">SEAMER</label><input type="number" id="edit-seam" style="padding:10px;"></div>
             <div><label style="font-size:9px;">FLANGER</label><input type="number" id="edit-flange" style="padding:10px;"></div>
+            <div><label style="font-size:9px;">PACKING</label><input type="number" id="edit-pack" style="padding:10px;"></div>
             <div><label style="font-size:9px;">OTHER</label><input type="number" id="edit-other" style="padding:10px;"></div>
         </div>
 
@@ -396,8 +404,6 @@
             <button class="btn" style="background:transparent; border:1px solid var(--border); color:var(--text); width:100%;" onclick="closeModals()">CANCEL</button>
         </div>
     </div>
-
-    <button id="operator-logout-btn" style="display:none; position: fixed; bottom: 20px; left: 20px; background: var(--danger); border: none; color: white; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; z-index: 1000;" onclick="logoutSecurely()">🚪 SECURE LOGOUT</button>
 
     <script>
         // =========================================================================
@@ -506,14 +512,6 @@
             }
         }
 
-        async function logoutSecurely() {
-            if(confirm("Securely log out?")) {
-                await sb.auth.signOut();
-                localStorage.removeItem('rcc_user'); localStorage.removeItem('rcc_role');
-                window.location.href = 'index.html';
-            }
-        }
-
         function unlockSystem() {
             document.body.style.display = 'block'; 
             const displayUser = currentUser.includes('@') ? currentUser.split('@')[0] : currentUser;
@@ -526,7 +524,7 @@
             
             if(localStorage.getItem('theme') === 'dark') toggleTheme(); 
 
-            setupRealtime(); initCharts(); init3DTwin(); fetchData(); fetchComments(); loadNotes(); loadEmailSettings(); loadDailyQualityNotes();
+            setupRealtime(); initCharts(); init3DTwin(); fetchData(); fetchComments(); loadEmailSettings(); loadDailyQualityNotes();
             setInterval(fetchComments, 3000);
             setMode('daily', document.querySelector('.tab-btn')); 
         }
@@ -574,12 +572,17 @@
             else if(currentMode === 'yearly') { start = `${yyyy}-01-01`; end = `${yyyy}-12-31`; }
             
             filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
+            
+            // Apply Master Line Filter
+            const lineFilter = document.getElementById('dashboard-line-filter').value;
+            if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
+
             loadDailyQualityNotes(); 
             updateAllVisuals();
         }
 
         function processData() {
-            if(currentMode !== 'custom') return; 
+            if(currentMode !== 'custom') { calculateDatesAndProcess(); return; } 
             const subMode = document.getElementById('custom-mode').value; let start, end;
             if (subMode === 'range') { start = document.getElementById('date-start').value; end = document.getElementById('date-end').value; } 
             else if (subMode === 'week') {
@@ -592,10 +595,16 @@
                 start = monVal + "-01"; let d = new Date(monVal.split('-')[0], monVal.split('-')[1], 0); end = monVal + "-" + d.getDate();
             } 
             filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
+            
+            // Apply Master Line Filter
+            const lineFilter = document.getElementById('dashboard-line-filter').value;
+            if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
+
             updateAllVisuals();
         }
 
-        function getTotalDown(r) { return (r.down_welder || 0) + (r.down_seamer || 0) + (r.down_flanger || 0) + (r.down_other || 0) + (r.down_mech || 0) + (r.down_elec || 0) + (r.down_mat || 0) + (r.down_qc || 0) + (r.down_pack || 0); }
+        // Includes Packing table
+        function getTotalDown(r) { return (r.down_welder || 0) + (r.down_seamer || 0) + (r.down_flanger || 0) + (r.down_pack || 0) + (r.down_other || 0) + (r.down_mech || 0) + (r.down_elec || 0) + (r.down_mat || 0) + (r.down_qc || 0); }
         function getTotalScrap(r) { return (r.defect_scratch || 0) + (r.defect_flange || 0) + (r.defect_weld || 0) + (r.defect_seam || 0); }
 
         function updateAllVisuals() {
@@ -612,7 +621,7 @@
 
             document.getElementById('kpi-yield').innerText = t.a.toLocaleString();
             document.getElementById('kpi-target').innerText = t.t.toLocaleString();
-            document.getElementById('kpi-down').innerText = t.d + " m";
+            document.getElementById('kpi-down').innerText = (t.d / 60).toFixed(1) + " hrs"; // UPDATED TO HOURS
             document.getElementById('kpi-scrap').innerText = t.s.toLocaleString();
             document.getElementById('kpi-eff').innerHTML = `${eff.toFixed(1)}% <span style="font-size:11px; background:var(--accent); color:white; padding:3px 8px; border-radius:6px; vertical-align:middle; margin-left:8px; display:inline-block; font-weight:bold; letter-spacing:1px; box-shadow: 0 2px 5px rgba(37,99,235,0.3);">OEE: ${oee.toFixed(1)}%</span>`;
         }
@@ -653,7 +662,7 @@
             
             charts.util = new Chart(document.getElementById('utilChart'), { 
                 type: 'doughnut', 
-                data: { labels: ['Welding', 'Seamer', 'Flanger', 'Other'], datasets: [{ data: [0,0,0,0], backgroundColor: ['#ef4444', '#f59e0b', '#2563eb', '#64748b'], borderWidth: 2, borderColor: 'var(--surface)', hoverOffset: 10 }]}, 
+                data: { labels: ['Welding', 'Seamer', 'Flanger', 'Packing', 'Other'], datasets: [{ data: [0,0,0,0,0], backgroundColor: ['#ef4444', '#f59e0b', '#2563eb', '#10b981', '#64748b'], borderWidth: 2, borderColor: 'var(--surface)', hoverOffset: 10 }]}, 
                 options: { 
                     responsive: true, maintainAspectRatio: false, cutout:'60%', 
                     plugins: { legend: { position: 'right' } },
@@ -664,7 +673,8 @@
                             if(filterLabel === 'Welding') drillData = filteredData.filter(r => r.down_welder > 0);
                             else if(filterLabel === 'Seamer') drillData = filteredData.filter(r => r.down_seamer > 0);
                             else if(filterLabel === 'Flanger') drillData = filteredData.filter(r => r.down_flanger > 0);
-                            else if(filterLabel === 'Other') drillData = filteredData.filter(r => r.down_other > 0);
+                            else if(filterLabel === 'Packing') drillData = filteredData.filter(r => r.down_pack > 0);
+                            else if(filterLabel === 'Other') drillData = filteredData.filter(r => r.down_other > 0 || r.down_mech > 0 || r.down_elec > 0 || r.down_mat > 0);
                             renderTable(drillData);
                         }
                     }
@@ -685,18 +695,18 @@
             const labels = [...new Set(filteredData.map(r => r.date))].sort();
             charts.prod.data.labels = labels; charts.prod.data.datasets[0].data = labels.map(d => filteredData.filter(r => r.date === d).reduce((s,r)=>s+(r.actual||0),0)); charts.prod.data.datasets[1].data = labels.map(d => filteredData.filter(r => r.date === d).reduce((s,r)=>s+(r.target||0),0)); charts.prod.update();
 
-            let wD=0, sD=0, fD=0, oD=0; let sQ=0, fQ=0; const sizeYields = {};
+            let wD=0, sD=0, fD=0, pD=0, oD=0; let sQ=0, fQ=0; const sizeYields = {};
 
             filteredData.forEach(r => { 
-                wD += (r.down_welder || 0); sD += (r.down_seamer || 0); fD += (r.down_flanger || 0); oD += (r.down_other || 0); 
-                oD += (r.down_mech || 0) + (r.down_elec || 0) + (r.down_mat || 0) + (r.down_qc || 0) + (r.down_pack || 0);
+                wD += (r.down_welder || 0); sD += (r.down_seamer || 0); fD += (r.down_flanger || 0); pD += (r.down_pack || 0); oD += (r.down_other || 0); 
+                oD += (r.down_mech || 0) + (r.down_elec || 0) + (r.down_mat || 0) + (r.down_qc || 0);
                 sQ += (r.defect_scratch||0); fQ += (r.defect_flange||0);
                 
                 const safeSize = r.can_size || "Standard";
                 if(r.actual > 0) sizeYields[safeSize] = (sizeYields[safeSize] || 0) + r.actual;
             });
             
-            charts.util.data.datasets[0].data = [wD, sD, fD, oD]; charts.util.update();
+            charts.util.data.datasets[0].data = [wD, sD, fD, pD, oD]; charts.util.update();
 
             let qcData = [{n:'Scratches', v:sQ}, {n:'Flanging', v:fQ}].sort((a,b)=>b.v - a.v);
             charts.qc.data.labels = qcData.map(d=>d.n); charts.qc.data.datasets[0].data = qcData.map(d=>d.v); charts.qc.update();
@@ -822,6 +832,7 @@
                 down_welder: parseInt(document.getElementById('f-down-weld').value) || 0, 
                 down_seamer: parseInt(document.getElementById('f-down-seam').value) || 0,
                 down_flanger: parseInt(document.getElementById('f-down-flange').value) || 0, 
+                down_pack: parseInt(document.getElementById('f-down-pack').value) || 0,
                 down_other: parseInt(document.getElementById('f-down-other').value) || 0, 
                 defect_scratch: parseInt(document.getElementById('f-scrap-scratch').value) || 0, 
                 defect_flange: parseInt(document.getElementById('f-scrap-flange').value) || 0,
@@ -836,7 +847,7 @@
                 rawData.unshift(data[0]); 
                 processData(); 
                 btn.innerText = "☁️ TRANSMIT RECORD (OPTIMISTIC UI)";
-                ['f-actual', 'f-down-weld', 'f-down-seam', 'f-down-flange', 'f-down-other', 'f-scrap-scratch', 'f-scrap-flange', 'f-reject-reason'].forEach(id => document.getElementById(id).value = '');
+                ['f-actual', 'f-down-weld', 'f-down-seam', 'f-down-flange', 'f-down-pack', 'f-down-other', 'f-scrap-scratch', 'f-scrap-flange', 'f-reject-reason'].forEach(id => document.getElementById(id).value = '');
             } else { alert("ACCESS DENIED: Database locked."); btn.innerText = "☁️ TRANSMIT RECORD"; }
         }
 
@@ -864,7 +875,7 @@
             }
 
             document.getElementById('edit-target').value = log.target; document.getElementById('edit-actual').value = log.actual;
-            document.getElementById('edit-weld').value = log.down_welder || 0; document.getElementById('edit-seam').value = log.down_seamer || 0; document.getElementById('edit-flange').value = log.down_flanger || 0; document.getElementById('edit-other').value = log.down_other || 0;
+            document.getElementById('edit-weld').value = log.down_welder || 0; document.getElementById('edit-seam').value = log.down_seamer || 0; document.getElementById('edit-flange').value = log.down_flanger || 0; document.getElementById('edit-pack').value = log.down_pack || 0; document.getElementById('edit-other').value = log.down_other || 0;
             document.getElementById('edit-scrap-scratch').value = log.defect_scratch || 0; document.getElementById('edit-scrap-flange').value = log.defect_flange || 0; 
             document.getElementById('edit-reject-reason').value = log.reject_reason || '';
             
@@ -880,7 +891,7 @@
             const updates = { 
                 can_size: document.getElementById('edit-size').value,
                 target: parseInt(document.getElementById('edit-target').value)||0, actual: parseInt(document.getElementById('edit-actual').value)||0, 
-                down_welder: parseInt(document.getElementById('edit-weld').value)||0, down_seamer: parseInt(document.getElementById('edit-seam').value)||0, down_flanger: parseInt(document.getElementById('edit-flange').value)||0, down_other: parseInt(document.getElementById('edit-other').value)||0, 
+                down_welder: parseInt(document.getElementById('edit-weld').value)||0, down_seamer: parseInt(document.getElementById('edit-seam').value)||0, down_flanger: parseInt(document.getElementById('edit-flange').value)||0, down_pack: parseInt(document.getElementById('edit-pack').value)||0, down_other: parseInt(document.getElementById('edit-other').value)||0, 
                 defect_scratch: parseInt(document.getElementById('edit-scrap-scratch').value)||0, defect_flange: parseInt(document.getElementById('edit-scrap-flange').value)||0,
                 reject_reason: document.getElementById('edit-reject-reason').value
             };
@@ -888,8 +899,8 @@
             try {
                 const auditEntry = {
                     action: 'UPDATE_PRODUCTION', record_id: id, machine: log.line,
-                    old_value: `Size: ${log.can_size}, Yield: ${log.actual}, Target: ${log.target}`,
-                    new_value: `Size: ${updates.can_size}, Yield: ${updates.actual}, Target: ${updates.target}`,
+                    old_value: `Yield: ${log.actual}, Target: ${log.target}`,
+                    new_value: `Yield: ${updates.actual}, Target: ${updates.target}`,
                     reason: reason, changed_by: currentUser || 'Admin'
                 };
                 await sb.from('audit_logs').insert([auditEntry]);
@@ -910,109 +921,12 @@
                 };
                 await sb.from('audit_logs').insert([auditEntry]);
                 const { error } = await sb.from('production_logs').delete().eq('id', id); 
-                if(!error) {
-                    rawData = rawData.filter(r => r.id != id); 
-                    processData();
-                }
+                if(!error) { rawData = rawData.filter(r => r.id != id); processData(); }
             } catch(e) { alert("Audit system error."); }
         }
 
         // ==========================================
-        // AI ORACLE
-        // ==========================================
-        async function fetchComments() {
-            try {
-                const { data, error } = await sb.from('live_comments').select('*').eq('module', 'production').order('created_at', {ascending: true}).limit(50);
-                if (error) throw error;
-                if(data) {
-                    const chatBox = document.getElementById('chat-box');
-                    const isScrolledToBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 20;
-                    const newHTML = data.map(c => {
-                        const safeUser = c.user_name || "Unknown";
-                        const isAdmin = safeUser.toLowerCase().includes("admin") || safeUser.toLowerCase().includes("engr") || safeUser.toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase();
-                        const canDelete = (safeUser === currentUser) || isEngineer;
-                        const delBtn = canDelete ? `<button class="del-msg-btn" onclick="deleteComment(${c.id})">✖</button>` : '';
-                        if(safeUser === 'RCC ORACLE') { return `<div class="chat-msg oracle-msg">${delBtn} <b>${safeUser}</b> <span style="display:block; margin-top:4px;">${c.message}</span></div>`; } 
-                        else if(safeUser === 'SYSTEM 🤖') { return `<div class="chat-msg" style="border-left-color:var(--danger); background:rgba(239, 68, 68, 0.05);">${delBtn} <b style="color:var(--danger);">${safeUser}</b> <span style="display:block; margin-top:4px; font-weight:bold; color:var(--danger);">${c.message}</span></div>`; }
-                        return `<div class="chat-msg" style="${isAdmin ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}">${delBtn} <b>${safeUser}</b> <span style="display:block; margin-top:4px;">${c.message}</span></div>`;
-                    }).join('');
-                    if (chatBox.innerHTML !== newHTML) { chatBox.innerHTML = newHTML; if (isScrolledToBottom) { chatBox.scrollTop = chatBox.scrollHeight; } }
-                }
-            } catch (err) {}
-        }
-        async function sendComment() { 
-            const i = document.getElementById('chat-input'); const msg = i.value.trim();
-            if(msg) { 
-                const safeUser = currentUser || "Operator"; i.value = ''; 
-                await sb.from('live_comments').insert([{ user_name: safeUser, message: msg, module: 'production' }]); 
-                if (msg.toLowerCase().startsWith("@oracle") || msg.toLowerCase().startsWith("/ai")) { setTimeout(() => { processOracleQuery(msg.toLowerCase().replace('@oracle','').replace('/ai','').trim()); }, 500); }
-                setTimeout(fetchComments, 400); 
-            } 
-        }
-        async function processOracleQuery(query) {
-            let response = "I am the RCC Oracle. I analyze your live production data locally. Try asking: 'What is the status of Line 1?', 'Analyze downtime', 'Analyze scrap', or 'Analyze can sizes'.";
-            const q = query.toLowerCase();
-
-            if (q.includes("status") && q.includes("line")) {
-                const lineMatch = query.match(/line \d/);
-                if (lineMatch) {
-                    const lineName = lineMatch[0]; const rs = filteredData.filter(x => x.line && x.line.toLowerCase().includes(lineName.toLowerCase()));
-                    if(rs.length > 0) {
-                        const a = rs.reduce((sum,x)=>sum+(x.actual||0),0); const t = rs.reduce((sum,x)=>sum+(x.target||0),0); const m = rs.reduce((sum,x)=>sum+(x.down_welder||0)+(x.down_seamer||0)+(x.down_flanger||0),0);
-                        const eff = t > 0 ? (a/t*100).toFixed(1) : 0;
-                        response = `Scanning ${lineName.toUpperCase()} telemetry... Current Efficiency: **${eff}%**. Output: ${a.toLocaleString()}/${t.toLocaleString()}. Accumulated Machine Downtime: ${m} minutes.`;
-                    } else { response = `I do not see any active production logs for ${lineName.toUpperCase()} in the current timeframe.`; }
-                }
-            }
-            else if (q.includes("worst") || q.includes("downtime") || q.includes("cause")) {
-                let wD=0, sD=0, fD=0, oD=0; let totalRun = 0;
-                filteredData.forEach(r => { wD+=(r.down_welder||0); sD+=(r.down_seamer||0); fD+=(r.down_flanger||0); oD+=(r.down_other||0); totalRun += (r.run||480); });
-                const totalDown = wD+sD+fD+oD;
-                const downPercent = totalRun > 0 ? ((totalDown/totalRun)*100).toFixed(1) : 0;
-                const reasons = { "Welding Machine": wD, "Seamer Machine": sD, "Flanger/Beader": fD, "Other Ops": oD };
-                const worst = Object.keys(reasons).reduce((a, b) => reasons[a] > reasons[b] ? a : b);
-                if (totalDown > 0) {
-                    response = `Diagnostic complete. Total downtime is **${totalDown} mins** (${downPercent}% of scheduled run time). `;
-                    if (downPercent > 10) response += `⚠️ **ALERT:** This is EXCESSIVE. `; else response += `✅ This is within healthy limits. `;
-                    response += `Primary bottleneck: **${worst}** (${reasons[worst]} mins).`;
-                } else { response = "No significant downtime recorded in the current timeframe."; }
-            }
-            else if (q.includes("scrap") || q.includes("reject")) {
-                let sc=0, fl=0; let totalYield = 0;
-                filteredData.forEach(r => { sc+=(r.defect_scratch||0); fl+=(r.defect_flange||0); totalYield += (r.actual||0); });
-                const totalScrap = sc+fl;
-                const scrapPercent = totalYield > 0 ? ((totalScrap/totalYield)*100).toFixed(2) : 0;
-                const reasons = { "Scratches": sc, "Flanging Errors": fl };
-                const worst = Object.keys(reasons).reduce((a, b) => reasons[a] > reasons[b] ? a : b);
-                
-                response = `Total QC Scrap is **${totalScrap.toLocaleString()} cans** (${scrapPercent}% of yield). `;
-                if (scrapPercent > 2) response += `⚠️ **ALERT:** Scrap rate is TOO HIGH. `; else response += `✅ Scrap rate is healthy. `;
-                response += `Highest failure mode is **${worst}** (${reasons[worst]} units).`;
-            }
-            await sb.from('live_comments').insert([{ user_name: 'RCC ORACLE', message: response, module: 'production' }]); fetchComments();
-        }
-
-        async function deleteComment(id) { if(confirm("Remove message?")) { await sb.from('live_comments').delete().eq('id', id); fetchComments(); } }
-
-        function toggleMenu() { 
-            const menu = document.getElementById('system-menu'); menu.classList.toggle('active'); 
-            document.getElementById('main-overlay').style.display = menu.classList.contains('active') ? 'block' : 'none'; 
-            if(menu.classList.contains('active')) { fetchAccessLogs(); }
-        }
-
-        async function fetchAccessLogs() {
-            const display = document.getElementById('access-log-display'); 
-            display.innerHTML = "<span style='color:var(--accent); font-weight:bold;'>↻ Pinging Supabase for secure logs...</span>";
-            try {
-                const { data, error } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(50);
-                if(error) throw error;
-                if(data && data.length > 0) { display.innerHTML = data.map(l => `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--text-dim); font-size:10px;">[${new Date(l.created_at).toLocaleTimeString()}]</span> <b style="color:var(--text); font-size:11px; margin-left:5px;">${l.user_name || 'Unknown'}</b></div>`).join(''); } 
-                else { display.innerHTML = "<span style='color:var(--text-dim);'>No access logs recorded yet.</span>"; }
-            } catch(err) { display.innerHTML = `<span style='color:var(--danger);'><b>DB ERROR:</b> Check if 'access_logs' table exists.</span>`; }
-        }
-
-        // ==========================================
-        // AI REPORT MAKER
+        // DEEP ANALYST AI REPORT MAKER
         // ==========================================
         function generateSmartReportText() {
             if(filteredData.length === 0) return "No data found.";
@@ -1026,15 +940,16 @@
             const eff = target > 0 ? (yield/target*100).toFixed(1) : 0;
 
             let lines = {}; let lineSizes = {}; 
-            const downReasons = { "Welding": 0, "Seamer": 0, "Flanger": 0, "Other": 0 };
+            const downReasons = { "Welding": 0, "Seamer": 0, "Flanger": 0, "Packing": 0, "Other": 0 };
             const scrapReasons = { "Scratches": 0, "Flanging Errors": 0 };
             
             filteredData.forEach(r => { 
                 const safeLine = r.line || "Unknown Asset";
                 const safeSize = r.can_size || "Standard";
 
-                if(!lines[safeLine]) lines[safeLine] = {a:0, t:0}; 
+                if(!lines[safeLine]) lines[safeLine] = {a:0, t:0, d:0, s:0}; 
                 lines[safeLine].a += (r.actual||0); lines[safeLine].t += (r.target||0); 
+                lines[safeLine].d += getTotalDown(r); lines[safeLine].s += getTotalScrap(r);
 
                 if(!lineSizes[safeLine]) lineSizes[safeLine] = {};
                 if(!lineSizes[safeLine][safeSize]) lineSizes[safeLine][safeSize] = {a:0, t:0, d:0, s:0, day:0, night:0};
@@ -1043,12 +958,24 @@
                 lineSizes[safeLine][safeSize].d += getTotalDown(r); lineSizes[safeLine][safeSize].s += getTotalScrap(r);
                 if(r.shift === 'Day Shift') lineSizes[safeLine][safeSize].day += (r.actual||0); else if(r.shift === 'Night Shift') lineSizes[safeLine][safeSize].night += (r.actual||0);
 
-                downReasons.Welding += (r.down_welder || 0); downReasons.Seamer += (r.down_seamer || 0); downReasons.Flanger += (r.down_flanger || 0); downReasons.Other += (r.down_other || 0); 
+                downReasons.Welding += (r.down_welder || 0); downReasons.Seamer += (r.down_seamer || 0); downReasons.Flanger += (r.down_flanger || 0); downReasons.Packing += (r.down_pack || 0); downReasons.Other += (r.down_other || 0); 
                 scrapReasons["Scratches"] += (r.defect_scratch||0); scrapReasons["Flanging Errors"] += (r.defect_flange||0); 
             });
             
-            let worstLine = "None"; let worstEff = 100;
-            for(let l in lines) { let lEff = lines[l].t > 0 ? (lines[l].a / lines[l].t * 100) : 100; if(lEff < worstEff) { worstEff = lEff; worstLine = l; } }
+            // Heuristic Deep Analysis
+            let worstEffLine = "None"; let worstEff = 100;
+            let highestScrapLine = "None"; let highestScrapRatio = 0;
+            let highestDownLine = "None"; let highestDown = 0;
+
+            for(let l in lines) { 
+                let lEff = lines[l].t > 0 ? (lines[l].a / lines[l].t * 100) : 100; 
+                let lScrapRatio = lines[l].a > 0 ? (lines[l].s / lines[l].a * 100) : 0;
+
+                if(lEff < worstEff && lines[l].t > 0) { worstEff = lEff; worstEffLine = l; } 
+                if(lScrapRatio > highestScrapRatio) { highestScrapRatio = lScrapRatio; highestScrapLine = l; }
+                if(lines[l].d > highestDown) { highestDown = lines[l].d; highestDownLine = l; }
+            }
+
             let topDownReason = Object.keys(downReasons).reduce((a,b) => downReasons[a] > downReasons[b] ? a : b);
             let topScrapReason = Object.keys(scrapReasons).reduce((a,b) => scrapReasons[a] > scrapReasons[b] ? a : b);
 
@@ -1060,18 +987,34 @@
             text += `📊 1. EXECUTIVE SUMMARY\n--------------------------------------------------\n`;
             text += `• Total Output: ${yield.toLocaleString()} cans\n`;
             text += `• Plant Efficiency: ${eff}%\n`;
-            text += `• Total Machine Downtime: ${down.toLocaleString()} minutes\n`;
+            text += `• Total Machine Downtime: ${(down/60).toFixed(2)} hours\n`;
             text += `• Total QC Scrap: ${scrap.toLocaleString()} cans\n\n`;
 
-            text += `🔬 2. DATA ANALYST HEURISTIC INSIGHTS\n--------------------------------------------------\n`;
-            if (downPercent > 10) text += `⚠️ DOWNTIME ALERT: Downtime accounts for ${downPercent}% of scheduled run time. Major bottleneck: ${topDownReason} machine.\n`;
-            else text += `✅ DOWNTIME HEALTHY: Downtime is within acceptable limits (${downPercent}% of run time).\n`;
+            text += `🔬 2. DEEP ANALYST INSIGHTS (MICRO-TRENDS)\n--------------------------------------------------\n`;
+            
+            // Down Time Analysis
+            if (downPercent > 10) text += `⚠️ CRITICAL DOWNTIME: Plant downtime accounts for ${downPercent}% of scheduled run time. Major bottleneck is ${topDownReason} delays.\n`;
+            else text += `✅ DOWNTIME HEALTHY: Plant downtime is within acceptable limits (${downPercent}% of run time).\n`;
+            if (highestDownLine !== "None") text += `   ↳ 🔍 Root Cause Asset: ${highestDownLine} is bleeding the most time (${(highestDown/60).toFixed(1)} hours lost).\n\n`;
 
-            if (scrapPercent > 2) text += `⚠️ QC SCRAP ALERT: Scrap rate is high at ${scrapPercent}% of total yield. Major contributor: ${topScrapReason}.\n`;
-            else text += `✅ QC SCRAP HEALTHY: Scrap rate is highly efficient at ${scrapPercent}% of total yield.\n`;
-            if(worstLine !== "None") text += `Asset Bottleneck: ${worstLine} was the lowest performing asset (${worstEff.toFixed(1)}% efficiency).\n\n`;
+            // Scrap Analysis
+            if (scrapPercent > 2) text += `⚠️ CRITICAL QC SCRAP: Scrap rate is failing at ${scrapPercent}% of total yield. Major contributor: ${topScrapReason}.\n`;
+            else text += `✅ QC SCRAP HEALTHY: Plant scrap rate is efficient at ${scrapPercent}% of total yield.\n`;
+            if (highestScrapLine !== "None" && highestScrapRatio > 2) text += `   ↳ 🔍 Root Cause Asset: ${highestScrapLine} is generating massive rejects (${highestScrapRatio.toFixed(1)}% scrap ratio for this specific line).\n\n`;
 
-            text += `📦 3. CAN SIZE YIELD & SHIFT BREAKDOWN (PERIOD-TO-DATE)\n--------------------------------------------------\n`;
+            text += `🚨 3. CONCLUSION & ACTION PLAN\n--------------------------------------------------\n`;
+            if(worstEffLine !== "None") {
+                text += `1. DISPATCH MAINTENANCE TO: ${worstEffLine}.\n   (This line is severely bottlenecking plant OEE at ${worstEff.toFixed(1)}% efficiency).\n`;
+            }
+            if(highestScrapLine !== "None" && highestScrapRatio > 2) {
+                text += `2. DISPATCH QUALITY CONTROL TO: ${highestScrapLine}.\n   (This line requires immediate mechanical recalibration to stop scrap generation).\n`;
+            }
+            if (worstEffLine === "None" && scrapPercent <= 2) {
+                text += `All production lines are currently operating within optimized standard parameters. Continue standard monitoring.\n`;
+            }
+            text += `\n`;
+
+            text += `📦 4. CAN SIZE YIELD & SHIFT BREAKDOWN (PERIOD-TO-DATE)\n--------------------------------------------------\n`;
             for(let line in lineSizes) {
                 text += `🏭 ${line.toUpperCase()}\n`;
                 for(let sz in lineSizes[line]) {
@@ -1092,17 +1035,8 @@
             document.getElementById('system-menu').classList.remove('active'); document.getElementById('main-overlay').style.display = 'block'; document.getElementById('report-modal').style.display = 'block';
         }
         function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); document.getElementById('main-overlay').style.display = 'none'; }
-        function downloadReport() { const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([document.getElementById('report-content').innerText], { type: 'text/plain' })); a.download = `RCC_Summary.txt`; a.click(); }
+        function downloadReport() { const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([document.getElementById('report-content').innerText], { type: 'text/plain' })); a.download = `RCC_Deep_Analysis.txt`; a.click(); }
         
-        function saveEmailSettings() { alert("Dispatcher Saved!"); }
-        function sendEmailNow() { window.location.href = `mailto:manager@rcc.com?subject=Report&body=${encodeURIComponent(generateSmartReportText())}`; }
-        function copyReportNow() { navigator.clipboard.writeText(generateSmartReportText()); alert("Copied!"); }
-        function exportExcel() { alert("Downloading Excel (Stub)..."); }
-        async function openAuditLedger() { alert("Fetching Immutable Audit Ledger from DB..."); }
-        function saveNotes() { localStorage.setItem('bodyline_notes', document.getElementById('prod-notepad').value); }
-        function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('bodyline_notes') || ""; }
-        function loadEmailSettings() {} function checkAutomations() {}
-
         window.onload = checkSession;
     </script>
 </body>
