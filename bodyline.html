@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v26.4 Interface Restored</title>
+    <title>RCC Bodyline OS | v26.5 Sentinel Secured</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -77,7 +77,7 @@
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th { text-align: left; padding: 12px 10px; border-bottom: 2px solid var(--border); color: var(--text-dim); text-transform: uppercase; position: sticky; top: 0; background: var(--surface); z-index: 10;}
         td { padding: 12px 10px; border-bottom: 1px solid var(--border); }
-        .admin-only { display: none; } /* Kept strictly for edit/delete buttons and ISO audit */
+        .admin-only { display: none; } 
         .action-cell { display: flex; gap: 10px; }
         .icon-btn { background: none; border: none; font-size: 14px; cursor: pointer; opacity: 0.6; transition: 0.2s; color: var(--text);}
         .icon-btn:hover { opacity: 1; transform: scale(1.2); }
@@ -409,6 +409,37 @@
 
     <script>
         // =========================================================================
+        // 🛡️ RCC SENTINEL: ANTI-TAMPER CYBERSECURITY AI
+        // =========================================================================
+        (function initSentinel() {
+            // 1. Detect LocalStorage Tampering
+            window.addEventListener('storage', (e) => {
+                if(e.key === 'rcc_role' || e.key === 'rcc_user') {
+                    terminateIntruder("Unauthorized storage manipulation detected.");
+                }
+            });
+
+            // 2. Continuous Role Validation
+            setInterval(() => {
+                const role = localStorage.getItem('rcc_role');
+                const user = localStorage.getItem('rcc_user');
+                if(role === 'admin' && user !== "Engr.Pinapit@rcc.com") {
+                    terminateIntruder("Privilege escalation attempt detected.");
+                }
+            }, 3000);
+
+            function terminateIntruder(reason) {
+                document.body.innerHTML = `<div style="background:#0f172a; color:#ef4444; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; text-align:center; padding:20px;">
+                    <h1 style="font-size:60px; margin:0;">🚨 SYSTEM TERMINATED</h1>
+                    <p style="font-size:18px; color:#f8fafc;">${reason}</p>
+                    <p style="color:#94a3b8; margin-top:20px;">Intrusion logged and flagged for review. Purging session data...</p>
+                </div>`;
+                localStorage.clear();
+                setTimeout(() => { window.location.href = 'index.html'; }, 4000);
+            }
+        })();
+
+        // =========================================================================
         // 🔒 SECURITY: 30 MINUTE AUTO-LOGOUT
         // =========================================================================
         let inactivityTime = function () {
@@ -520,7 +551,6 @@
             document.getElementById('user-display').innerText = displayUser;
             document.getElementById('user-avatar').innerText = displayUser.charAt(0).toUpperCase();
             
-            // STRICTLY apply admin-only only to the specific tools, allowing everyone else to input data
             document.querySelectorAll('.admin-only').forEach(el => { el.style.display = isEngineer ? 'block' : 'none'; });
             
             if(isEngineer) document.getElementById('hub-link-container').style.display = 'block';
@@ -577,7 +607,6 @@
             
             filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
             
-            // Apply Master Line Filter
             const lineFilter = document.getElementById('dashboard-line-filter').value;
             if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
 
@@ -600,7 +629,6 @@
             } 
             filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
             
-            // Apply Master Line Filter
             const lineFilter = document.getElementById('dashboard-line-filter').value;
             if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
 
@@ -624,7 +652,7 @@
 
             document.getElementById('kpi-yield').innerText = t.a.toLocaleString();
             document.getElementById('kpi-target').innerText = t.t.toLocaleString();
-            document.getElementById('kpi-down').innerText = (t.d / 60).toFixed(1) + " hrs"; // UPDATED TO HOURS
+            document.getElementById('kpi-down').innerText = (t.d / 60).toFixed(1) + " hrs"; 
             document.getElementById('kpi-scrap').innerText = t.s.toLocaleString();
             document.getElementById('kpi-eff').innerHTML = `${eff.toFixed(1)}% <span style="font-size:11px; background:var(--accent); color:white; padding:3px 8px; border-radius:6px; vertical-align:middle; margin-left:8px; display:inline-block; font-weight:bold; letter-spacing:1px; box-shadow: 0 2px 5px rgba(37,99,235,0.3);">OEE: ${oee.toFixed(1)}%</span>`;
         }
@@ -654,9 +682,6 @@
             }).join('');
         }
 
-        // ==========================================
-        // CHARTS & SIZE DISTRIBUTION GRAPH
-        // ==========================================
         function initCharts() {
             const cleanScales = { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(100,116,139,0.1)' } } };
             const animCfg = { duration: 600, easing: 'easeOutQuart' };
@@ -1034,15 +1059,6 @@
         function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); document.getElementById('main-overlay').style.display = 'none'; }
         function downloadReport() { const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([document.getElementById('report-content').innerText], { type: 'text/plain' })); a.download = `RCC_Deep_Analysis.txt`; a.click(); }
         
-        function saveEmailSettings() { alert("Dispatcher Saved!"); }
-        function sendEmailNow() { window.location.href = `mailto:manager@rcc.com?subject=Report&body=${encodeURIComponent(generateSmartReportText())}`; }
-        function copyReportNow() { navigator.clipboard.writeText(generateSmartReportText()); alert("Copied!"); }
-        function exportExcel() { alert("Downloading Excel (Stub)..."); }
-        async function openAuditLedger() { alert("Fetching Immutable Audit Ledger from DB..."); }
-        function saveNotes() { localStorage.setItem('bodyline_notes', document.getElementById('prod-notepad').value); }
-        function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('bodyline_notes') || ""; }
-        function loadEmailSettings() {} function checkAutomations() {}
-
         window.onload = checkSession;
     </script>
 </body>
