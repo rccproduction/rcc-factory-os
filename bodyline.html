@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v26.5 Sentinel Secured</title>
+    <title>RCC Bodyline OS | v26.3 Deep Analytics</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -98,8 +98,6 @@
 
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 12px; z-index: 3000; box-shadow: 0 15px 40px rgba(0,0,0,0.5); width: 90%; max-width: 650px; max-height: 90vh; overflow-y: auto;}
         .modal-content-box { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 15px; border-radius: 8px; margin: 15px 0; max-height: 400px; overflow-y: auto; font-size: 13px; line-height: 1.6; border: 1px solid var(--border); white-space: pre-wrap;}
-        .audit-record { background: var(--bg); border-left: 4px solid #8b5cf6; padding: 12px; margin-bottom: 10px; font-family: monospace; font-size: 11px; border-radius: 4px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .audit-record b { color: #8b5cf6; }
     </style>
 </head>
 <body>
@@ -226,7 +224,7 @@
             </div>
         </div>
 
-        <div class="chart-row" id="admin-form-container">
+        <div class="chart-row admin-only" id="admin-form-container">
             <div class="panel" id="admin-form" style="grid-column: span 2; border: 1px solid var(--accent); background: var(--bg);">
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
@@ -282,7 +280,7 @@
                 <label style="font-size:11px; font-weight:bold; color:var(--warning); display:block; margin-bottom:5px;">REJECT JUSTIFICATION</label>
                 <input type="text" id="f-reject-reason" placeholder="Explain the root cause of the rejected cans..." style="margin-bottom: 15px;">
 
-                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()">☁️ TRANSMIT RECORD (INSTANT POP)</button>
+                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()">☁️ TRANSMIT RECORD (OPTIMISTIC UI)</button>
             </div>
         </div>
 
@@ -312,7 +310,7 @@
         </div>
     </div>
 
-    <div class="fab" onclick="toggleMenu()">⚙️</div>
+    <div class="fab admin-only" onclick="toggleMenu()">⚙️</div>
     <div class="menu-overlay" onclick="toggleMenu()" id="main-overlay"></div>
     <div id="system-menu">
         <h2 style="font-weight: 800; color: var(--text); margin-top: 0;">RCC CONTROLS</h2>
@@ -325,7 +323,7 @@
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 2px solid #8b5cf6; color: #8b5cf6;" onclick="openAuditLedger()">🛡️ ISO AUDIT LEDGER</button>
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="exportExcel()">🟩 EXCEL (CURRENT VIEW)</button>
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="window.print()">🖨️ PDF (PRINT VIEW)</button>
-            <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" onclick="generateSmartReport()">📋 AI DEEP ANALYST REPORT</button>
+            <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" onclick="generateSmartReport()">📋 AI DATA ANALYST REPORT</button>
             
             <h4 style="color:var(--accent); font-size: 11px; text-transform: uppercase; margin-bottom: 5px;">✉️ Report Dispatcher</h4>
             <div style="background:var(--bg); padding:15px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 20px;">
@@ -408,37 +406,6 @@
     </div>
 
     <script>
-        // =========================================================================
-        // 🛡️ RCC SENTINEL: ANTI-TAMPER CYBERSECURITY AI
-        // =========================================================================
-        (function initSentinel() {
-            // 1. Detect LocalStorage Tampering
-            window.addEventListener('storage', (e) => {
-                if(e.key === 'rcc_role' || e.key === 'rcc_user') {
-                    terminateIntruder("Unauthorized storage manipulation detected.");
-                }
-            });
-
-            // 2. Continuous Role Validation
-            setInterval(() => {
-                const role = localStorage.getItem('rcc_role');
-                const user = localStorage.getItem('rcc_user');
-                if(role === 'admin' && user !== "Engr.Pinapit@rcc.com") {
-                    terminateIntruder("Privilege escalation attempt detected.");
-                }
-            }, 3000);
-
-            function terminateIntruder(reason) {
-                document.body.innerHTML = `<div style="background:#0f172a; color:#ef4444; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; text-align:center; padding:20px;">
-                    <h1 style="font-size:60px; margin:0;">🚨 SYSTEM TERMINATED</h1>
-                    <p style="font-size:18px; color:#f8fafc;">${reason}</p>
-                    <p style="color:#94a3b8; margin-top:20px;">Intrusion logged and flagged for review. Purging session data...</p>
-                </div>`;
-                localStorage.clear();
-                setTimeout(() => { window.location.href = 'index.html'; }, 4000);
-            }
-        })();
-
         // =========================================================================
         // 🔒 SECURITY: 30 MINUTE AUTO-LOGOUT
         // =========================================================================
@@ -550,7 +517,6 @@
             const displayUser = currentUser.includes('@') ? currentUser.split('@')[0] : currentUser;
             document.getElementById('user-display').innerText = displayUser;
             document.getElementById('user-avatar').innerText = displayUser.charAt(0).toUpperCase();
-            
             document.querySelectorAll('.admin-only').forEach(el => { el.style.display = isEngineer ? 'block' : 'none'; });
             
             if(isEngineer) document.getElementById('hub-link-container').style.display = 'block';
@@ -607,6 +573,7 @@
             
             filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
             
+            // Apply Master Line Filter
             const lineFilter = document.getElementById('dashboard-line-filter').value;
             if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
 
@@ -629,12 +596,14 @@
             } 
             filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
             
+            // Apply Master Line Filter
             const lineFilter = document.getElementById('dashboard-line-filter').value;
             if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
 
             updateAllVisuals();
         }
 
+        // Includes Packing table
         function getTotalDown(r) { return (r.down_welder || 0) + (r.down_seamer || 0) + (r.down_flanger || 0) + (r.down_pack || 0) + (r.down_other || 0) + (r.down_mech || 0) + (r.down_elec || 0) + (r.down_mat || 0) + (r.down_qc || 0); }
         function getTotalScrap(r) { return (r.defect_scratch || 0) + (r.defect_flange || 0) + (r.defect_weld || 0) + (r.defect_seam || 0); }
 
@@ -652,7 +621,7 @@
 
             document.getElementById('kpi-yield').innerText = t.a.toLocaleString();
             document.getElementById('kpi-target').innerText = t.t.toLocaleString();
-            document.getElementById('kpi-down').innerText = (t.d / 60).toFixed(1) + " hrs"; 
+            document.getElementById('kpi-down').innerText = (t.d / 60).toFixed(1) + " hrs"; // UPDATED TO HOURS
             document.getElementById('kpi-scrap').innerText = t.s.toLocaleString();
             document.getElementById('kpi-eff').innerHTML = `${eff.toFixed(1)}% <span style="font-size:11px; background:var(--accent); color:white; padding:3px 8px; border-radius:6px; vertical-align:middle; margin-left:8px; display:inline-block; font-weight:bold; letter-spacing:1px; box-shadow: 0 2px 5px rgba(37,99,235,0.3);">OEE: ${oee.toFixed(1)}%</span>`;
         }
@@ -682,6 +651,9 @@
             }).join('');
         }
 
+        // ==========================================
+        // CHARTS & SIZE DISTRIBUTION GRAPH
+        // ==========================================
         function initCharts() {
             const cleanScales = { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(100,116,139,0.1)' } } };
             const animCfg = { duration: 600, easing: 'easeOutQuart' };
@@ -874,7 +846,7 @@
             if(!error && data) { 
                 rawData.unshift(data[0]); 
                 processData(); 
-                btn.innerText = "☁️ TRANSMIT RECORD (INSTANT POP)";
+                btn.innerText = "☁️ TRANSMIT RECORD (OPTIMISTIC UI)";
                 ['f-actual', 'f-down-weld', 'f-down-seam', 'f-down-flange', 'f-down-pack', 'f-down-other', 'f-scrap-scratch', 'f-scrap-flange', 'f-reject-reason'].forEach(id => document.getElementById(id).value = '');
             } else { alert("ACCESS DENIED: Database locked."); btn.innerText = "☁️ TRANSMIT RECORD"; }
         }
@@ -949,10 +921,7 @@
                 };
                 await sb.from('audit_logs').insert([auditEntry]);
                 const { error } = await sb.from('production_logs').delete().eq('id', id); 
-                if(!error) {
-                    rawData = rawData.filter(r => r.id != id); 
-                    processData();
-                }
+                if(!error) { rawData = rawData.filter(r => r.id != id); processData(); }
             } catch(e) { alert("Audit system error."); }
         }
 
@@ -993,6 +962,7 @@
                 scrapReasons["Scratches"] += (r.defect_scratch||0); scrapReasons["Flanging Errors"] += (r.defect_flange||0); 
             });
             
+            // Heuristic Deep Analysis
             let worstEffLine = "None"; let worstEff = 100;
             let highestScrapLine = "None"; let highestScrapRatio = 0;
             let highestDownLine = "None"; let highestDown = 0;
@@ -1022,18 +992,26 @@
 
             text += `🔬 2. DEEP ANALYST INSIGHTS (MICRO-TRENDS)\n--------------------------------------------------\n`;
             
+            // Down Time Analysis
             if (downPercent > 10) text += `⚠️ CRITICAL DOWNTIME: Plant downtime accounts for ${downPercent}% of scheduled run time. Major bottleneck is ${topDownReason} delays.\n`;
             else text += `✅ DOWNTIME HEALTHY: Plant downtime is within acceptable limits (${downPercent}% of run time).\n`;
             if (highestDownLine !== "None") text += `   ↳ 🔍 Root Cause Asset: ${highestDownLine} is bleeding the most time (${(highestDown/60).toFixed(1)} hours lost).\n\n`;
 
+            // Scrap Analysis
             if (scrapPercent > 2) text += `⚠️ CRITICAL QC SCRAP: Scrap rate is failing at ${scrapPercent}% of total yield. Major contributor: ${topScrapReason}.\n`;
             else text += `✅ QC SCRAP HEALTHY: Plant scrap rate is efficient at ${scrapPercent}% of total yield.\n`;
             if (highestScrapLine !== "None" && highestScrapRatio > 2) text += `   ↳ 🔍 Root Cause Asset: ${highestScrapLine} is generating massive rejects (${highestScrapRatio.toFixed(1)}% scrap ratio for this specific line).\n\n`;
 
             text += `🚨 3. CONCLUSION & ACTION PLAN\n--------------------------------------------------\n`;
-            if(worstEffLine !== "None") text += `1. DISPATCH MAINTENANCE TO: ${worstEffLine}.\n   (This line is severely bottlenecking plant OEE at ${worstEff.toFixed(1)}% efficiency).\n`;
-            if(highestScrapLine !== "None" && highestScrapRatio > 2) text += `2. DISPATCH QUALITY CONTROL TO: ${highestScrapLine}.\n   (This line requires immediate mechanical recalibration to stop scrap generation).\n`;
-            if (worstEffLine === "None" && scrapPercent <= 2) text += `All production lines are currently operating within optimized standard parameters. Continue standard monitoring.\n`;
+            if(worstEffLine !== "None") {
+                text += `1. DISPATCH MAINTENANCE TO: ${worstEffLine}.\n   (This line is severely bottlenecking plant OEE at ${worstEff.toFixed(1)}% efficiency).\n`;
+            }
+            if(highestScrapLine !== "None" && highestScrapRatio > 2) {
+                text += `2. DISPATCH QUALITY CONTROL TO: ${highestScrapLine}.\n   (This line requires immediate mechanical recalibration to stop scrap generation).\n`;
+            }
+            if (worstEffLine === "None" && scrapPercent <= 2) {
+                text += `All production lines are currently operating within optimized standard parameters. Continue standard monitoring.\n`;
+            }
             text += `\n`;
 
             text += `📦 4. CAN SIZE YIELD & SHIFT BREAKDOWN (PERIOD-TO-DATE)\n--------------------------------------------------\n`;
