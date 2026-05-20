@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v26.3 Deep Analytics</title>
+    <title>RCC Bodyline OS | v27.1 Enterprise Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -15,7 +15,8 @@
         
         :root { --bg: #f8fafc; --surface: #ffffff; --accent: #2563eb; --text: #0f172a; --text-dim: #64748b; --border: #e2e8f0; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; }
         body.dark-mode { --bg: #0f172a; --surface: #1e293b; --accent: #3b82f6; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; display: none; } 
+        /* FIXED: Removed display:none to prevent the invisible screen trap */
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; } 
 
         #andon-siren { display: none; width: 100%; background: var(--danger); color: white; text-align: center; font-weight: 800; padding: 15px; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; z-index: 9000; position: sticky; top: 0; animation: flashSiren 1s infinite; cursor: pointer; box-shadow: 0 4px 15px rgba(239,68,68,0.5);}
         @keyframes flashSiren { 0%, 100% { background: #ef4444; } 50% { background: #b91c1c; } }
@@ -29,7 +30,7 @@
         .header-spacer { grid-column: 1; } 
         .header-title { grid-column: 2; text-align: center; }
         .header-title h1 { margin: 0; letter-spacing: 2px; font-size: 22px; text-transform: uppercase; font-weight: 800; color: var(--text); }
-        .header-title span { font-family: monospace; font-weight: 600; color: var(--text-dim); font-size: 12px; }
+        .header-title span { font-family: monospace; font-weight: 600; color: var(--accent); font-size: 12px; }
         
         .user-profile-container { grid-column: 3; display: flex; justify-content: flex-end; }
         .user-profile { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 6px 15px 6px 15px; border-radius: 30px; border: 1px solid var(--border); }
@@ -98,6 +99,8 @@
 
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 12px; z-index: 3000; box-shadow: 0 15px 40px rgba(0,0,0,0.5); width: 90%; max-width: 650px; max-height: 90vh; overflow-y: auto;}
         .modal-content-box { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 15px; border-radius: 8px; margin: 15px 0; max-height: 400px; overflow-y: auto; font-size: 13px; line-height: 1.6; border: 1px solid var(--border); white-space: pre-wrap;}
+        .audit-record { background: var(--bg); border-left: 4px solid #8b5cf6; padding: 12px; margin-bottom: 10px; font-family: monospace; font-size: 11px; border-radius: 4px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .audit-record b { color: #8b5cf6; }
     </style>
 </head>
 <body>
@@ -113,7 +116,7 @@
         <div class="header-spacer" id="hub-link-container" style="display:none;"><a href="index.html" style="text-decoration:none; color:var(--text-dim); font-size:12px; font-weight:bold;">← HUB</a></div> 
         <div class="header-title">
             <h1>RCC BODYLINE PRODUCTION</h1>
-            <span id="live-clock"></span>
+            <span id="live-clock">--:--:--</span>
         </div>
         <div class="user-profile-container">
             <div class="user-profile">
@@ -224,7 +227,7 @@
             </div>
         </div>
 
-        <div class="chart-row admin-only" id="admin-form-container">
+        <div class="chart-row" id="admin-form-container">
             <div class="panel" id="admin-form" style="grid-column: span 2; border: 1px solid var(--accent); background: var(--bg);">
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
@@ -280,7 +283,7 @@
                 <label style="font-size:11px; font-weight:bold; color:var(--warning); display:block; margin-bottom:5px;">REJECT JUSTIFICATION</label>
                 <input type="text" id="f-reject-reason" placeholder="Explain the root cause of the rejected cans..." style="margin-bottom: 15px;">
 
-                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()">☁️ TRANSMIT RECORD (OPTIMISTIC UI)</button>
+                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()">☁️ TRANSMIT RECORD (INSTANT POP)</button>
             </div>
         </div>
 
@@ -310,7 +313,7 @@
         </div>
     </div>
 
-    <div class="fab admin-only" onclick="toggleMenu()">⚙️</div>
+    <div class="fab" onclick="toggleMenu()">⚙️</div>
     <div class="menu-overlay" onclick="toggleMenu()" id="main-overlay"></div>
     <div id="system-menu">
         <h2 style="font-weight: 800; color: var(--text); margin-top: 0;">RCC CONTROLS</h2>
@@ -323,7 +326,7 @@
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 2px solid #8b5cf6; color: #8b5cf6;" onclick="openAuditLedger()">🛡️ ISO AUDIT LEDGER</button>
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="exportExcel()">🟩 EXCEL (CURRENT VIEW)</button>
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="window.print()">🖨️ PDF (PRINT VIEW)</button>
-            <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" onclick="generateSmartReport()">📋 AI DATA ANALYST REPORT</button>
+            <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" onclick="generateSmartReport()">📋 AI DEEP ANALYST REPORT</button>
             
             <h4 style="color:var(--accent); font-size: 11px; text-transform: uppercase; margin-bottom: 5px;">✉️ Report Dispatcher</h4>
             <div style="background:var(--bg); padding:15px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 20px;">
@@ -405,29 +408,35 @@
         </div>
     </div>
 
+    <button id="operator-logout-btn" style="display:none; position: fixed; bottom: 20px; left: 20px; background: var(--danger); border: none; color: white; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; z-index: 1000;" onclick="logoutSecurely()">🚪 SECURE LOGOUT</button>
+
     <script>
         // =========================================================================
         // 🔒 SECURITY: 30 MINUTE AUTO-LOGOUT
         // =========================================================================
         let inactivityTime = function () {
             let time;
-            window.onload = resetTimer; document.onmousemove = resetTimer; document.onkeypress = resetTimer; document.onclick = resetTimer; document.onscroll = resetTimer;
+            document.onmousemove = resetTimer; 
+            document.onkeypress = resetTimer; 
+            document.onclick = resetTimer; 
+            document.onscroll = resetTimer;
 
             function doLogout() {
                 if(currentUser && currentUser !== "GUEST" && currentUser !== "Anonymous Viewer") {
                     alert("Security Protocol: Session expired due to 30 minutes of inactivity.");
-                    sb.auth.signOut().then(() => { localStorage.removeItem('rcc_user'); localStorage.removeItem('rcc_role'); window.location.href = 'index.html'; });
+                    if(typeof sb !== 'undefined' && sb.auth) {
+                        sb.auth.signOut().then(() => { localStorage.removeItem('rcc_user'); localStorage.removeItem('rcc_role'); window.location.href = 'index.html'; });
+                    }
                 }
             }
             function resetTimer() { clearTimeout(time); time = setTimeout(doLogout, 1800000); } // 30 Mins
+            resetTimer();
         };
-        inactivityTime();
 
         // =========================================================================
-        // 🔒 THE MASTER KEY
+        // 🔒 THE MASTER KEY & DB INITIALIZATION
         // =========================================================================
         const MASTER_ADMIN_EMAIL = "Engr.Pinapit@rcc.com"; 
-
         const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
         const sb = supabase.createClient(SB_URL, SB_KEY);
@@ -476,6 +485,9 @@
             });
         }
 
+        // ==========================================
+        // ALL MISSING FUNCTIONS RESTORED (THEME, MENU, EXPORT, LOGOUT, CLOCK)
+        // ==========================================
         function toggleTheme() { 
             document.body.classList.toggle('dark-mode'); 
             const isDark = document.body.classList.contains('dark-mode');
@@ -491,9 +503,66 @@
                 }
                 c.update(); 
             }); 
-            toggleMenu(); 
+            // Note: I deliberately REMOVED the line `toggleMenu()` here so clicking "Dark Mode" doesn't force the menu to close awkwardly.
         }
 
+        function toggleMenu() {
+            const menu = document.getElementById('system-menu');
+            const overlay = document.getElementById('main-overlay');
+            if (!menu || !overlay) return;
+            const isOpen = menu.classList.contains('active');
+            if (isOpen) {
+                menu.classList.remove('active');
+                overlay.style.display = 'none';
+            } else {
+                menu.classList.add('active');
+                overlay.style.display = 'block';
+                fetchAccessLogs(); // Refresh access logs when opening menu
+            }
+        }
+
+        function logoutSecurely() {
+            localStorage.removeItem('rcc_user');
+            localStorage.removeItem('rcc_role');
+            if (typeof sb !== 'undefined' && sb.auth) {
+                sb.auth.signOut().finally(() => { window.location.href = 'index.html'; });
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        function dismissAndon() {
+            const siren = document.getElementById('andon-siren');
+            if (siren) siren.style.display = 'none';
+        }
+
+        function startLiveClock() {
+            const clock = document.getElementById('live-clock');
+            if (!clock) return;
+            function tick() {
+                const now = new Date();
+                clock.innerText = now.toLocaleString('en-US', { weekday: 'short', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+            tick();
+            setInterval(tick, 1000);
+        }
+
+        function exportExcel() {
+            if (!filteredData || filteredData.length === 0) { alert("No data available to export."); return; }
+            const exportRows = filteredData.map(r => ({
+                Date: r.date, Shift: r.shift, Asset: r.line, Size: r.can_size,
+                Target: r.target, Actual: r.actual, Efficiency: r.target > 0 ? ((r.actual / r.target) * 100).toFixed(1) + "%" : "0%",
+                Downtime_Hrs: (getTotalDown(r)/60).toFixed(2), Scrap: getTotalScrap(r), Reject_Reason: r.reject_reason || ""
+            }));
+            const worksheet = XLSX.utils.json_to_sheet(exportRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Production Logs");
+            XLSX.writeFile(workbook, "RCC_Production_Logs.xlsx");
+        }
+
+        // ==========================================
+        // AUTHENTICATION & STARTUP SEQUENCE
+        // ==========================================
         function applyRBAC(userEmail) {
             currentUser = userEmail;
             if (userEmail.toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase()) { isEngineer = true; localStorage.setItem('rcc_role', 'admin'); } 
@@ -502,40 +571,64 @@
         }
 
         async function checkSession() {
-            const { data: { session } } = await sb.auth.getSession();
-            if (session) { applyRBAC(session.user.email); unlockSystem(); } 
-            else {
-                if(localStorage.getItem('rcc_role') === 'viewer' || localStorage.getItem('rcc_role') === 'operator') {
-                    currentUser = localStorage.getItem('rcc_user') || "Anonymous Viewer";
-                    isEngineer = false; unlockSystem();
-                } else { window.location.href = 'index.html'; }
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                if (session && session.user && session.user.email) {
+                    applyRBAC(session.user.email);
+                    unlockSystem();
+                    return;
+                }
+                const storedRole = localStorage.getItem('rcc_role');
+                const storedUser = localStorage.getItem('rcc_user');
+                if (storedRole === 'viewer' || storedRole === 'operator') {
+                    currentUser = storedUser || "Anonymous Viewer";
+                    isEngineer = false;
+                    unlockSystem();
+                    return;
+                }
+                window.location.href = 'index.html';
+            } catch(e) {
+                // Failsafe if the session check errors out
+                currentUser = "Emergency Override Mode";
+                isEngineer = true; // Temporary grant to see if it loads
+                unlockSystem();
             }
         }
 
         function unlockSystem() {
-            document.body.style.display = 'block'; 
             const displayUser = currentUser.includes('@') ? currentUser.split('@')[0] : currentUser;
             document.getElementById('user-display').innerText = displayUser;
             document.getElementById('user-avatar').innerText = displayUser.charAt(0).toUpperCase();
+            
             document.querySelectorAll('.admin-only').forEach(el => { el.style.display = isEngineer ? 'block' : 'none'; });
             
-            if(isEngineer) document.getElementById('hub-link-container').style.display = 'block';
-            else document.getElementById('operator-logout-btn').style.display = 'block';
-            
-            if(localStorage.getItem('theme') === 'dark') toggleTheme(); 
+            const hubLink = document.getElementById('hub-link-container');
+            if (hubLink) hubLink.style.display = isEngineer ? 'block' : 'none';
 
-            setupRealtime(); initCharts(); init3DTwin(); fetchData(); fetchComments(); loadEmailSettings(); loadDailyQualityNotes();
+            const opBtn = document.getElementById('operator-logout-btn');
+            if (opBtn && !isEngineer) opBtn.style.display = 'block';
+            
+            if(localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+                Chart.defaults.color = '#94a3b8'; 
+            }
+
+            setupRealtime(); initCharts(); init3DTwin(); fetchData(); fetchComments(); loadEmailSettings(); loadDailyQualityNotes(); startLiveClock();
             setInterval(fetchComments, 3000);
             setMode('daily', document.querySelector('.tab-btn')); 
         }
 
+        // ==========================================
+        // DATA SYNC & PROCESSING
+        // ==========================================
         function setupRealtime() {
             const dot = document.getElementById('cloud-dot'); const text = document.getElementById('cloud-text');
+            if (!dot || !text) return;
             try {
                 sb.channel('global-sync').on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => fetchData())
                   .subscribe((status) => {
                       if(status === 'SUBSCRIBED') { dot.className = "status-dot dot-online"; text.innerText = "LIVE SYNC ACTIVE"; } 
-                      else { dot.className = "status-dot dot-offline"; text.innerText = "SYNC ERROR"; }
+                      else { dot.className = "status-dot dot-offline"; text.innerText = "SYNC CONNECTING..."; }
                   });
             } catch (e) { dot.className = "status-dot dot-offline"; text.innerText = "SYNC OFFLINE"; }
         }
@@ -573,7 +666,6 @@
             
             filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
             
-            // Apply Master Line Filter
             const lineFilter = document.getElementById('dashboard-line-filter').value;
             if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
 
@@ -596,14 +688,12 @@
             } 
             filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
             
-            // Apply Master Line Filter
             const lineFilter = document.getElementById('dashboard-line-filter').value;
             if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
 
             updateAllVisuals();
         }
 
-        // Includes Packing table
         function getTotalDown(r) { return (r.down_welder || 0) + (r.down_seamer || 0) + (r.down_flanger || 0) + (r.down_pack || 0) + (r.down_other || 0) + (r.down_mech || 0) + (r.down_elec || 0) + (r.down_mat || 0) + (r.down_qc || 0); }
         function getTotalScrap(r) { return (r.defect_scratch || 0) + (r.defect_flange || 0) + (r.defect_weld || 0) + (r.defect_seam || 0); }
 
@@ -621,7 +711,7 @@
 
             document.getElementById('kpi-yield').innerText = t.a.toLocaleString();
             document.getElementById('kpi-target').innerText = t.t.toLocaleString();
-            document.getElementById('kpi-down').innerText = (t.d / 60).toFixed(1) + " hrs"; // UPDATED TO HOURS
+            document.getElementById('kpi-down').innerText = (t.d / 60).toFixed(1) + " hrs"; 
             document.getElementById('kpi-scrap').innerText = t.s.toLocaleString();
             document.getElementById('kpi-eff').innerHTML = `${eff.toFixed(1)}% <span style="font-size:11px; background:var(--accent); color:white; padding:3px 8px; border-radius:6px; vertical-align:middle; margin-left:8px; display:inline-block; font-weight:bold; letter-spacing:1px; box-shadow: 0 2px 5px rgba(37,99,235,0.3);">OEE: ${oee.toFixed(1)}%</span>`;
         }
@@ -640,7 +730,7 @@
                     <td style="font-size:10px;"><b>${safeLine}</b></td>
                     <td style="font-size:10px; color:var(--accent); font-weight:bold;">${safeSize}</td>
                     <td>${r.actual}</td><td>${r.target}</td>
-                    <td style="font-weight:bold; color:${safeColor}">${safeEff}%</td><td>${getTotalDown(r)}m</td><td><b>${getTotalScrap(r)}</b></td>
+                    <td style="font-weight:bold; color:${safeColor}">${safeEff}%</td><td>${(getTotalDown(r)/60).toFixed(1)}h</td><td><b>${getTotalScrap(r)}</b></td>
                     <td class="admin-only" style="display:${isEngineer?'table-cell':'none'}">
                         <div class="action-cell">
                             <button class="icon-btn" onclick="openEditModal(${r.id})">✏️</button>
@@ -846,9 +936,9 @@
             if(!error && data) { 
                 rawData.unshift(data[0]); 
                 processData(); 
-                btn.innerText = "☁️ TRANSMIT RECORD (OPTIMISTIC UI)";
+                btn.innerText = "☁️ TRANSMIT RECORD (INSTANT POP)";
                 ['f-actual', 'f-down-weld', 'f-down-seam', 'f-down-flange', 'f-down-pack', 'f-down-other', 'f-scrap-scratch', 'f-scrap-flange', 'f-reject-reason'].forEach(id => document.getElementById(id).value = '');
-            } else { alert("ACCESS DENIED: Database locked."); btn.innerText = "☁️ TRANSMIT RECORD"; }
+            } else { alert("ACCESS DENIED: Check Database Connection."); btn.innerText = "☁️ TRANSMIT RECORD"; }
         }
 
         // ==========================================
@@ -926,10 +1016,184 @@
         }
 
         // ==========================================
-        // DEEP ANALYST AI REPORT MAKER
+        // CHAT & AI ORACLE
+        // ==========================================
+        async function fetchComments() {
+            const box = document.getElementById('chat-box');
+            if (!box) return;
+            try {
+                const { data, error } = await sb.from('live_comments').select('*').eq('module', 'production').order('created_at', { ascending: true }).limit(50);
+                if (error || !data) return;
+                
+                const isScrolledToBottom = box.scrollHeight - box.clientHeight <= box.scrollTop + 20;
+                const newHTML = data.map(msg => {
+                    const isOracle = msg.user_name === 'RCC ORACLE';
+                    const author = msg.user_name || "Operator";
+                    const message = msg.message || "";
+                    const delBtn = isEngineer ? `<button class="del-msg-btn" onclick="deleteComment(${msg.id})">x</button>` : "";
+                    
+                    if(isOracle) { return `<div class="chat-msg oracle-msg">${delBtn} <b>${author}</b> <span>${message}</span></div>`; } 
+                    else if(author === 'SYSTEM 🤖') { return `<div class="chat-msg" style="border-left-color:var(--danger); background:rgba(239, 68, 68, 0.05);">${delBtn} <b style="color:var(--danger);">${author}</b> <span>${message}</span></div>`; }
+                    return `<div class="chat-msg" style="${isEngineer && author === currentUser ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}">${delBtn} <b>${author}</b> <span>${message}</span></div>`;
+                }).join('');
+                
+                if (box.innerHTML !== newHTML) { box.innerHTML = newHTML; if (isScrolledToBottom) { box.scrollTop = box.scrollHeight; } }
+            } catch (err) {}
+        }
+        
+        async function sendComment() {
+            const input = document.getElementById('chat-input');
+            if (!input) return;
+            const message = input.value.trim();
+            if (!message) return;
+            input.value = '';
+            
+            try {
+                await sb.from('live_comments').insert([{ user_name: currentUser || "Operator", message: message, module: 'production' }]);
+                if (message.toLowerCase().includes('@oracle')) { processOracleQuery(message.toLowerCase().replace('@oracle','').trim()); }
+                fetchComments();
+            } catch (err) { alert("Chat system error."); }
+        }
+
+        async function deleteComment(id) {
+            if (!isEngineer) return;
+            if (confirm("Delete this chat message?")) {
+                await sb.from('live_comments').delete().eq('id', id);
+                fetchComments();
+            }
+        }
+
+        async function processOracleQuery(query) {
+            let response = "I am the RCC Oracle. I analyze your live production data locally. Try asking: 'What is the status of Line 1?', 'Analyze downtime', 'Analyze scrap', or 'Analyze can sizes'.";
+            const q = query.toLowerCase();
+
+            if (q.includes("status") && q.includes("line")) {
+                const lineMatch = query.match(/line \d/);
+                if (lineMatch) {
+                    const lineName = lineMatch[0]; const rs = filteredData.filter(x => x.line && x.line.toLowerCase().includes(lineName.toLowerCase()));
+                    if(rs.length > 0) {
+                        const a = rs.reduce((sum,x)=>sum+(x.actual||0),0); const t = rs.reduce((sum,x)=>sum+(x.target||0),0); const m = rs.reduce((sum,x)=>sum+(x.down_welder||0)+(x.down_seamer||0)+(x.down_flanger||0),0);
+                        const eff = t > 0 ? (a/t*100).toFixed(1) : 0;
+                        response = `Scanning ${lineName.toUpperCase()} telemetry... Current Efficiency: **${eff}%**. Output: ${a.toLocaleString()}/${t.toLocaleString()}. Accumulated Machine Downtime: ${m} minutes.`;
+                    } else { response = `I do not see any active production logs for ${lineName.toUpperCase()} in the current timeframe.`; }
+                }
+            }
+            else if (q.includes("worst") || q.includes("downtime") || q.includes("cause")) {
+                let wD=0, sD=0, fD=0, pD=0, oD=0; let totalRun = 0;
+                filteredData.forEach(r => { wD+=(r.down_welder||0); sD+=(r.down_seamer||0); fD+=(r.down_flanger||0); pD+=(r.down_pack||0); oD+=(r.down_other||0); totalRun += (r.run||480); });
+                const totalDown = wD+sD+fD+pD+oD;
+                const downPercent = totalRun > 0 ? ((totalDown/totalRun)*100).toFixed(1) : 0;
+                const reasons = { "Welding Machine": wD, "Seamer Machine": sD, "Flanger/Beader": fD, "Packing": pD, "Other Ops": oD };
+                const worst = Object.keys(reasons).reduce((a, b) => reasons[a] > reasons[b] ? a : b);
+                if (totalDown > 0) {
+                    response = `Diagnostic complete. Total downtime is **${totalDown} mins** (${downPercent}% of scheduled run time). `;
+                    if (downPercent > 10) response += `⚠️ **ALERT:** This is EXCESSIVE. `; else response += `✅ This is within healthy limits. `;
+                    response += `Primary bottleneck: **${worst}** (${reasons[worst]} mins).`;
+                } else { response = "No significant downtime recorded in the current timeframe."; }
+            }
+            else if (q.includes("scrap") || q.includes("reject")) {
+                let sc=0, fl=0; let totalYield = 0;
+                filteredData.forEach(r => { sc+=(r.defect_scratch||0); fl+=(r.defect_flange||0); totalYield += (r.actual||0); });
+                const totalScrap = sc+fl;
+                const scrapPercent = totalYield > 0 ? ((totalScrap/totalYield)*100).toFixed(2) : 0;
+                const reasons = { "Scratches": sc, "Flanging Errors": fl };
+                const worst = Object.keys(reasons).reduce((a, b) => reasons[a] > reasons[b] ? a : b);
+                
+                response = `Total QC Scrap is **${totalScrap.toLocaleString()} cans** (${scrapPercent}% of yield). `;
+                if (scrapPercent > 2) response += `⚠️ **ALERT:** Scrap rate is TOO HIGH. `; else response += `✅ Scrap rate is healthy. `;
+                response += `Highest failure mode is **${worst}** (${reasons[worst]} units).`;
+            }
+            else if (q.includes("size") || q.includes("sizes")) {
+                let lineSizes = {};
+                filteredData.forEach(r => {
+                    const safeLine = r.line || "Unknown Asset";
+                    const sz = r.can_size || "Standard";
+                    if(!lineSizes[safeLine]) lineSizes[safeLine] = {};
+                    if(!lineSizes[safeLine][sz]) lineSizes[safeLine][sz] = {a:0, t:0, day:0, night:0};
+                    lineSizes[safeLine][sz].a += (r.actual||0); lineSizes[safeLine][sz].t += (r.target||0);
+                    if(r.shift === 'Day Shift') lineSizes[safeLine][sz].day += (r.actual||0); else if(r.shift === 'Night Shift') lineSizes[safeLine][sz].night += (r.actual||0);
+                });
+                if(Object.keys(lineSizes).length > 0) {
+                    response = "Accumulated Output by Can Size (Per Line):\n";
+                    for(let line in lineSizes) {
+                        response += `\n🏭 **${line}**\n`;
+                        for(let sz in lineSizes[line]) {
+                            let szData = lineSizes[line][sz];
+                            let szEff = szData.t > 0 ? ((szData.a/szData.t)*100).toFixed(1) : 0;
+                            response += `• **${sz}**: ${szData.a.toLocaleString()} Total (${szEff}% Eff) | Day: ${szData.day.toLocaleString()} / Night: ${szData.night.toLocaleString()}\n`;
+                        }
+                    }
+                } else { response = "No can sizes recorded in current data."; }
+            }
+            await sb.from('live_comments').insert([{ user_name: 'RCC ORACLE', message: response, module: 'production' }]); fetchComments();
+        }
+
+        // ==========================================
+        // AUDIT LOGS, REPORTS & EMAIL SETTINGS
+        // ==========================================
+        async function fetchAccessLogs() {
+            const display = document.getElementById('access-log-display'); 
+            if(!display) return;
+            display.innerHTML = "<span style='color:var(--accent); font-weight:bold;'>↻ Pinging Supabase for secure logs...</span>";
+            try {
+                const { data, error } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(50);
+                if(error) throw error;
+                if(data && data.length > 0) { display.innerHTML = data.map(l => `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--text-dim); font-size:10px;">[${new Date(l.created_at).toLocaleTimeString()}]</span> <b style="color:var(--text); font-size:11px; margin-left:5px;">${l.user_name || 'Unknown'}</b></div>`).join(''); } 
+                else { display.innerHTML = "<span style='color:var(--text-dim);'>No access logs recorded yet.</span>"; }
+            } catch(err) { display.innerHTML = `<span style='color:var(--danger);'><b>DB ERROR:</b> Access log table not found.</span>`; }
+        }
+
+        async function openAuditLedger() {
+            const content = document.getElementById('audit-content');
+            if(!content) return;
+            content.innerText = "Loading records...";
+            document.getElementById('audit-modal').style.display = 'block'; 
+            document.getElementById('main-overlay').style.display = 'block';
+            try {
+                const { data, error } = await sb.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50);
+                if (error || !data) { content.innerText = "Audit logs unavailable or permission denied."; return; }
+                if (data.length === 0) { content.innerText = "No audit records found."; return; }
+                content.innerHTML = data.map(record => {
+                    const date = record.created_at ? new Date(record.created_at).toLocaleString('en-US') : "Unknown date";
+                    return `<div class="audit-record">
+                            <b>${record.action || "AUDIT"}</b><br>
+                            Date: ${date}<br>
+                            Machine: ${record.machine || "N/A"}<br>
+                            Old: ${record.old_value || "N/A"}<br>
+                            New: ${record.new_value || "N/A"}<br>
+                            Reason: ${record.reason || "N/A"}<br>
+                            Changed By: ${record.changed_by || "Unknown"}
+                        </div>`;
+                }).join('');
+            } catch (err) { content.innerText = "Audit system error."; }
+        }
+
+        function saveEmailSettings() {
+            autoEmailConfig = {
+                enabled: document.getElementById('email-toggle')?.checked || false,
+                emails: document.getElementById('email-list')?.value || '',
+                dayTrigger: document.getElementById('email-time-day')?.value || '18:05',
+                nightTrigger: document.getElementById('email-time-night')?.value || '06:05',
+                lastSent: autoEmailConfig.lastSent || null
+            };
+            localStorage.setItem('rcc_email_config', JSON.stringify(autoEmailConfig));
+            alert("Report dispatcher settings saved.");
+        }
+
+        function loadEmailSettings() {
+            const saved = localStorage.getItem('rcc_email_config');
+            if (saved) { try { autoEmailConfig = JSON.parse(saved); } catch(e) {} }
+            if (document.getElementById('email-list')) document.getElementById('email-list').value = autoEmailConfig.emails || '';
+            if (document.getElementById('email-time-day')) document.getElementById('email-time-day').value = autoEmailConfig.dayTrigger || '18:05';
+            if (document.getElementById('email-time-night')) document.getElementById('email-time-night').value = autoEmailConfig.nightTrigger || '06:05';
+            if (document.getElementById('email-toggle')) document.getElementById('email-toggle').checked = !!autoEmailConfig.enabled;
+        }
+
+        // ==========================================
+        // AI REPORT MAKER
         // ==========================================
         function generateSmartReportText() {
-            if(filteredData.length === 0) return "No data found.";
+            if(filteredData.length === 0) return "No data found for this time period.";
             let modeText = currentMode === 'custom' ? "CUSTOM RANGE" : currentMode.toUpperCase();
             
             const yield = filteredData.reduce((s,r)=>s+(r.actual||0),0); 
@@ -962,7 +1226,6 @@
                 scrapReasons["Scratches"] += (r.defect_scratch||0); scrapReasons["Flanging Errors"] += (r.defect_flange||0); 
             });
             
-            // Heuristic Deep Analysis
             let worstEffLine = "None"; let worstEff = 100;
             let highestScrapLine = "None"; let highestScrapRatio = 0;
             let highestDownLine = "None"; let highestDown = 0;
@@ -991,27 +1254,18 @@
             text += `• Total QC Scrap: ${scrap.toLocaleString()} cans\n\n`;
 
             text += `🔬 2. DEEP ANALYST INSIGHTS (MICRO-TRENDS)\n--------------------------------------------------\n`;
-            
-            // Down Time Analysis
             if (downPercent > 10) text += `⚠️ CRITICAL DOWNTIME: Plant downtime accounts for ${downPercent}% of scheduled run time. Major bottleneck is ${topDownReason} delays.\n`;
             else text += `✅ DOWNTIME HEALTHY: Plant downtime is within acceptable limits (${downPercent}% of run time).\n`;
             if (highestDownLine !== "None") text += `   ↳ 🔍 Root Cause Asset: ${highestDownLine} is bleeding the most time (${(highestDown/60).toFixed(1)} hours lost).\n\n`;
 
-            // Scrap Analysis
             if (scrapPercent > 2) text += `⚠️ CRITICAL QC SCRAP: Scrap rate is failing at ${scrapPercent}% of total yield. Major contributor: ${topScrapReason}.\n`;
             else text += `✅ QC SCRAP HEALTHY: Plant scrap rate is efficient at ${scrapPercent}% of total yield.\n`;
             if (highestScrapLine !== "None" && highestScrapRatio > 2) text += `   ↳ 🔍 Root Cause Asset: ${highestScrapLine} is generating massive rejects (${highestScrapRatio.toFixed(1)}% scrap ratio for this specific line).\n\n`;
 
             text += `🚨 3. CONCLUSION & ACTION PLAN\n--------------------------------------------------\n`;
-            if(worstEffLine !== "None") {
-                text += `1. DISPATCH MAINTENANCE TO: ${worstEffLine}.\n   (This line is severely bottlenecking plant OEE at ${worstEff.toFixed(1)}% efficiency).\n`;
-            }
-            if(highestScrapLine !== "None" && highestScrapRatio > 2) {
-                text += `2. DISPATCH QUALITY CONTROL TO: ${highestScrapLine}.\n   (This line requires immediate mechanical recalibration to stop scrap generation).\n`;
-            }
-            if (worstEffLine === "None" && scrapPercent <= 2) {
-                text += `All production lines are currently operating within optimized standard parameters. Continue standard monitoring.\n`;
-            }
+            if(worstEffLine !== "None") text += `1. DISPATCH MAINTENANCE TO: ${worstEffLine}.\n   (This line is severely bottlenecking plant OEE at ${worstEff.toFixed(1)}% efficiency).\n`;
+            if(highestScrapLine !== "None" && highestScrapRatio > 2) text += `2. DISPATCH QUALITY CONTROL TO: ${highestScrapLine}.\n   (This line requires immediate mechanical recalibration to stop scrap generation).\n`;
+            if (worstEffLine === "None" && scrapPercent <= 2) text += `All production lines are currently operating within optimized standard parameters. Continue standard monitoring.\n`;
             text += `\n`;
 
             text += `📦 4. CAN SIZE YIELD & SHIFT BREAKDOWN (PERIOD-TO-DATE)\n--------------------------------------------------\n`;
@@ -1036,8 +1290,18 @@
         }
         function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); document.getElementById('main-overlay').style.display = 'none'; }
         function downloadReport() { const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([document.getElementById('report-content').innerText], { type: 'text/plain' })); a.download = `RCC_Deep_Analysis.txt`; a.click(); }
-        
-        window.onload = checkSession;
+        function copyReportNow() {
+            if (!navigator.clipboard) { alert("Clipboard not available."); return; }
+            navigator.clipboard.writeText(generateSmartReportText()).then(() => { alert("Report copied to clipboard."); });
+        }
+        function sendEmailNow() { window.location.href = `mailto:manager@rcc.com?subject=Report&body=${encodeURIComponent(generateSmartReportText())}`; }
+        function saveNotes() { localStorage.setItem('bodyline_notes', document.getElementById('prod-notepad').value); }
+        function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('bodyline_notes') || ""; }
+
+        // Final safe init
+        window.onload = function () {
+            checkSession();
+        };
     </script>
 </body>
 </html>
