@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v28.1 Audited Build</title>
+    <title>RCC Bodyline OS | v28.2 Smooth Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -290,7 +290,7 @@
                 <label style="font-size:11px; font-weight:bold; color:var(--warning); display:block; margin-bottom:5px;">REJECT JUSTIFICATION</label>
                 <input type="text" id="f-reject-reason" placeholder="Explain the root cause of the rejected cans..." style="margin-bottom: 15px;">
 
-                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()">☁️ TRANSMIT RECORD (INSTANT POP)</button>
+                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()">☁️ TRANSMIT RECORD</button>
             </div>
         </div>
 
@@ -384,9 +384,7 @@
         <textarea id="edit-reason" rows="2" placeholder="Strictly detail why you are altering this official record..." style="border: 2px solid var(--danger); margin-bottom:15px;"></textarea>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
-            <div><label style="font-size:10px; color:var(--text-dim);">CAN SIZE</label>
-                <select id="edit-size" style="padding:10px;"></select>
-            </div>
+            <div><label style="font-size:10px; color:var(--text-dim);">CAN SIZE</label><select id="edit-size" style="padding:10px;"></select></div>
             <div><label style="font-size:10px; color:var(--text-dim);">TARGET</label><input type="number" id="edit-target" style="padding:10px;"></div>
             <div><label style="font-size:10px; color:var(--text-dim);">ACTUAL</label><input type="number" id="edit-actual" style="padding:10px;"></div>
         </div>
@@ -422,11 +420,10 @@
 
     <script>
         // =========================================================================
-        // 🔒 SECURITY: SAFE SESSION GUARD (NO TERMINATION SCREEN)
+        // 🔒 SECURITY: OPTIMIZED 30 MINUTE AUTO-LOGOUT (REMOVED MOUSEMOVE TO STOP LAG)
         // =========================================================================
         let inactivityTime = function () {
             let time;
-            document.onmousemove = resetTimer; 
             document.onkeypress = resetTimer; 
             document.onclick = resetTimer; 
             document.onscroll = resetTimer;
@@ -850,7 +847,7 @@
         }
 
         // ==========================================
-        // DATA UPLOAD & OPTIMISTIC UI
+        // DATA UPLOAD (SYNC-ONLY TO PREVENT TWITCHING)
         // ==========================================
         async function saveData() {
             const btn = document.getElementById('transmit-btn');
@@ -865,10 +862,12 @@
                 reject_reason: document.getElementById('f-reject-reason').value || '', created_at: new Date().toISOString()
             };
             if (entry.target === 0 || entry.actual === 0 || !entry.line) { alert("Target, Actual, and Line are required."); return; }
+            
             btn.innerText = "UPLOADING...";
-            const { data, error } = await sb.from('production_logs').insert([entry]).select();
-            if(!error && data) { 
-                rawData.unshift(data[0]); processData(); btn.innerText = "☁️ TRANSMIT RECORD (INSTANT POP)";
+            const { error } = await sb.from('production_logs').insert([entry]);
+            
+            if(!error) { 
+                btn.innerText = "☁️ TRANSMIT RECORD";
                 ['f-actual', 'f-down-weld', 'f-down-seam', 'f-down-flange', 'f-down-elec', 'f-down-elev', 'f-down-pallet', 'f-down-pack', 'f-down-other', 'f-scrap-scratch', 'f-scrap-flange', 'f-reject-reason'].forEach(id => document.getElementById(id).value = '');
             } else { alert("ACCESS DENIED: Check connection."); btn.innerText = "☁️ TRANSMIT RECORD"; }
         }
