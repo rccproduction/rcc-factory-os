@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v28.2 Smooth Edition</title>
+    <title>RCC Bodyline OS | v28.3 Stable & Unlocked</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -77,7 +77,6 @@
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th { text-align: left; padding: 12px 10px; border-bottom: 2px solid var(--border); color: var(--text-dim); text-transform: uppercase; position: sticky; top: 0; background: var(--surface); z-index: 10;}
         td { padding: 12px 10px; border-bottom: 1px solid var(--border); }
-        .admin-only { display: none; } 
         .action-cell { display: flex; gap: 10px; }
         .icon-btn { background: none; border: none; font-size: 14px; cursor: pointer; opacity: 0.6; transition: 0.2s; color: var(--text);}
         .icon-btn:hover { opacity: 1; transform: scale(1.2); }
@@ -302,7 +301,7 @@
                 </div>
                 <div style="overflow-y:auto; height: 400px;">
                     <table id="log-table">
-                        <thead><tr><th>Date</th><th>Shift</th><th>Asset</th><th>Size</th><th>Actual</th><th>Target</th><th>Eff%</th><th>Total Down</th><th>Scrap</th><th class="admin-only">Action</th></tr></thead>
+                        <thead><tr><th>Date</th><th>Shift</th><th>Asset</th><th>Size</th><th>Actual</th><th>Target</th><th>Eff%</th><th>Total Down</th><th>Scrap</th><th>Action</th></tr></thead>
                         <tbody id="log-body"></tbody>
                     </table>
                 </div>
@@ -328,7 +327,7 @@
         <button class="btn" style="width:100%; margin-bottom:20px; background: var(--danger); color: white;" onclick="logoutSecurely()">🔒 SECURE LOGOUT</button>
         <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="toggleTheme()">🌓 TOGGLE DARK MODE</button>
         
-        <div class="admin-only" style="margin-top: 20px;">
+        <div style="margin-top: 20px;">
             <h4 style="color:var(--accent); font-size: 11px; text-transform: uppercase; margin-bottom: 10px;">Admin Tools</h4>
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 2px solid #8b5cf6; color: #8b5cf6;" onclick="openAuditLedger()">🛡️ ISO AUDIT LEDGER</button>
             <button class="btn" style="width:100%; margin-bottom:10px; background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="exportExcel()">🟩 EXCEL (CURRENT VIEW)</button>
@@ -416,29 +415,30 @@
         </div>
     </div>
 
-    <button id="operator-logout-btn" style="display:none; position: fixed; bottom: 20px; left: 20px; background: var(--danger); border: none; color: white; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; z-index: 1000;" onclick="logoutSecurely()">🚪 SECURE LOGOUT</button>
-
     <script>
         // =========================================================================
-        // 🔒 SECURITY: OPTIMIZED 30 MINUTE AUTO-LOGOUT (REMOVED MOUSEMOVE TO STOP LAG)
+        // 🔒 SECURITY: OPTIMIZED 30 MINUTE AUTO-LOGOUT
         // =========================================================================
-        let inactivityTime = function () {
+        function setupSecurityTimer() {
             let time;
-            document.onkeypress = resetTimer; 
-            document.onclick = resetTimer; 
-            document.onscroll = resetTimer;
-
-            function doLogout() {
+            const resetTimer = () => {
+                clearTimeout(time);
+                time = setTimeout(doLogout, 1800000); // 30 Mins
+            };
+            const doLogout = () => {
                 if(currentUser && currentUser !== "GUEST" && currentUser !== "Anonymous Viewer") {
                     alert("Security Protocol: Session expired due to 30 minutes of inactivity.");
                     if(typeof sb !== 'undefined' && sb.auth) {
                         sb.auth.signOut().then(() => { localStorage.removeItem('rcc_user'); localStorage.removeItem('rcc_role'); window.location.href = 'index.html'; });
                     }
                 }
-            }
-            function resetTimer() { clearTimeout(time); time = setTimeout(doLogout, 1800000); } // 30 Mins
+            };
+            // FIXED: Removed onmousemove to stop memory leak and browser twitching
+            document.addEventListener('keypress', resetTimer); 
+            document.addEventListener('click', resetTimer); 
+            document.addEventListener('scroll', resetTimer);
             resetTimer();
-        };
+        }
 
         // =========================================================================
         // 🔒 THE MASTER KEY & DB INITIALIZATION
@@ -581,11 +581,8 @@
             document.getElementById('user-display').innerText = displayUser;
             document.getElementById('user-avatar').innerText = displayUser.charAt(0).toUpperCase();
             
-            document.querySelectorAll('.admin-only').forEach(el => { el.style.display = isEngineer ? 'block' : 'none'; });
-            document.querySelectorAll('th.admin-only, td.admin-only').forEach(el => { el.style.display = isEngineer ? 'table-cell' : 'none'; });
-            
+            // UNLOCKED: Edit buttons now globally visible
             const hubLink = document.getElementById('hub-link-container'); if (hubLink) hubLink.style.display = isEngineer ? 'block' : 'none';
-            const opBtn = document.getElementById('operator-logout-btn'); if (opBtn && !isEngineer) opBtn.style.display = 'block';
             
             if(localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); Chart.defaults.color = '#94a3b8'; }
 
@@ -696,16 +693,17 @@
                 let safeEff = r.target > 0 ? (r.actual/r.target*100).toFixed(1) : '0.0';
                 let safeColor = (r.target > 0 && (r.actual/r.target*100) < 80) ? 'var(--danger)' : 'var(--success)';
                 
+                // UNLOCKED: Action column edit/delete buttons available to all authenticated users
                 return `<tr>
                     <td>${r.date}</td><td>${safeShift}</td>
                     <td style="font-size:10px;"><b>${safeLine}</b></td>
                     <td style="font-size:10px; color:var(--accent); font-weight:bold;">${safeSize}</td>
                     <td>${r.actual}</td><td>${r.target}</td>
                     <td style="font-weight:bold; color:${safeColor}">${safeEff}%</td><td>${(getTotalDown(r)/60).toFixed(1)}h</td><td><b>${getTotalScrap(r)}</b></td>
-                    <td class="admin-only" style="display:${isEngineer?'table-cell':'none'}">
+                    <td>
                         <div class="action-cell">
-                            <button class="icon-btn" onclick="openEditModal(${r.id})">✏️</button>
-                            <button class="icon-btn" style="color:var(--danger)" onclick="deleteLog(${r.id})">🗑</button>
+                            <button class="icon-btn" onclick="openEditModal(${r.id})" title="Edit Record">✏️</button>
+                            <button class="icon-btn" style="color:var(--danger)" onclick="deleteLog(${r.id})" title="Delete Record">🗑</button>
                         </div>
                     </td>
                 </tr>`;
@@ -847,7 +845,7 @@
         }
 
         // ==========================================
-        // DATA UPLOAD (SYNC-ONLY TO PREVENT TWITCHING)
+        // DATA UPLOAD (SYNC-ONLY TO STOP TWITCHING)
         // ==========================================
         async function saveData() {
             const btn = document.getElementById('transmit-btn');
@@ -864,8 +862,9 @@
             if (entry.target === 0 || entry.actual === 0 || !entry.line) { alert("Target, Actual, and Line are required."); return; }
             
             btn.innerText = "UPLOADING...";
-            const { error } = await sb.from('production_logs').insert([entry]);
             
+            // FIXED: Removed optimistic UI arrays. Pure database sync ensures zero twitching.
+            const { error } = await sb.from('production_logs').insert([entry]);
             if(!error) { 
                 btn.innerText = "☁️ TRANSMIT RECORD";
                 ['f-actual', 'f-down-weld', 'f-down-seam', 'f-down-flange', 'f-down-elec', 'f-down-elev', 'f-down-pallet', 'f-down-pack', 'f-down-other', 'f-scrap-scratch', 'f-scrap-flange', 'f-reject-reason'].forEach(id => document.getElementById(id).value = '');
@@ -1083,7 +1082,7 @@
         function saveNotes() { localStorage.setItem('bodyline_notes', document.getElementById('prod-notepad').value); }
         function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('bodyline_notes') || ""; }
 
-        window.onload = function () { checkSession(); };
+        window.onload = function () { setupSecurityTimer(); checkSession(); };
     </script>
 </body>
 </html>
