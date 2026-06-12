@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v27.1 Enterprise Edition</title>
+    <title>RCC Bodyline OS | v28.5 Shift Matrix & Deep AI</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -15,7 +15,6 @@
         
         :root { --bg: #f8fafc; --surface: #ffffff; --accent: #2563eb; --text: #0f172a; --text-dim: #64748b; --border: #e2e8f0; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; }
         body.dark-mode { --bg: #0f172a; --surface: #1e293b; --accent: #3b82f6; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155; }
-        /* FIXED: Removed display:none to prevent the invisible screen trap */
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; } 
 
         #andon-siren { display: none; width: 100%; background: var(--danger); color: white; text-align: center; font-weight: 800; padding: 15px; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; z-index: 9000; position: sticky; top: 0; animation: flashSiren 1s infinite; cursor: pointer; box-shadow: 0 4px 15px rgba(239,68,68,0.5);}
@@ -65,9 +64,9 @@
         .twin-overlay p { margin: 5px 0 0 0; font-size: 11px; color: #94a3b8; text-transform: uppercase; }
 
         .admin-form-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 12px; }
-        .downtime-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 15px; background: rgba(37, 99, 235, 0.05); border: 1px dashed var(--accent); border-radius: 8px; margin-bottom: 10px;}
+        .downtime-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 15px; background: rgba(37, 99, 235, 0.05); border: 1px dashed var(--accent); border-radius: 8px; margin-bottom: 10px;}
         .downtime-grid div { display: flex; flex-direction: column; }
-        @media (max-width: 1100px) { .admin-form-grid { grid-template-columns: repeat(3, 1fr); } .downtime-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 1100px) { .admin-form-grid { grid-template-columns: repeat(3, 1fr); } .downtime-grid { grid-template-columns: repeat(2, 1fr); } }
 
         input, select, textarea { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; margin-bottom: 5px; font-family: inherit; font-size: 13px;}
         input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
@@ -187,12 +186,17 @@
                 <div class="kpi-card"><small>🗑️ Total QC Scrap</small><div id="kpi-scrap" class="val" style="color:var(--danger)">0</div></div>
             </div>
 
-            <div class="chart-row">
-                <div class="panel"><h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color:var(--text-dim);">Historical Performance</h3><div style="height: 220px;"><canvas id="prodChart"></canvas></div></div>
-                <div class="panel">
-                    <h3 style="margin:0; font-size:12px; text-transform: uppercase; color:var(--text-dim);">Downtime Root Cause (Machine Center)</h3>
-                    <p style="margin:0 0 10px 0; font-size:9px; color:var(--accent);">*Click a slice to filter log table</p>
-                    <div style="height: 200px;"><canvas id="utilChart"></canvas></div>
+            <div class="panel" style="margin-bottom: 20px;">
+                <h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color:var(--text-dim);">Historical Performance</h3>
+                <div style="height: 220px;"><canvas id="prodChart"></canvas></div>
+            </div>
+
+            <div class="panel" style="margin-bottom: 20px; border: 1px solid var(--accent);">
+                <h3 style="margin:0 0 15px 0; font-size:13px; text-transform: uppercase; color:var(--accent);">⚠️ Downtime Root Cause (Shift Matrix)</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; height: 220px;">
+                    <div><h4 style="text-align:center; font-size:11px; margin:0 0 5px 0; color:var(--text);">🌐 OVERALL</h4><canvas id="utilChartOverall"></canvas></div>
+                    <div><h4 style="text-align:center; font-size:11px; margin:0 0 5px 0; color:var(--warning);">☀️ DAY SHIFT</h4><canvas id="utilChartDay"></canvas></div>
+                    <div><h4 style="text-align:center; font-size:11px; margin:0 0 5px 0; color:var(--accent);">🌙 NIGHT SHIFT</h4><canvas id="utilChartNight"></canvas></div>
                 </div>
             </div>
 
@@ -266,10 +270,13 @@
                 </div>
 
                 <label style="font-size:11px; font-weight:bold; color:var(--accent); display:block; margin-bottom:5px;">MACHINE DOWNTIME ALLOCATION (MINUTES)</label>
-                <div class="downtime-grid">
+                <div class="downtime-grid" style="grid-template-columns: repeat(4, 1fr);">
                     <div><label style="font-size:10px; color:var(--text-dim);">⚡ WELDING MACHINE</label><input type="number" id="f-down-weld" placeholder="0"></div>
                     <div><label style="font-size:10px; color:var(--text-dim);">⚙️ SEAMER MACHINE</label><input type="number" id="f-down-seam" placeholder="0"></div>
                     <div><label style="font-size:10px; color:var(--text-dim);">🥫 FLANGER & BEADER</label><input type="number" id="f-down-flange" placeholder="0"></div>
+                    <div><label style="font-size:10px; color:var(--text-dim);">🔌 ELECTRICAL</label><input type="number" id="f-down-elec" placeholder="0"></div>
+                    <div><label style="font-size:10px; color:var(--text-dim);">🛗 ELEVATOR</label><input type="number" id="f-down-elev" placeholder="0"></div>
+                    <div><label style="font-size:10px; color:var(--text-dim);">🤖 PALLETIZER</label><input type="number" id="f-down-pallet" placeholder="0"></div>
                     <div><label style="font-size:10px; color:var(--text-dim);">📦 PACKING / SORTING</label><input type="number" id="f-down-pack" placeholder="0"></div>
                     <div><label style="font-size:10px; color:var(--text-dim);">🛑 OTHER / OPS DELAY</label><input type="number" id="f-down-other" placeholder="0"></div>
                 </div>
@@ -283,7 +290,7 @@
                 <label style="font-size:11px; font-weight:bold; color:var(--warning); display:block; margin-bottom:5px;">REJECT JUSTIFICATION</label>
                 <input type="text" id="f-reject-reason" placeholder="Explain the root cause of the rejected cans..." style="margin-bottom: 15px;">
 
-                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()">☁️ TRANSMIT RECORD (INSTANT POP)</button>
+                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()">☁️ TRANSMIT RECORD</button>
             </div>
         </div>
 
@@ -377,18 +384,19 @@
         <textarea id="edit-reason" rows="2" placeholder="Strictly detail why you are altering this official record..." style="border: 2px solid var(--danger); margin-bottom:15px;"></textarea>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
-            <div><label style="font-size:10px; color:var(--text-dim);">CAN SIZE</label>
-                <select id="edit-size" style="padding:10px;"></select>
-            </div>
+            <div><label style="font-size:10px; color:var(--text-dim);">CAN SIZE</label><select id="edit-size" style="padding:10px;"></select></div>
             <div><label style="font-size:10px; color:var(--text-dim);">TARGET</label><input type="number" id="edit-target" style="padding:10px;"></div>
             <div><label style="font-size:10px; color:var(--text-dim);">ACTUAL</label><input type="number" id="edit-actual" style="padding:10px;"></div>
         </div>
 
         <label style="font-size:11px; font-weight:bold; color:var(--accent); display:block; margin-bottom:5px;">EDIT MACHINE DOWNTIME (MINS)</label>
-        <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px; background:var(--bg); padding:10px; border-radius:6px; margin-bottom:10px;">
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; background:var(--bg); padding:10px; border-radius:6px; margin-bottom:10px;">
             <div><label style="font-size:9px;">WELDER</label><input type="number" id="edit-weld" style="padding:10px;"></div>
             <div><label style="font-size:9px;">SEAMER</label><input type="number" id="edit-seam" style="padding:10px;"></div>
             <div><label style="font-size:9px;">FLANGER</label><input type="number" id="edit-flange" style="padding:10px;"></div>
+            <div><label style="font-size:9px;">ELECTRICAL</label><input type="number" id="edit-elec" style="padding:10px;"></div>
+            <div><label style="font-size:9px;">ELEVATOR</label><input type="number" id="edit-elev" style="padding:10px;"></div>
+            <div><label style="font-size:9px;">PALLETIZER</label><input type="number" id="edit-pallet" style="padding:10px;"></div>
             <div><label style="font-size:9px;">PACKING</label><input type="number" id="edit-pack" style="padding:10px;"></div>
             <div><label style="font-size:9px;">OTHER</label><input type="number" id="edit-other" style="padding:10px;"></div>
         </div>
@@ -412,30 +420,25 @@
 
     <script>
         // =========================================================================
-        // 🔒 SECURITY: 30 MINUTE AUTO-LOGOUT
+        // 🔒 SECURITY: SAFE SESSION GUARD (NO MEMORY LEAKS OR WHITE SCREENS)
         // =========================================================================
-        let inactivityTime = function () {
+        function setupSecurityTimer() {
             let time;
-            document.onmousemove = resetTimer; 
-            document.onkeypress = resetTimer; 
-            document.onclick = resetTimer; 
-            document.onscroll = resetTimer;
-
-            function doLogout() {
+            const resetTimer = () => { clearTimeout(time); time = setTimeout(doLogout, 1800000); };
+            const doLogout = () => {
                 if(currentUser && currentUser !== "GUEST" && currentUser !== "Anonymous Viewer") {
                     alert("Security Protocol: Session expired due to 30 minutes of inactivity.");
                     if(typeof sb !== 'undefined' && sb.auth) {
                         sb.auth.signOut().then(() => { localStorage.removeItem('rcc_user'); localStorage.removeItem('rcc_role'); window.location.href = 'index.html'; });
                     }
                 }
-            }
-            function resetTimer() { clearTimeout(time); time = setTimeout(doLogout, 1800000); } // 30 Mins
+            };
+            document.addEventListener('keypress', resetTimer); 
+            document.addEventListener('click', resetTimer); 
+            document.addEventListener('scroll', resetTimer);
             resetTimer();
-        };
+        }
 
-        // =========================================================================
-        // 🔒 THE MASTER KEY & DB INITIALIZATION
-        // =========================================================================
         const MASTER_ADMIN_EMAIL = "Engr.Pinapit@rcc.com"; 
         const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
@@ -446,20 +449,13 @@
         let isTwinVisible = false;
         let autoEmailConfig = { enabled: false, emails: '', dayTrigger: '18:05', nightTrigger: '06:05', lastSent: null };
 
-        Chart.defaults.font.family = "'Inter', sans-serif";
-        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = "'Inter', sans-serif"; Chart.defaults.color = '#64748b';
 
-        // ==========================================
-        // AUTO-CALCULATE TARGET
-        // ==========================================
         function calculateTarget() {
             const cpm = document.getElementById('f-cpm').value;
             if(cpm) { document.getElementById('f-target').value = Math.round(cpm * 60 * 8.5 * 0.8); }
         }
 
-        // ==========================================
-        // PRECISE FACTORY CAN SIZE MAPPING 
-        // ==========================================
         const lineSizeMap = {
             "Line 1": ["211 x 300 (0.15)", "211 x 308 (0.15)", "300 x 400 (0.17)", "214/300 x 407 (0.17)", "300 x 407 (0.17)"],
             "Line 2": ["202 x 205 (0.14)", "200/202 x 205 (0.14)", "202 x 306 (0.14)", "200/202 x 306 (0.14)", "202 x 312 (0.14)", "200/202 x 312 (0.14)", "300 x 400 (0.17)", "300 x 407 (0.17)", "214/300 x 407 (0.17)"],
@@ -472,97 +468,55 @@
 
         function updateCanSizes() {
             const assetSelect = document.getElementById('f-line').value;
-            const sizeSelect = document.getElementById('f-size');
-            sizeSelect.innerHTML = ""; 
+            const sizeSelect = document.getElementById('f-size'); sizeSelect.innerHTML = ""; 
             if(!assetSelect) { sizeSelect.innerHTML = `<option value="">Select Asset First</option>`; return; }
-
             let foundSizes = ["Standard Multi-Size"]; 
-            for (const [lineKey, sizes] of Object.entries(lineSizeMap)) {
-                if (assetSelect.toUpperCase().includes(lineKey.toUpperCase())) { foundSizes = sizes; break; }
-            }
-            foundSizes.forEach(size => {
-                const opt = document.createElement('option'); opt.value = size; opt.innerText = size; sizeSelect.appendChild(opt);
-            });
+            for (const [lineKey, sizes] of Object.entries(lineSizeMap)) { if (assetSelect.toUpperCase().includes(lineKey.toUpperCase())) { foundSizes = sizes; break; } }
+            foundSizes.forEach(size => { const opt = document.createElement('option'); opt.value = size; opt.innerText = size; sizeSelect.appendChild(opt); });
         }
 
-        // ==========================================
-        // ALL MISSING FUNCTIONS RESTORED (THEME, MENU, EXPORT, LOGOUT, CLOCK)
-        // ==========================================
         function toggleTheme() { 
-            document.body.classList.toggle('dark-mode'); 
-            const isDark = document.body.classList.contains('dark-mode');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light'); 
-            
-            Chart.defaults.color = isDark ? '#94a3b8' : '#64748b'; 
-            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(100,116,139,0.1)';
-            
+            document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); 
+            Chart.defaults.color = isDark ? '#94a3b8' : '#64748b'; const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(100,116,139,0.1)';
             Object.values(charts).forEach(c => { 
-                if(c.options.scales) {
+                if(c && c.options && c.options.scales) {
                     if(c.options.scales.x && c.options.scales.x.grid) c.options.scales.x.grid.color = gridColor;
                     if(c.options.scales.y && c.options.scales.y.grid) c.options.scales.y.grid.color = gridColor;
                 }
-                c.update(); 
+                if(c) c.update(); 
             }); 
-            // Note: I deliberately REMOVED the line `toggleMenu()` here so clicking "Dark Mode" doesn't force the menu to close awkwardly.
         }
 
         function toggleMenu() {
-            const menu = document.getElementById('system-menu');
-            const overlay = document.getElementById('main-overlay');
-            if (!menu || !overlay) return;
-            const isOpen = menu.classList.contains('active');
-            if (isOpen) {
-                menu.classList.remove('active');
-                overlay.style.display = 'none';
-            } else {
-                menu.classList.add('active');
-                overlay.style.display = 'block';
-                fetchAccessLogs(); // Refresh access logs when opening menu
-            }
+            const menu = document.getElementById('system-menu'); const overlay = document.getElementById('main-overlay'); if (!menu || !overlay) return;
+            if (menu.classList.contains('active')) { menu.classList.remove('active'); overlay.style.display = 'none'; } 
+            else { menu.classList.add('active'); overlay.style.display = 'block'; fetchAccessLogs(); }
         }
 
         function logoutSecurely() {
-            localStorage.removeItem('rcc_user');
-            localStorage.removeItem('rcc_role');
-            if (typeof sb !== 'undefined' && sb.auth) {
-                sb.auth.signOut().finally(() => { window.location.href = 'index.html'; });
-            } else {
-                window.location.href = 'index.html';
-            }
+            localStorage.removeItem('rcc_user'); localStorage.removeItem('rcc_role');
+            if (typeof sb !== 'undefined' && sb.auth) { sb.auth.signOut().finally(() => { window.location.href = 'index.html'; }); } 
+            else { window.location.href = 'index.html'; }
         }
 
-        function dismissAndon() {
-            const siren = document.getElementById('andon-siren');
-            if (siren) siren.style.display = 'none';
-        }
+        function dismissAndon() { const siren = document.getElementById('andon-siren'); if (siren) siren.style.display = 'none'; }
 
         function startLiveClock() {
-            const clock = document.getElementById('live-clock');
-            if (!clock) return;
-            function tick() {
-                const now = new Date();
-                clock.innerText = now.toLocaleString('en-US', { weekday: 'short', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            }
-            tick();
-            setInterval(tick, 1000);
+            const clock = document.getElementById('live-clock'); if (!clock) return;
+            function tick() { clock.innerText = new Date().toLocaleString('en-US', { weekday: 'short', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+            tick(); setInterval(tick, 1000);
         }
 
         function exportExcel() {
             if (!filteredData || filteredData.length === 0) { alert("No data available to export."); return; }
             const exportRows = filteredData.map(r => ({
-                Date: r.date, Shift: r.shift, Asset: r.line, Size: r.can_size,
-                Target: r.target, Actual: r.actual, Efficiency: r.target > 0 ? ((r.actual / r.target) * 100).toFixed(1) + "%" : "0%",
+                Date: r.date, Shift: r.shift, Asset: r.line, Size: r.can_size, Target: r.target, Actual: r.actual, 
+                Efficiency: r.target > 0 ? ((r.actual / r.target) * 100).toFixed(1) + "%" : "0%",
                 Downtime_Hrs: (getTotalDown(r)/60).toFixed(2), Scrap: getTotalScrap(r), Reject_Reason: r.reject_reason || ""
             }));
-            const worksheet = XLSX.utils.json_to_sheet(exportRows);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Production Logs");
-            XLSX.writeFile(workbook, "RCC_Production_Logs.xlsx");
+            const worksheet = XLSX.utils.json_to_sheet(exportRows); const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, worksheet, "Production Logs"); XLSX.writeFile(workbook, "RCC_Production_Logs.xlsx");
         }
 
-        // ==========================================
-        // AUTHENTICATION & STARTUP SEQUENCE
-        // ==========================================
         function applyRBAC(userEmail) {
             currentUser = userEmail;
             if (userEmail.toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase()) { isEngineer = true; localStorage.setItem('rcc_role', 'admin'); } 
@@ -573,54 +527,28 @@
         async function checkSession() {
             try {
                 const { data: { session } } = await sb.auth.getSession();
-                if (session && session.user && session.user.email) {
-                    applyRBAC(session.user.email);
-                    unlockSystem();
-                    return;
+                if (session && session.user && session.user.email) { applyRBAC(session.user.email); } 
+                else {
+                    const storedRole = localStorage.getItem('rcc_role'); const storedUser = localStorage.getItem('rcc_user');
+                    if (storedRole === 'viewer' || storedRole === 'operator') { currentUser = storedUser || "Anonymous Viewer"; isEngineer = false; }
+                    else { window.location.href = 'index.html'; return; }
                 }
-                const storedRole = localStorage.getItem('rcc_role');
-                const storedUser = localStorage.getItem('rcc_user');
-                if (storedRole === 'viewer' || storedRole === 'operator') {
-                    currentUser = storedUser || "Anonymous Viewer";
-                    isEngineer = false;
-                    unlockSystem();
-                    return;
-                }
-                window.location.href = 'index.html';
-            } catch(e) {
-                // Failsafe if the session check errors out
-                currentUser = "Emergency Override Mode";
-                isEngineer = true; // Temporary grant to see if it loads
-                unlockSystem();
-            }
-        }
-
-        function unlockSystem() {
+            } catch(e) { currentUser = "RCC User"; isEngineer = false; }
+            
+            // Failsafe execution inside the session check
             const displayUser = currentUser.includes('@') ? currentUser.split('@')[0] : currentUser;
-            document.getElementById('user-display').innerText = displayUser;
-            document.getElementById('user-avatar').innerText = displayUser.charAt(0).toUpperCase();
+            const userDisplay = document.getElementById('user-display'); if (userDisplay) userDisplay.innerText = displayUser;
+            const userAvatar = document.getElementById('user-avatar'); if (userAvatar) userAvatar.innerText = displayUser.charAt(0).toUpperCase();
             
             document.querySelectorAll('.admin-only').forEach(el => { el.style.display = isEngineer ? 'block' : 'none'; });
-            
-            const hubLink = document.getElementById('hub-link-container');
-            if (hubLink) hubLink.style.display = isEngineer ? 'block' : 'none';
-
-            const opBtn = document.getElementById('operator-logout-btn');
-            if (opBtn && !isEngineer) opBtn.style.display = 'block';
-            
-            if(localStorage.getItem('theme') === 'dark') {
-                document.body.classList.add('dark-mode');
-                Chart.defaults.color = '#94a3b8'; 
-            }
+            const hubLink = document.getElementById('hub-link-container'); if (hubLink) hubLink.style.display = isEngineer ? 'block' : 'none';
+            const opBtn = document.getElementById('operator-logout-btn'); if (opBtn && !isEngineer) opBtn.style.display = 'block';
+            if(localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); Chart.defaults.color = '#94a3b8'; }
 
             setupRealtime(); initCharts(); init3DTwin(); fetchData(); fetchComments(); loadEmailSettings(); loadDailyQualityNotes(); startLiveClock();
-            setInterval(fetchComments, 3000);
-            setMode('daily', document.querySelector('.tab-btn')); 
+            setInterval(fetchComments, 3000); setMode('daily', document.querySelector('.tab-btn')); 
         }
 
-        // ==========================================
-        // DATA SYNC & PROCESSING
-        // ==========================================
         function setupRealtime() {
             const dot = document.getElementById('cloud-dot'); const text = document.getElementById('cloud-text');
             if (!dot || !text) return;
@@ -652,130 +580,60 @@
         function calculateDatesAndProcess() {
             const today = new Date(); const yyyy = today.getFullYear(); const mm = String(today.getMonth() + 1).padStart(2, '0'); const dd = String(today.getDate()).padStart(2, '0');
             const todayStr = `${yyyy}-${mm}-${dd}`; let start, end;
-
             if(currentMode === 'daily') { start = end = todayStr; } 
-            else if(currentMode === 'weekly') {
-                let day = today.getDay(); let diff = today.getDate() - day + (day === 0 ? -6 : 1); 
-                let mon = new Date(today.setDate(diff)); let sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-                start = mon.toISOString().split('T')[0]; end = sun.toISOString().split('T')[0];
-            }
-            else if(currentMode === 'monthly') {
-                start = `${yyyy}-${mm}-01`; let lastDay = new Date(yyyy, today.getMonth() + 1, 0); end = `${yyyy}-${mm}-${lastDay.getDate()}`;
-            }
+            else if(currentMode === 'weekly') { let day = today.getDay(); let diff = today.getDate() - day + (day === 0 ? -6 : 1); let mon = new Date(today.setDate(diff)); let sun = new Date(mon); sun.setDate(mon.getDate() + 6); start = mon.toISOString().split('T')[0]; end = sun.toISOString().split('T')[0]; }
+            else if(currentMode === 'monthly') { start = `${yyyy}-${mm}-01`; let lastDay = new Date(yyyy, today.getMonth() + 1, 0); end = `${yyyy}-${mm}-${lastDay.getDate()}`; }
             else if(currentMode === 'yearly') { start = `${yyyy}-01-01`; end = `${yyyy}-12-31`; }
             
             filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
-            
-            const lineFilter = document.getElementById('dashboard-line-filter').value;
-            if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
-
-            loadDailyQualityNotes(); 
-            updateAllVisuals();
+            const lineFilter = document.getElementById('dashboard-line-filter').value; if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
+            loadDailyQualityNotes(); updateAllVisuals();
         }
 
         function processData() {
             if(currentMode !== 'custom') { calculateDatesAndProcess(); return; } 
             const subMode = document.getElementById('custom-mode').value; let start, end;
             if (subMode === 'range') { start = document.getElementById('date-start').value; end = document.getElementById('date-end').value; } 
-            else if (subMode === 'week') {
-                const weekVal = document.getElementById('date-week').value; if(!weekVal) return;
-                let [y, w] = weekVal.split('-W'); let simple = new Date(y, 0, 1 + (w - 1) * 7); let day = simple.getDay(); let diff = simple.getDate() - day + (day === 0 ? -6 : 1); 
-                let mon = new Date(simple.setDate(diff)); let sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-                start = mon.toISOString().split('T')[0]; end = sun.toISOString().split('T')[0];
-            } else if (subMode === 'month') {
-                const monVal = document.getElementById('date-month').value; if(!monVal) return;
-                start = monVal + "-01"; let d = new Date(monVal.split('-')[0], monVal.split('-')[1], 0); end = monVal + "-" + d.getDate();
-            } 
+            else if (subMode === 'week') { const weekVal = document.getElementById('date-week').value; if(!weekVal) return; let [y, w] = weekVal.split('-W'); let simple = new Date(y, 0, 1 + (w - 1) * 7); let day = simple.getDay(); let diff = simple.getDate() - day + (day === 0 ? -6 : 1); let mon = new Date(simple.setDate(diff)); let sun = new Date(mon); sun.setDate(mon.getDate() + 6); start = mon.toISOString().split('T')[0]; end = sun.toISOString().split('T')[0]; } 
+            else if (subMode === 'month') { const monVal = document.getElementById('date-month').value; if(!monVal) return; start = monVal + "-01"; let d = new Date(monVal.split('-')[0], monVal.split('-')[1], 0); end = monVal + "-" + d.getDate(); } 
             filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
-            
-            const lineFilter = document.getElementById('dashboard-line-filter').value;
-            if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
-
+            const lineFilter = document.getElementById('dashboard-line-filter').value; if (lineFilter !== "ALL") { filteredData = filteredData.filter(r => r.line && r.line.includes(lineFilter)); }
             updateAllVisuals();
         }
 
-        function getTotalDown(r) { return (r.down_welder || 0) + (r.down_seamer || 0) + (r.down_flanger || 0) + (r.down_pack || 0) + (r.down_other || 0) + (r.down_mech || 0) + (r.down_elec || 0) + (r.down_mat || 0) + (r.down_qc || 0); }
+        function getTotalDown(r) { return (r.down_welder || 0) + (r.down_seamer || 0) + (r.down_flanger || 0) + (r.down_elec || 0) + (r.down_elevator || 0) + (r.down_palletizer || 0) + (r.down_pack || 0) + (r.down_other || 0) + (r.down_mech || 0) + (r.down_mat || 0) + (r.down_qc || 0); }
         function getTotalScrap(r) { return (r.defect_scratch || 0) + (r.defect_flange || 0) + (r.defect_weld || 0) + (r.defect_seam || 0); }
 
-        function updateAllVisuals() {
-            updateKPIs(); renderTable(); updateCharts(); update3DTwin();
-        }
+        function updateAllVisuals() { updateKPIs(); renderTable(); updateCharts(); update3DTwin(); }
 
         function updateKPIs() {
-            const t = filteredData.reduce((acc, r) => { 
-                acc.a += (r.actual||0); acc.t += (r.target||0); acc.d += getTotalDown(r); acc.s += getTotalScrap(r); acc.run += (r.run || 480); return acc; 
-            }, {a:0, t:0, d:0, s:0, run:0});
-            
-            const eff = t.t > 0 ? (t.a/t.t*100) : 0; 
-            let oee = ((t.run > 0 ? (t.run - t.d) / t.run : 0) * (t.t > 0 ? t.a / t.t : 0) * (t.a > 0 ? Math.max(0, t.a - t.s) / t.a : 0)) * 100;
-
-            document.getElementById('kpi-yield').innerText = t.a.toLocaleString();
-            document.getElementById('kpi-target').innerText = t.t.toLocaleString();
-            document.getElementById('kpi-down').innerText = (t.d / 60).toFixed(1) + " hrs"; 
-            document.getElementById('kpi-scrap').innerText = t.s.toLocaleString();
-            document.getElementById('kpi-eff').innerHTML = `${eff.toFixed(1)}% <span style="font-size:11px; background:var(--accent); color:white; padding:3px 8px; border-radius:6px; vertical-align:middle; margin-left:8px; display:inline-block; font-weight:bold; letter-spacing:1px; box-shadow: 0 2px 5px rgba(37,99,235,0.3);">OEE: ${oee.toFixed(1)}%</span>`;
+            const t = filteredData.reduce((acc, r) => { acc.a += (r.actual||0); acc.t += (r.target||0); acc.d += getTotalDown(r); acc.s += getTotalScrap(r); acc.run += (r.run || 480); return acc; }, {a:0, t:0, d:0, s:0, run:0});
+            const eff = t.t > 0 ? (t.a/t.t*100) : 0; let oee = ((t.run > 0 ? (t.run - t.d) / t.run : 0) * (t.t > 0 ? t.a / t.t : 0) * (t.a > 0 ? Math.max(0, t.a - t.s) / t.a : 0)) * 100;
+            document.getElementById('kpi-yield').innerText = t.a.toLocaleString(); document.getElementById('kpi-target').innerText = t.t.toLocaleString(); document.getElementById('kpi-down').innerText = (t.d / 60).toFixed(1) + " hrs"; 
+            document.getElementById('kpi-scrap').innerText = t.s.toLocaleString(); document.getElementById('kpi-eff').innerHTML = `${eff.toFixed(1)}% <span style="font-size:11px; background:var(--accent); color:white; padding:3px 8px; border-radius:6px; vertical-align:middle; margin-left:8px; display:inline-block; font-weight:bold; letter-spacing:1px; box-shadow: 0 2px 5px rgba(37,99,235,0.3);">OEE: ${oee.toFixed(1)}%</span>`;
         }
 
         function renderTable(customData = null) {
             const dataToRender = customData || filteredData;
             document.getElementById('log-body').innerHTML = dataToRender.map(r => {
-                let safeShift = r.shift ? r.shift[0] : '-'; 
-                let safeLine = r.line || 'Unknown';
-                let safeSize = r.can_size || 'N/A'; 
-                let safeEff = r.target > 0 ? (r.actual/r.target*100).toFixed(1) : '0.0';
-                let safeColor = (r.target > 0 && (r.actual/r.target*100) < 80) ? 'var(--danger)' : 'var(--success)';
-                
-                return `<tr>
-                    <td>${r.date}</td><td>${safeShift}</td>
-                    <td style="font-size:10px;"><b>${safeLine}</b></td>
-                    <td style="font-size:10px; color:var(--accent); font-weight:bold;">${safeSize}</td>
-                    <td>${r.actual}</td><td>${r.target}</td>
-                    <td style="font-weight:bold; color:${safeColor}">${safeEff}%</td><td>${(getTotalDown(r)/60).toFixed(1)}h</td><td><b>${getTotalScrap(r)}</b></td>
-                    <td class="admin-only" style="display:${isEngineer?'table-cell':'none'}">
-                        <div class="action-cell">
-                            <button class="icon-btn" onclick="openEditModal(${r.id})">✏️</button>
-                            <button class="icon-btn" style="color:var(--danger)" onclick="deleteLog(${r.id})">🗑</button>
-                        </div>
-                    </td>
-                </tr>`;
+                let safeShift = r.shift ? r.shift[0] : '-'; let safeLine = r.line || 'Unknown'; let safeSize = r.can_size || 'N/A'; 
+                let safeEff = r.target > 0 ? (r.actual/r.target*100).toFixed(1) : '0.0'; let safeColor = (r.target > 0 && (r.actual/r.target*100) < 80) ? 'var(--danger)' : 'var(--success)';
+                return `<tr><td>${r.date}</td><td>${safeShift}</td><td style="font-size:10px;"><b>${safeLine}</b></td><td style="font-size:10px; color:var(--accent); font-weight:bold;">${safeSize}</td><td>${r.actual}</td><td>${r.target}</td><td style="font-weight:bold; color:${safeColor}">${safeEff}%</td><td>${(getTotalDown(r)/60).toFixed(1)}h</td><td><b>${getTotalScrap(r)}</b></td>
+                    <td class="admin-only" style="display:${isEngineer?'table-cell':'none'}"><div class="action-cell"><button class="icon-btn" onclick="openEditModal(${r.id})">✏️</button><button class="icon-btn" style="color:var(--danger)" onclick="deleteLog(${r.id})">🗑</button></div></td></tr>`;
             }).join('');
         }
 
-        // ==========================================
-        // CHARTS & SIZE DISTRIBUTION GRAPH
-        // ==========================================
         function initCharts() {
-            const cleanScales = { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(100,116,139,0.1)' } } };
-            const animCfg = { duration: 600, easing: 'easeOutQuart' };
-
+            const cleanScales = { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(100,116,139,0.1)' } } }; const animCfg = { duration: 600, easing: 'easeOutQuart' };
             charts.prod = new Chart(document.getElementById('prodChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.05)', fill: true, tension: 0.3, data: [] }, { label: 'Target', borderColor: '#94a3b8', borderDash:[4,4], data: [] }]}, options: { responsive: true, maintainAspectRatio: false, animation: animCfg, plugins: { legend: { position: 'top', align: 'end' } }, scales: cleanScales } });
-            
-            charts.util = new Chart(document.getElementById('utilChart'), { 
-                type: 'doughnut', 
-                data: { labels: ['Welding', 'Seamer', 'Flanger', 'Packing', 'Other'], datasets: [{ data: [0,0,0,0,0], backgroundColor: ['#ef4444', '#f59e0b', '#2563eb', '#10b981', '#64748b'], borderWidth: 2, borderColor: 'var(--surface)', hoverOffset: 10 }]}, 
-                options: { 
-                    responsive: true, maintainAspectRatio: false, cutout:'60%', 
-                    plugins: { legend: { position: 'right' } },
-                    onClick: (e, activeEls) => {
-                        if(activeEls.length > 0) {
-                            const index = activeEls[0].index; const filterLabel = charts.util.data.labels[index];
-                            let drillData = [];
-                            if(filterLabel === 'Welding') drillData = filteredData.filter(r => r.down_welder > 0);
-                            else if(filterLabel === 'Seamer') drillData = filteredData.filter(r => r.down_seamer > 0);
-                            else if(filterLabel === 'Flanger') drillData = filteredData.filter(r => r.down_flanger > 0);
-                            else if(filterLabel === 'Packing') drillData = filteredData.filter(r => r.down_pack > 0);
-                            else if(filterLabel === 'Other') drillData = filteredData.filter(r => r.down_other > 0 || r.down_mech > 0 || r.down_elec > 0 || r.down_mat > 0);
-                            renderTable(drillData);
-                        }
-                    }
-                } 
-            });
-
+            const dOptions = { responsive: true, maintainAspectRatio: false, cutout:'60%', plugins: { legend: { display: false } } };
+            charts.utilOverall = new Chart(document.getElementById('utilChartOverall'), { type: 'doughnut', data: { labels: ['Welding', 'Seamer', 'Flanger', 'Elec', 'Elevator', 'Palletizer', 'Packing', 'Other'], datasets: [{ data: [0,0,0,0,0,0,0,0], backgroundColor: ['#ef4444','#f59e0b','#2563eb','#8b5cf6','#ec4899','#14b8a6','#10b981','#64748b'], borderWidth: 2, borderColor: 'var(--surface)' }]}, options: dOptions });
+            charts.utilDay = new Chart(document.getElementById('utilChartDay'), { type: 'doughnut', data: { labels: ['Welding', 'Seamer', 'Flanger', 'Elec', 'Elevator', 'Palletizer', 'Packing', 'Other'], datasets: [{ data: [0,0,0,0,0,0,0,0], backgroundColor: ['#ef4444','#f59e0b','#2563eb','#8b5cf6','#ec4899','#14b8a6','#10b981','#64748b'], borderWidth: 2, borderColor: 'var(--surface)' }]}, options: dOptions });
+            charts.utilNight = new Chart(document.getElementById('utilChartNight'), { type: 'doughnut', data: { labels: ['Welding', 'Seamer', 'Flanger', 'Elec', 'Elevator', 'Palletizer', 'Packing', 'Other'], datasets: [{ data: [0,0,0,0,0,0,0,0], backgroundColor: ['#ef4444','#f59e0b','#2563eb','#8b5cf6','#ec4899','#14b8a6','#10b981','#64748b'], borderWidth: 2, borderColor: 'var(--surface)' }]}, options: dOptions });
             const groupLabels = ['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5', 'Line 6', 'SLITTER'];
             charts.effDay = new Chart(document.getElementById('effChartDay'), { type: 'bar', data: { labels: groupLabels, datasets: [{ label: 'Eff %', data: [], backgroundColor: '#10b981', borderRadius: 4 }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { max: 100, grid: { color: 'rgba(100,116,139,0.1)' } } } } });
             charts.effNight = new Chart(document.getElementById('effChartNight'), { type: 'bar', data: { labels: groupLabels, datasets: [{ label: 'Eff %', data: [], backgroundColor: '#2563eb', borderRadius: 4 }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { max: 100, grid: { color: 'rgba(100,116,139,0.1)' } } } } });
             charts.shiftComp = new Chart(document.getElementById('shiftCompChart'), { type: 'bar', data: { labels: ['Day Shift', 'Night Shift'], datasets: [{ label: 'Total Output', backgroundColor: ['#f59e0b', '#2563eb'], data: [0, 0], borderRadius: 4 }]}, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(100,116,139,0.1)' } }, y: { grid: { display: false } } } } });
-            
             charts.qc = new Chart(document.getElementById('qcChart'), { type: 'bar', data: { labels: ['Scratches', 'Flanging'], datasets: [{ label: 'Cans Lost', backgroundColor: '#ef4444', borderRadius: 4, data: [0,0] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: cleanScales } });
             charts.sizeDist = new Chart(document.getElementById('sizeChart'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Total Yield', backgroundColor: '#8b5cf6', borderRadius: 4, data: [] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: cleanScales } });
         }
@@ -785,32 +643,21 @@
             const labels = [...new Set(filteredData.map(r => r.date))].sort();
             charts.prod.data.labels = labels; charts.prod.data.datasets[0].data = labels.map(d => filteredData.filter(r => r.date === d).reduce((s,r)=>s+(r.actual||0),0)); charts.prod.data.datasets[1].data = labels.map(d => filteredData.filter(r => r.date === d).reduce((s,r)=>s+(r.target||0),0)); charts.prod.update();
 
-            let wD=0, sD=0, fD=0, pD=0, oD=0; let sQ=0, fQ=0; const sizeYields = {};
-
+            let oDown=[0,0,0,0,0,0,0,0], dDown=[0,0,0,0,0,0,0,0], nDown=[0,0,0,0,0,0,0,0]; let sQ=0, fQ=0; const sizeYields = {};
             filteredData.forEach(r => { 
-                wD += (r.down_welder || 0); sD += (r.down_seamer || 0); fD += (r.down_flanger || 0); pD += (r.down_pack || 0); oD += (r.down_other || 0); 
-                oD += (r.down_mech || 0) + (r.down_elec || 0) + (r.down_mat || 0) + (r.down_qc || 0);
+                const arr = [(r.down_welder||0), (r.down_seamer||0), (r.down_flanger||0), (r.down_elec||0), (r.down_elevator||0), (r.down_palletizer||0), (r.down_pack||0), ((r.down_other||0) + (r.down_mech||0) + (r.down_mat||0) + (r.down_qc||0))];
+                for(let i=0; i<8; i++) { oDown[i] += arr[i]; if(r.shift === 'Day Shift') dDown[i] += arr[i]; if(r.shift === 'Night Shift') nDown[i] += arr[i]; }
                 sQ += (r.defect_scratch||0); fQ += (r.defect_flange||0);
-                
-                const safeSize = r.can_size || "Standard";
-                if(r.actual > 0) sizeYields[safeSize] = (sizeYields[safeSize] || 0) + r.actual;
+                const safeSize = r.can_size || "Standard"; if(r.actual > 0) sizeYields[safeSize] = (sizeYields[safeSize] || 0) + r.actual;
             });
-            
-            charts.util.data.datasets[0].data = [wD, sD, fD, pD, oD]; charts.util.update();
-
-            let qcData = [{n:'Scratches', v:sQ}, {n:'Flanging', v:fQ}].sort((a,b)=>b.v - a.v);
-            charts.qc.data.labels = qcData.map(d=>d.n); charts.qc.data.datasets[0].data = qcData.map(d=>d.v); charts.qc.update();
-
-            charts.sizeDist.data.labels = Object.keys(sizeYields);
-            charts.sizeDist.data.datasets[0].data = Object.values(sizeYields);
-            charts.sizeDist.update();
+            charts.utilOverall.data.datasets[0].data = oDown; charts.utilOverall.update(); charts.utilDay.data.datasets[0].data = dDown; charts.utilDay.update(); charts.utilNight.data.datasets[0].data = nDown; charts.utilNight.update();
+            let qcData = [{n:'Scratches', v:sQ}, {n:'Flanging', v:fQ}].sort((a,b)=>b.v - a.v); charts.qc.data.labels = qcData.map(d=>d.n); charts.qc.data.datasets[0].data = qcData.map(d=>d.v); charts.qc.update();
+            charts.sizeDist.data.labels = Object.keys(sizeYields); charts.sizeDist.data.datasets[0].data = Object.values(sizeYields); charts.sizeDist.update();
 
             const groupLabels = ['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5', 'Line 6', 'SLITTER'];
             const updateShift = (chart, shift) => {
                 const vals = groupLabels.map(baseLine => { 
-                    const rs = filteredData.filter(x => x.line && x.line.startsWith(baseLine) && x.shift === shift); 
-                    const a = rs.reduce((sum,x)=>sum+(x.actual||0),0), t = rs.reduce((sum,x)=>sum+(x.target||0),0); 
-                    return t > 0 ? (a/t*100) : 0; 
+                    const rs = filteredData.filter(x => x.line && x.line.startsWith(baseLine) && x.shift === shift); const a = rs.reduce((sum,x)=>sum+(x.actual||0),0), t = rs.reduce((sum,x)=>sum+(x.target||0),0); return t > 0 ? (a/t*100) : 0; 
                 });
                 chart.data.datasets[0].data = vals; chart.data.datasets[0].backgroundColor = vals.map(e => e === 0 ? '#e2e8f0' : (e < 65 ? '#ef4444' : (e < 80 ? '#f59e0b' : '#10b981'))); chart.update();
             }
@@ -818,379 +665,105 @@
             charts.shiftComp.data.datasets[0].data = [ filteredData.filter(r => r.shift === "Day Shift").reduce((sum,r)=>sum+(r.actual||0),0), filteredData.filter(r => r.shift === "Night Shift").reduce((sum,r)=>sum+(r.actual||0),0) ]; charts.shiftComp.update();
         }
 
-        // ==========================================
-        // 3D TWIN ENGINE
-        // ==========================================
-        let scene, camera, renderer, factoryObjects = {};
-        
-        function toggleTwin() {
-            isTwinVisible = !isTwinVisible;
-            document.getElementById('traditional-charts').style.display = isTwinVisible ? 'none' : 'block';
-            document.getElementById('twin-container').style.display = isTwinVisible ? 'block' : 'none';
-            if(isTwinVisible && renderer) {
-                const container = document.getElementById('twin-container');
-                renderer.setSize(container.clientWidth, container.clientHeight);
-                camera.aspect = container.clientWidth / container.clientHeight;
-                camera.updateProjectionMatrix();
-                update3DTwin();
-            }
-        }
-
         function init3DTwin() {
             const container = document.getElementById('twin-container');
-            scene = new THREE.Scene(); scene.background = new THREE.Color('#0f172a');
-            const gridHelper = new THREE.GridHelper(40, 40, '#334155', '#1e293b'); scene.add(gridHelper);
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            scene = new THREE.Scene(); scene.background = new THREE.Color('#0f172a'); scene.add(new THREE.GridHelper(40, 40, '#334155', '#1e293b')); scene.add(new THREE.AmbientLight(0xffffff, 0.6));
             const dirLight = new THREE.DirectionalLight(0xffffff, 0.8); dirLight.position.set(10, 20, 10); scene.add(dirLight);
-
-            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 15, 25);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            container.appendChild(renderer.domElement);
-
-            const controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; controls.dampingFactor = 0.05; controls.maxPolarAngle = Math.PI / 2 - 0.1;
-
-            const lineNames = ['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5', 'Line 6', 'Slitter'];
-            const startX = -12;
-            lineNames.forEach((name, i) => {
-                const geometry = new THREE.BoxGeometry(2, 1.5, 6);
-                const material = new THREE.MeshPhongMaterial({ color: '#64748b', transparent: true, opacity: 0.9 });
-                const cube = new THREE.Mesh(geometry, material);
-                cube.position.set(startX + (i * 4), 0.75, 0);
-                scene.add(cube); factoryObjects[name] = cube;
-            });
-
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000); camera.position.set(0, 15, 25);
+            renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(container.clientWidth, container.clientHeight); container.appendChild(renderer.domElement);
+            const controls = new THREE.OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.dampingFactor = 0.05; controls.maxPolarAngle = Math.PI / 2 - 0.1;
+            const lineNames = ['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5', 'Line 6', 'Slitter']; const startX = -12;
+            lineNames.forEach((name, i) => { const cube = new THREE.Mesh(new THREE.BoxGeometry(2, 1.5, 6), new THREE.MeshPhongMaterial({ color: '#64748b', transparent: true, opacity: 0.9 })); cube.position.set(startX + (i * 4), 0.75, 0); scene.add(cube); factoryObjects[name] = cube; });
             function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); } animate();
         }
-
         function update3DTwin() {
-            if(!scene) return;
-            const lineNames = ['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5', 'Line 6', 'Slitter'];
+            if(!scene) return; const lineNames = ['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5', 'Line 6', 'Slitter'];
             lineNames.forEach(name => {
-                const rs = filteredData.filter(x => x.line && x.line.toUpperCase().includes(name.toUpperCase()));
-                const a = rs.reduce((sum,x)=>sum+(x.actual||0),0); const t = rs.reduce((sum,x)=>sum+(x.target||0),0);
-                const eff = t > 0 ? (a/t*100) : 0;
-                
-                let targetColor = '#64748b'; 
-                if (t > 0) { if (eff >= 80) targetColor = '#10b981'; else if (eff >= 65) targetColor = '#f59e0b'; else targetColor = '#ef4444'; }
+                const rs = filteredData.filter(x => x.line && x.line.toUpperCase().includes(name.toUpperCase())); const a = rs.reduce((sum,x)=>sum+(x.actual||0),0); const t = rs.reduce((sum,x)=>sum+(x.target||0),0); const eff = t > 0 ? (a/t*100) : 0;
+                let targetColor = '#64748b'; if (t > 0) { if (eff >= 80) targetColor = '#10b981'; else if (eff >= 65) targetColor = '#f59e0b'; else targetColor = '#ef4444'; }
                 if(factoryObjects[name]) factoryObjects[name].material.color.set(targetColor);
             });
         }
-
-        // ==========================================
-        // DAILY QUALITY NOTES & LOCAL STORAGE
-        // ==========================================
-        function saveDailyQualityNotes() {
-            const dateKey = currentMode === 'custom' && document.getElementById('date-start').value ? document.getElementById('date-start').value : new Date().toISOString().split('T')[0];
-            const dayNotes = document.getElementById('daily-quality-day').value;
-            const nightNotes = document.getElementById('daily-quality-night').value;
-            
-            const qualityData = JSON.parse(localStorage.getItem('rcc_quality_notes') || '{}');
-            qualityData[dateKey] = { day: dayNotes, night: nightNotes };
-            localStorage.setItem('rcc_quality_notes', JSON.stringify(qualityData));
+        function toggleTwin() {
+            isTwinVisible = !isTwinVisible; document.getElementById('traditional-charts').style.display = isTwinVisible ? 'none' : 'block'; document.getElementById('twin-container').style.display = isTwinVisible ? 'block' : 'none';
+            if(isTwinVisible && renderer) { const container = document.getElementById('twin-container'); renderer.setSize(container.clientWidth, container.clientHeight); camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); update3DTwin(); }
         }
 
-        function loadDailyQualityNotes() {
-            const dateKey = currentMode === 'custom' && document.getElementById('date-start').value ? document.getElementById('date-start').value : new Date().toISOString().split('T')[0];
-            const qualityData = JSON.parse(localStorage.getItem('rcc_quality_notes') || '{}');
-            
-            if(qualityData[dateKey]) {
-                document.getElementById('daily-quality-day').value = qualityData[dateKey].day || "";
-                document.getElementById('daily-quality-night').value = qualityData[dateKey].night || "";
-            } else {
-                document.getElementById('daily-quality-day').value = "";
-                document.getElementById('daily-quality-night').value = "";
-            }
-        }
-
-        // ==========================================
-        // DATA UPLOAD & OPTIMISTIC UI
-        // ==========================================
         async function saveData() {
             const btn = document.getElementById('transmit-btn');
-            
             const entry = {
                 date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
-                shift: document.getElementById('f-shift').value, 
-                line: document.getElementById('f-line').value,
-                can_size: document.getElementById('f-size').value || 'Standard', 
-                target: parseInt(document.getElementById('f-target').value) || 0, actual: parseInt(document.getElementById('f-actual').value) || 0, 
-                run: parseInt(document.getElementById('f-run').value) || 480, 
-                down_welder: parseInt(document.getElementById('f-down-weld').value) || 0, 
-                down_seamer: parseInt(document.getElementById('f-down-seam').value) || 0,
-                down_flanger: parseInt(document.getElementById('f-down-flange').value) || 0, 
-                down_pack: parseInt(document.getElementById('f-down-pack').value) || 0,
-                down_other: parseInt(document.getElementById('f-down-other').value) || 0, 
-                defect_scratch: parseInt(document.getElementById('f-scrap-scratch').value) || 0, 
-                defect_flange: parseInt(document.getElementById('f-scrap-flange').value) || 0,
-                reject_reason: document.getElementById('f-reject-reason').value || '',
-                created_at: new Date().toISOString()
+                shift: document.getElementById('f-shift').value, line: document.getElementById('f-line').value, can_size: document.getElementById('f-size').value || 'Standard', 
+                target: parseInt(document.getElementById('f-target').value) || 0, actual: parseInt(document.getElementById('f-actual').value) || 0, run: parseInt(document.getElementById('f-run').value) || 480, 
+                down_welder: parseInt(document.getElementById('f-down-weld').value) || 0, down_seamer: parseInt(document.getElementById('f-down-seam').value) || 0, down_flanger: parseInt(document.getElementById('f-down-flange').value) || 0, 
+                down_elec: parseInt(document.getElementById('f-down-elec').value) || 0, down_elevator: parseInt(document.getElementById('f-down-elev').value) || 0, down_palletizer: parseInt(document.getElementById('f-down-pallet').value) || 0, 
+                down_pack: parseInt(document.getElementById('f-down-pack').value) || 0, down_other: parseInt(document.getElementById('f-down-other').value) || 0, 
+                defect_scratch: parseInt(document.getElementById('f-scrap-scratch').value) || 0, defect_flange: parseInt(document.getElementById('f-scrap-flange').value) || 0, reject_reason: document.getElementById('f-reject-reason').value || '', created_at: new Date().toISOString()
             };
             if (entry.target === 0 || entry.actual === 0 || !entry.line) { alert("Target, Actual, and Line are required."); return; }
-            
             btn.innerText = "UPLOADING...";
-            const { data, error } = await sb.from('production_logs').insert([entry]).select();
-            if(!error && data) { 
-                rawData.unshift(data[0]); 
-                processData(); 
-                btn.innerText = "☁️ TRANSMIT RECORD (INSTANT POP)";
-                ['f-actual', 'f-down-weld', 'f-down-seam', 'f-down-flange', 'f-down-pack', 'f-down-other', 'f-scrap-scratch', 'f-scrap-flange', 'f-reject-reason'].forEach(id => document.getElementById(id).value = '');
-            } else { alert("ACCESS DENIED: Check Database Connection."); btn.innerText = "☁️ TRANSMIT RECORD"; }
+            const { error } = await sb.from('production_logs').insert([entry]);
+            if(!error) { 
+                fetchData(); btn.innerText = "☁️ TRANSMIT RECORD";
+                ['f-actual', 'f-down-weld', 'f-down-seam', 'f-down-flange', 'f-down-elec', 'f-down-elev', 'f-down-pallet', 'f-down-pack', 'f-down-other', 'f-scrap-scratch', 'f-scrap-flange', 'f-reject-reason'].forEach(id => document.getElementById(id).value = '');
+            } else { alert("ACCESS DENIED: Database locked."); btn.innerText = "☁️ TRANSMIT RECORD"; }
         }
 
-        // ==========================================
-        // EDIT MODULE RESTORED (ISO COMPLIANT)
-        // ==========================================
-        function openEditModal(id) {
-            const log = rawData.find(r => r.id === id); if(!log) return;
-            document.getElementById('edit-id').value = id; 
-            document.getElementById('edit-reason').value = ''; 
-            
-            const sizeSelect = document.getElementById('edit-size');
-            sizeSelect.innerHTML = ""; 
-            let foundSizes = ["Standard Multi-Size"]; 
-            for (const [lineKey, sizes] of Object.entries(lineSizeMap)) {
-                if (log.line && log.line.toUpperCase().includes(lineKey.toUpperCase())) { foundSizes = sizes; break; }
-            }
-            foundSizes.forEach(s => {
-                const opt = document.createElement('option'); opt.value = s; opt.innerText = s;
-                if(s === log.can_size) opt.selected = true; 
-                sizeSelect.appendChild(opt);
-            });
-            if(!foundSizes.includes(log.can_size) && log.can_size) {
-                const opt = document.createElement('option'); opt.value = log.can_size; opt.innerText = log.can_size; opt.selected = true; sizeSelect.appendChild(opt);
-            }
-
-            document.getElementById('edit-target').value = log.target; document.getElementById('edit-actual').value = log.actual;
-            document.getElementById('edit-weld').value = log.down_welder || 0; document.getElementById('edit-seam').value = log.down_seamer || 0; document.getElementById('edit-flange').value = log.down_flanger || 0; document.getElementById('edit-pack').value = log.down_pack || 0; document.getElementById('edit-other').value = log.down_other || 0;
-            document.getElementById('edit-scrap-scratch').value = log.defect_scratch || 0; document.getElementById('edit-scrap-flange').value = log.defect_flange || 0; 
-            document.getElementById('edit-reject-reason').value = log.reject_reason || '';
-            
-            document.getElementById('edit-modal').style.display = 'block'; document.getElementById('main-overlay').style.display = 'block';
-        }
-
-        async function submitEdit() {
-            const id = document.getElementById('edit-id').value;
-            const reason = document.getElementById('edit-reason').value.trim();
-            if(!reason) { alert("🛑 ISO COMPLIANCE BLOCK: You must state the exact reason for altering this official record."); return; }
-
-            const log = rawData.find(r => r.id == id);
-            const updates = { 
-                can_size: document.getElementById('edit-size').value,
-                target: parseInt(document.getElementById('edit-target').value)||0, actual: parseInt(document.getElementById('edit-actual').value)||0, 
-                down_welder: parseInt(document.getElementById('edit-weld').value)||0, down_seamer: parseInt(document.getElementById('edit-seam').value)||0, down_flanger: parseInt(document.getElementById('edit-flange').value)||0, down_pack: parseInt(document.getElementById('edit-pack').value)||0, down_other: parseInt(document.getElementById('edit-other').value)||0, 
-                defect_scratch: parseInt(document.getElementById('edit-scrap-scratch').value)||0, defect_flange: parseInt(document.getElementById('edit-scrap-flange').value)||0,
-                reject_reason: document.getElementById('edit-reject-reason').value
-            };
-
-            try {
-                const auditEntry = {
-                    action: 'UPDATE_PRODUCTION', record_id: id, machine: log.line,
-                    old_value: `Yield: ${log.actual}, Target: ${log.target}`,
-                    new_value: `Yield: ${updates.actual}, Target: ${updates.target}`,
-                    reason: reason, changed_by: currentUser || 'Admin'
-                };
-                await sb.from('audit_logs').insert([auditEntry]);
-                const { error } = await sb.from('production_logs').update(updates).eq('id', id);
-                if(!error) { closeModals(); await fetchData(); } else { alert("ACCESS DENIED: Database locked."); }
-            } catch(e) { alert("Audit system error. Action aborted."); }
-        }
-
-        async function deleteLog(id) { 
-            const reason = prompt("🛑 ISO COMPLIANCE CHECK: State reason for permanent deletion:");
-            if(!reason) { alert("Deletion cancelled. A valid reason is strictly required."); return; }
-            const log = rawData.find(r => r.id == id);
-            try {
-                const auditEntry = {
-                    action: 'DELETE_PRODUCTION', record_id: id, machine: log.line,
-                    old_value: `Date: ${log.date}, Yield: ${log.actual}, Size: ${log.can_size}`,
-                    new_value: `DELETED`, reason: reason, changed_by: currentUser || 'Admin'
-                };
-                await sb.from('audit_logs').insert([auditEntry]);
-                const { error } = await sb.from('production_logs').delete().eq('id', id); 
-                if(!error) { rawData = rawData.filter(r => r.id != id); processData(); }
-            } catch(e) { alert("Audit system error."); }
-        }
-
-        // ==========================================
-        // CHAT & AI ORACLE
-        // ==========================================
         async function fetchComments() {
-            const box = document.getElementById('chat-box');
-            if (!box) return;
+            const box = document.getElementById('chat-box'); if (!box) return;
             try {
                 const { data, error } = await sb.from('live_comments').select('*').eq('module', 'production').order('created_at', { ascending: true }).limit(50);
                 if (error || !data) return;
-                
                 const isScrolledToBottom = box.scrollHeight - box.clientHeight <= box.scrollTop + 20;
                 const newHTML = data.map(msg => {
-                    const isOracle = msg.user_name === 'RCC ORACLE';
-                    const author = msg.user_name || "Operator";
-                    const message = msg.message || "";
+                    const isOracle = msg.user_name === 'RCC ORACLE'; const author = msg.user_name || "Operator"; const message = msg.message || "";
                     const delBtn = isEngineer ? `<button class="del-msg-btn" onclick="deleteComment(${msg.id})">x</button>` : "";
-                    
                     if(isOracle) { return `<div class="chat-msg oracle-msg">${delBtn} <b>${author}</b> <span>${message}</span></div>`; } 
                     else if(author === 'SYSTEM 🤖') { return `<div class="chat-msg" style="border-left-color:var(--danger); background:rgba(239, 68, 68, 0.05);">${delBtn} <b style="color:var(--danger);">${author}</b> <span>${message}</span></div>`; }
                     return `<div class="chat-msg" style="${isEngineer && author === currentUser ? 'border-left-color:var(--accent)' : 'border-left-color:var(--border)'}">${delBtn} <b>${author}</b> <span>${message}</span></div>`;
                 }).join('');
-                
                 if (box.innerHTML !== newHTML) { box.innerHTML = newHTML; if (isScrolledToBottom) { box.scrollTop = box.scrollHeight; } }
             } catch (err) {}
         }
         
         async function sendComment() {
-            const input = document.getElementById('chat-input');
-            if (!input) return;
-            const message = input.value.trim();
-            if (!message) return;
-            input.value = '';
-            
+            const input = document.getElementById('chat-input'); if (!input) return;
+            const message = input.value.trim(); if (!message) return; input.value = '';
             try {
                 await sb.from('live_comments').insert([{ user_name: currentUser || "Operator", message: message, module: 'production' }]);
-                if (message.toLowerCase().includes('@oracle')) { processOracleQuery(message.toLowerCase().replace('@oracle','').trim()); }
+                if (message.toLowerCase().includes('@oracle') || message.toLowerCase().includes('report') || message.toLowerCase().includes('analyze')) { 
+                    processOracleQuery(message.toLowerCase()); 
+                }
                 fetchComments();
-            } catch (err) { alert("Chat system error."); }
-        }
-
-        async function deleteComment(id) {
-            if (!isEngineer) return;
-            if (confirm("Delete this chat message?")) {
-                await sb.from('live_comments').delete().eq('id', id);
-                fetchComments();
-            }
+            } catch (err) {}
         }
 
         async function processOracleQuery(query) {
-            let response = "I am the RCC Oracle. I analyze your live production data locally. Try asking: 'What is the status of Line 1?', 'Analyze downtime', 'Analyze scrap', or 'Analyze can sizes'.";
-            const q = query.toLowerCase();
+            let response = "I am the RCC Oracle. Analyzing datasets...";
+            let wD=0, sD=0, fD=0, eD=0, elD=0, plD=0, pkD=0, oD=0; let totalRun = 0; let totalActual = 0; let sc=0, fl=0;
+            
+            filteredData.forEach(r => { 
+                wD+=(r.down_welder||0); sD+=(r.down_seamer||0); fD+=(r.down_flanger||0); eD+=(r.down_elec||0); elD+=(r.down_elevator||0); plD+=(r.down_palletizer||0); pkD+=(r.down_pack||0); oD+=(r.down_other||0); totalRun += (r.run||480); 
+                sc+=(r.defect_scratch||0); fl+=(r.defect_flange||0); totalActual += (r.actual||0);
+            });
+            const totalDown = wD+sD+fD+eD+elD+plD+pkD+oD;
+            const downPercent = totalRun > 0 ? ((totalDown/totalRun)*100).toFixed(1) : 0;
+            const reasons = { "Welding": wD, "Seamer": sD, "Flanger": fD, "Electrical": eD, "Elevator": elD, "Palletizer": plD, "Packing": pkD, "Other": oD };
+            const worst = Object.keys(reasons).reduce((a, b) => reasons[a] > reasons[b] ? a : b);
+            
+            let suggestion = "";
+            if (worst === "Palletizer") suggestion = "Suggesting immediate sensor and hydraulic pressure audit on the Palletizer.";
+            else if (worst === "Electrical") suggestion = "Suggesting power supply stability checks and control panel diagnostics.";
+            else if (worst === "Seamer") suggestion = "Suggesting seaming roll gap checks and lubrication audit.";
+            else suggestion = "Routine mechanical preventive maintenance required.";
 
-            if (q.includes("status") && q.includes("line")) {
-                const lineMatch = query.match(/line \d/);
-                if (lineMatch) {
-                    const lineName = lineMatch[0]; const rs = filteredData.filter(x => x.line && x.line.toLowerCase().includes(lineName.toLowerCase()));
-                    if(rs.length > 0) {
-                        const a = rs.reduce((sum,x)=>sum+(x.actual||0),0); const t = rs.reduce((sum,x)=>sum+(x.target||0),0); const m = rs.reduce((sum,x)=>sum+(x.down_welder||0)+(x.down_seamer||0)+(x.down_flanger||0),0);
-                        const eff = t > 0 ? (a/t*100).toFixed(1) : 0;
-                        response = `Scanning ${lineName.toUpperCase()} telemetry... Current Efficiency: **${eff}%**. Output: ${a.toLocaleString()}/${t.toLocaleString()}. Accumulated Machine Downtime: ${m} minutes.`;
-                    } else { response = `I do not see any active production logs for ${lineName.toUpperCase()} in the current timeframe.`; }
-                }
-            }
-            else if (q.includes("worst") || q.includes("downtime") || q.includes("cause")) {
-                let wD=0, sD=0, fD=0, pD=0, oD=0; let totalRun = 0;
-                filteredData.forEach(r => { wD+=(r.down_welder||0); sD+=(r.down_seamer||0); fD+=(r.down_flanger||0); pD+=(r.down_pack||0); oD+=(r.down_other||0); totalRun += (r.run||480); });
-                const totalDown = wD+sD+fD+pD+oD;
-                const downPercent = totalRun > 0 ? ((totalDown/totalRun)*100).toFixed(1) : 0;
-                const reasons = { "Welding Machine": wD, "Seamer Machine": sD, "Flanger/Beader": fD, "Packing": pD, "Other Ops": oD };
-                const worst = Object.keys(reasons).reduce((a, b) => reasons[a] > reasons[b] ? a : b);
-                if (totalDown > 0) {
-                    response = `Diagnostic complete. Total downtime is **${totalDown} mins** (${downPercent}% of scheduled run time). `;
-                    if (downPercent > 10) response += `⚠️ **ALERT:** This is EXCESSIVE. `; else response += `✅ This is within healthy limits. `;
-                    response += `Primary bottleneck: **${worst}** (${reasons[worst]} mins).`;
-                } else { response = "No significant downtime recorded in the current timeframe."; }
-            }
-            else if (q.includes("scrap") || q.includes("reject")) {
-                let sc=0, fl=0; let totalYield = 0;
-                filteredData.forEach(r => { sc+=(r.defect_scratch||0); fl+=(r.defect_flange||0); totalYield += (r.actual||0); });
-                const totalScrap = sc+fl;
-                const scrapPercent = totalYield > 0 ? ((totalScrap/totalYield)*100).toFixed(2) : 0;
-                const reasons = { "Scratches": sc, "Flanging Errors": fl };
-                const worst = Object.keys(reasons).reduce((a, b) => reasons[a] > reasons[b] ? a : b);
-                
-                response = `Total QC Scrap is **${totalScrap.toLocaleString()} cans** (${scrapPercent}% of yield). `;
-                if (scrapPercent > 2) response += `⚠️ **ALERT:** Scrap rate is TOO HIGH. `; else response += `✅ Scrap rate is healthy. `;
-                response += `Highest failure mode is **${worst}** (${reasons[worst]} units).`;
-            }
-            else if (q.includes("size") || q.includes("sizes")) {
-                let lineSizes = {};
-                filteredData.forEach(r => {
-                    const safeLine = r.line || "Unknown Asset";
-                    const sz = r.can_size || "Standard";
-                    if(!lineSizes[safeLine]) lineSizes[safeLine] = {};
-                    if(!lineSizes[safeLine][sz]) lineSizes[safeLine][sz] = {a:0, t:0, day:0, night:0};
-                    lineSizes[safeLine][sz].a += (r.actual||0); lineSizes[safeLine][sz].t += (r.target||0);
-                    if(r.shift === 'Day Shift') lineSizes[safeLine][sz].day += (r.actual||0); else if(r.shift === 'Night Shift') lineSizes[safeLine][sz].night += (r.actual||0);
-                });
-                if(Object.keys(lineSizes).length > 0) {
-                    response = "Accumulated Output by Can Size (Per Line):\n";
-                    for(let line in lineSizes) {
-                        response += `\n🏭 **${line}**\n`;
-                        for(let sz in lineSizes[line]) {
-                            let szData = lineSizes[line][sz];
-                            let szEff = szData.t > 0 ? ((szData.a/szData.t)*100).toFixed(1) : 0;
-                            response += `• **${sz}**: ${szData.a.toLocaleString()} Total (${szEff}% Eff) | Day: ${szData.day.toLocaleString()} / Night: ${szData.night.toLocaleString()}\n`;
-                        }
-                    }
-                } else { response = "No can sizes recorded in current data."; }
-            }
+            response = `**Oracle Full Analysis:**\nTotal Downtime: **${(totalDown/60).toFixed(1)} hrs** (${downPercent}% of capacity). \nPrimary Bottleneck: **${worst}** (${(reasons[worst]/60).toFixed(1)} hrs). \n**Oracle Suggestion:** ${suggestion}`;
+            
             await sb.from('live_comments').insert([{ user_name: 'RCC ORACLE', message: response, module: 'production' }]); fetchComments();
         }
 
         // ==========================================
-        // AUDIT LOGS, REPORTS & EMAIL SETTINGS
-        // ==========================================
-        async function fetchAccessLogs() {
-            const display = document.getElementById('access-log-display'); 
-            if(!display) return;
-            display.innerHTML = "<span style='color:var(--accent); font-weight:bold;'>↻ Pinging Supabase for secure logs...</span>";
-            try {
-                const { data, error } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(50);
-                if(error) throw error;
-                if(data && data.length > 0) { display.innerHTML = data.map(l => `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--text-dim); font-size:10px;">[${new Date(l.created_at).toLocaleTimeString()}]</span> <b style="color:var(--text); font-size:11px; margin-left:5px;">${l.user_name || 'Unknown'}</b></div>`).join(''); } 
-                else { display.innerHTML = "<span style='color:var(--text-dim);'>No access logs recorded yet.</span>"; }
-            } catch(err) { display.innerHTML = `<span style='color:var(--danger);'><b>DB ERROR:</b> Access log table not found.</span>`; }
-        }
-
-        async function openAuditLedger() {
-            const content = document.getElementById('audit-content');
-            if(!content) return;
-            content.innerText = "Loading records...";
-            document.getElementById('audit-modal').style.display = 'block'; 
-            document.getElementById('main-overlay').style.display = 'block';
-            try {
-                const { data, error } = await sb.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50);
-                if (error || !data) { content.innerText = "Audit logs unavailable or permission denied."; return; }
-                if (data.length === 0) { content.innerText = "No audit records found."; return; }
-                content.innerHTML = data.map(record => {
-                    const date = record.created_at ? new Date(record.created_at).toLocaleString('en-US') : "Unknown date";
-                    return `<div class="audit-record">
-                            <b>${record.action || "AUDIT"}</b><br>
-                            Date: ${date}<br>
-                            Machine: ${record.machine || "N/A"}<br>
-                            Old: ${record.old_value || "N/A"}<br>
-                            New: ${record.new_value || "N/A"}<br>
-                            Reason: ${record.reason || "N/A"}<br>
-                            Changed By: ${record.changed_by || "Unknown"}
-                        </div>`;
-                }).join('');
-            } catch (err) { content.innerText = "Audit system error."; }
-        }
-
-        function saveEmailSettings() {
-            autoEmailConfig = {
-                enabled: document.getElementById('email-toggle')?.checked || false,
-                emails: document.getElementById('email-list')?.value || '',
-                dayTrigger: document.getElementById('email-time-day')?.value || '18:05',
-                nightTrigger: document.getElementById('email-time-night')?.value || '06:05',
-                lastSent: autoEmailConfig.lastSent || null
-            };
-            localStorage.setItem('rcc_email_config', JSON.stringify(autoEmailConfig));
-            alert("Report dispatcher settings saved.");
-        }
-
-        function loadEmailSettings() {
-            const saved = localStorage.getItem('rcc_email_config');
-            if (saved) { try { autoEmailConfig = JSON.parse(saved); } catch(e) {} }
-            if (document.getElementById('email-list')) document.getElementById('email-list').value = autoEmailConfig.emails || '';
-            if (document.getElementById('email-time-day')) document.getElementById('email-time-day').value = autoEmailConfig.dayTrigger || '18:05';
-            if (document.getElementById('email-time-night')) document.getElementById('email-time-night').value = autoEmailConfig.nightTrigger || '06:05';
-            if (document.getElementById('email-toggle')) document.getElementById('email-toggle').checked = !!autoEmailConfig.enabled;
-        }
-
-        // ==========================================
-        // AI REPORT MAKER
+        // SHIFT-INTELLIGENCE AI REPORT MAKER
         // ==========================================
         function generateSmartReportText() {
             if(filteredData.length === 0) return "No data found for this time period.";
@@ -1204,26 +777,27 @@
             const eff = target > 0 ? (yield/target*100).toFixed(1) : 0;
 
             let lines = {}; let lineSizes = {}; 
-            const downReasons = { "Welding": 0, "Seamer": 0, "Flanger": 0, "Packing": 0, "Other": 0 };
-            const scrapReasons = { "Scratches": 0, "Flanging Errors": 0 };
+            const dDown = { "Welding": 0, "Seamer": 0, "Flanger": 0, "Electrical": 0, "Elevator": 0, "Palletizer": 0, "Packing": 0, "Other": 0 };
+            const nDown = { "Welding": 0, "Seamer": 0, "Flanger": 0, "Electrical": 0, "Elevator": 0, "Palletizer": 0, "Packing": 0, "Other": 0 };
             
             filteredData.forEach(r => { 
-                const safeLine = r.line || "Unknown Asset";
-                const safeSize = r.can_size || "Standard";
-
+                const safeLine = r.line || "Unknown Asset"; const safeSize = r.can_size || "Standard";
                 if(!lines[safeLine]) lines[safeLine] = {a:0, t:0, d:0, s:0}; 
                 lines[safeLine].a += (r.actual||0); lines[safeLine].t += (r.target||0); 
                 lines[safeLine].d += getTotalDown(r); lines[safeLine].s += getTotalScrap(r);
 
                 if(!lineSizes[safeLine]) lineSizes[safeLine] = {};
                 if(!lineSizes[safeLine][safeSize]) lineSizes[safeLine][safeSize] = {a:0, t:0, d:0, s:0, day:0, night:0};
-                
                 lineSizes[safeLine][safeSize].a += (r.actual||0); lineSizes[safeLine][safeSize].t += (r.target||0);
                 lineSizes[safeLine][safeSize].d += getTotalDown(r); lineSizes[safeLine][safeSize].s += getTotalScrap(r);
-                if(r.shift === 'Day Shift') lineSizes[safeLine][safeSize].day += (r.actual||0); else if(r.shift === 'Night Shift') lineSizes[safeLine][safeSize].night += (r.actual||0);
-
-                downReasons.Welding += (r.down_welder || 0); downReasons.Seamer += (r.down_seamer || 0); downReasons.Flanger += (r.down_flanger || 0); downReasons.Packing += (r.down_pack || 0); downReasons.Other += (r.down_other || 0); 
-                scrapReasons["Scratches"] += (r.defect_scratch||0); scrapReasons["Flanging Errors"] += (r.defect_flange||0); 
+                
+                if(r.shift === 'Day Shift') {
+                    lineSizes[safeLine][safeSize].day += (r.actual||0);
+                    dDown.Welding += (r.down_welder||0); dDown.Seamer += (r.down_seamer||0); dDown.Flanger += (r.down_flanger||0); dDown.Electrical += (r.down_elec||0); dDown.Elevator += (r.down_elevator||0); dDown.Palletizer += (r.down_palletizer||0); dDown.Packing += (r.down_pack||0); dDown.Other += (r.down_other||0);
+                } else if(r.shift === 'Night Shift') {
+                    lineSizes[safeLine][safeSize].night += (r.actual||0);
+                    nDown.Welding += (r.down_welder||0); nDown.Seamer += (r.down_seamer||0); nDown.Flanger += (r.down_flanger||0); nDown.Electrical += (r.down_elec||0); nDown.Elevator += (r.down_elevator||0); nDown.Palletizer += (r.down_palletizer||0); nDown.Packing += (r.down_pack||0); nDown.Other += (r.down_other||0);
+                }
             });
             
             let worstEffLine = "None"; let worstEff = 100;
@@ -1233,32 +807,39 @@
             for(let l in lines) { 
                 let lEff = lines[l].t > 0 ? (lines[l].a / lines[l].t * 100) : 100; 
                 let lScrapRatio = lines[l].a > 0 ? (lines[l].s / lines[l].a * 100) : 0;
-
                 if(lEff < worstEff && lines[l].t > 0) { worstEff = lEff; worstEffLine = l; } 
                 if(lScrapRatio > highestScrapRatio) { highestScrapRatio = lScrapRatio; highestScrapLine = l; }
                 if(lines[l].d > highestDown) { highestDown = lines[l].d; highestDownLine = l; }
             }
 
-            let topDownReason = Object.keys(downReasons).reduce((a,b) => downReasons[a] > downReasons[b] ? a : b);
-            let topScrapReason = Object.keys(scrapReasons).reduce((a,b) => scrapReasons[a] > scrapReasons[b] ? a : b);
+            let topDayReason = Object.keys(dDown).reduce((a,b) => dDown[a] > dDown[b] ? a : b);
+            let topNightReason = Object.keys(nDown).reduce((a,b) => nDown[a] > nDown[b] ? a : b);
 
             const downPercent = runTime > 0 ? ((down / runTime) * 100).toFixed(1) : 0;
             const scrapPercent = yield > 0 ? ((scrap / yield) * 100).toFixed(2) : 0;
 
             let text = `SUBJECT: RCC Production Analytics Report - ${modeText}\n\n`;
-            text += `Dear Management Team,\n\n`;
             text += `📊 1. EXECUTIVE SUMMARY\n--------------------------------------------------\n`;
             text += `• Total Output: ${yield.toLocaleString()} cans\n`;
             text += `• Plant Efficiency: ${eff}%\n`;
             text += `• Total Machine Downtime: ${(down/60).toFixed(2)} hours\n`;
             text += `• Total QC Scrap: ${scrap.toLocaleString()} cans\n\n`;
 
-            text += `🔬 2. DEEP ANALYST INSIGHTS (MICRO-TRENDS)\n--------------------------------------------------\n`;
-            if (downPercent > 10) text += `⚠️ CRITICAL DOWNTIME: Plant downtime accounts for ${downPercent}% of scheduled run time. Major bottleneck is ${topDownReason} delays.\n`;
+            text += `🔬 2. DEEP ANALYST INSIGHTS (SHIFT DELTA ANALYSIS)\n--------------------------------------------------\n`;
+            if (downPercent > 10) text += `⚠️ CRITICAL DOWNTIME: Plant downtime accounts for ${downPercent}% of scheduled run time.\n`;
             else text += `✅ DOWNTIME HEALTHY: Plant downtime is within acceptable limits (${downPercent}% of run time).\n`;
-            if (highestDownLine !== "None") text += `   ↳ 🔍 Root Cause Asset: ${highestDownLine} is bleeding the most time (${(highestDown/60).toFixed(1)} hours lost).\n\n`;
+            
+            text += `   ↳ ☀️ Day Shift Primary Bottleneck: ${topDayReason} (${(dDown[topDayReason]/60).toFixed(1)} hrs)\n`;
+            if (topDayReason === 'Electrical') text += `      (Suggestion: Schedule a midday thermal imaging scan of control panels)\n`;
+            if (topDayReason === 'Palletizer') text += `      (Suggestion: Verify pneumatic pressure settings at start of Day Shift)\n`;
+            
+            text += `   ↳ 🌙 Night Shift Primary Bottleneck: ${topNightReason} (${(nDown[topNightReason]/60).toFixed(1)} hrs)\n`;
+            if (topNightReason === 'Electrical') text += `      (Suggestion: Check for voltage drops or condensation during Night Shift)\n`;
+            if (topNightReason === 'Palletizer') text += `      (Suggestion: Audit layer-pad alignment sensors under low light conditions)\n`;
 
-            if (scrapPercent > 2) text += `⚠️ CRITICAL QC SCRAP: Scrap rate is failing at ${scrapPercent}% of total yield. Major contributor: ${topScrapReason}.\n`;
+            if (highestDownLine !== "None") text += `   ↳ 🔍 Root Cause Asset: ${highestDownLine} is bleeding the most time overall.\n\n`;
+
+            if (scrapPercent > 2) text += `⚠️ CRITICAL QC SCRAP: Scrap rate is failing at ${scrapPercent}% of total yield.\n`;
             else text += `✅ QC SCRAP HEALTHY: Plant scrap rate is efficient at ${scrapPercent}% of total yield.\n`;
             if (highestScrapLine !== "None" && highestScrapRatio > 2) text += `   ↳ 🔍 Root Cause Asset: ${highestScrapLine} is generating massive rejects (${highestScrapRatio.toFixed(1)}% scrap ratio for this specific line).\n\n`;
 
@@ -1290,18 +871,13 @@
         }
         function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); document.getElementById('main-overlay').style.display = 'none'; }
         function downloadReport() { const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([document.getElementById('report-content').innerText], { type: 'text/plain' })); a.download = `RCC_Deep_Analysis.txt`; a.click(); }
-        function copyReportNow() {
-            if (!navigator.clipboard) { alert("Clipboard not available."); return; }
-            navigator.clipboard.writeText(generateSmartReportText()).then(() => { alert("Report copied to clipboard."); });
-        }
-        function sendEmailNow() { window.location.href = `mailto:manager@rcc.com?subject=Report&body=${encodeURIComponent(generateSmartReportText())}`; }
-        function saveNotes() { localStorage.setItem('bodyline_notes', document.getElementById('prod-notepad').value); }
-        function loadNotes() { document.getElementById('prod-notepad').value = localStorage.getItem('bodyline_notes') || ""; }
-
-        // Final safe init
-        window.onload = function () {
-            checkSession();
-        };
+        function copyReportNow() { if (!navigator.clipboard) { alert("Clipboard not available."); return; } navigator.clipboard.writeText(generateSmartReportText()).then(() => { alert("Report copied to clipboard."); }); }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            document.body.style.display = 'block';
+            setupSecurityTimer(); checkSession();
+        });
     </script>
 </body>
 </html>
+
