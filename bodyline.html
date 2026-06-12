@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCC Bodyline OS | v29.0 Enterprise Edition</title>
+    <title>RCC Bodyline OS | v29.1 Yearly & Monthly Analytics</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -35,7 +35,6 @@
             --border: #334155; 
         }
 
-        /* The page will always render. No display:none trap. */
         body { 
             font-family: 'Inter', sans-serif; 
             background: var(--bg); 
@@ -473,7 +472,7 @@
         <button class="tab-btn active" onclick="setMode('daily', this)">📊 Today</button>
         <button class="tab-btn" onclick="setMode('weekly', this)">📅 This Week</button>
         <button class="tab-btn" onclick="setMode('monthly', this)">📈 This Month</button>
-        <button class="tab-btn" onclick="setMode('all', this)">♾️ All Time</button>
+        <button class="tab-btn" onclick="setMode('yearly', this)">📅 This Year</button>
         <button class="tab-btn" onclick="setMode('custom', this)">🔍 Custom</button>
         
         <select id="dashboard-line-filter" class="tab-btn" style="background:var(--surface); border:1px solid var(--accent); color:var(--accent); outline:none; font-weight:bold;" onchange="calculateDatesAndProcess()">
@@ -531,26 +530,15 @@
                 <div class="kpi-card"><small>🗑️ Total QC Scrap</small><div id="kpi-scrap" class="val" style="color:var(--danger)">0</div></div>
             </div>
 
-            <div class="panel" style="margin-bottom: 20px;">
-                <h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color:var(--text-dim);">Historical Performance</h3>
-                <div style="height: 220px;"><canvas id="prodChart"></canvas></div>
-            </div>
-
-            <div class="panel" style="margin-bottom: 20px; border: 1px solid var(--accent);">
-                <h3 style="margin:0 0 15px 0; font-size:13px; text-transform: uppercase; color:var(--accent);">⚠️ Downtime Root Cause (Shift Matrix)</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; height: 220px;">
-                    <div>
-                        <h4 style="text-align:center; font-size:11px; margin:0 0 5px 0; color:var(--text);">🌐 OVERALL</h4>
-                        <canvas id="utilChartOverall"></canvas>
-                    </div>
-                    <div>
-                        <h4 style="text-align:center; font-size:11px; margin:0 0 5px 0; color:var(--warning);">☀️ DAY SHIFT</h4>
-                        <canvas id="utilChartDay"></canvas>
-                    </div>
-                    <div>
-                        <h4 style="text-align:center; font-size:11px; margin:0 0 5px 0; color:var(--accent);">🌙 NIGHT SHIFT</h4>
-                        <canvas id="utilChartNight"></canvas>
-                    </div>
+            <div class="chart-row">
+                <div class="panel">
+                    <h3 style="margin:0 0 15px 0; font-size:12px; text-transform: uppercase; color:var(--text-dim);">Historical Performance (Monthly)</h3>
+                    <div style="height: 220px;"><canvas id="prodChart"></canvas></div>
+                </div>
+                <div class="panel">
+                    <h3 style="margin:0; font-size:12px; text-transform: uppercase; color:var(--text-dim);">Downtime Root Cause (Machine Center)</h3>
+                    <p style="margin:0 0 10px 0; font-size:9px; color:var(--accent);">*Click a slice to filter log table</p>
+                    <div style="height: 200px;"><canvas id="utilChart"></canvas></div>
                 </div>
             </div>
 
@@ -835,7 +823,7 @@
 
     <script>
         // =========================================================================
-        // 🔒 SECURITY: SAFE SESSION GUARD
+        // 🔒 SECURITY: OPTIMIZED 30 MINUTE AUTO-LOGOUT
         // =========================================================================
         function setupSecurityTimer() {
             let time;
@@ -858,7 +846,6 @@
                 }
             };
             
-            // Replaced heavy mousemove with light click/typing listeners
             document.addEventListener('keypress', resetTimer); 
             document.addEventListener('click', resetTimer); 
             document.addEventListener('scroll', resetTimer);
@@ -1107,6 +1094,7 @@
             loadEmailSettings(); 
             loadDailyQualityNotes(); 
             
+            // Only fetch data once to stop double-render twitching
             fetchData(); 
             
             fetchComments(); 
@@ -1146,6 +1134,7 @@
                 const { data, error } = await sb.from('production_logs').select('*').order('date', {ascending:false}); 
                 if (error) { 
                     console.error("Fetch Data Error:", error); 
+                    alert("Unable to download data. Ensure Row Level Security (RLS) is configured or disabled.");
                     return; 
                 }
                 if(data) { 
@@ -1188,8 +1177,10 @@
             const todayStr = `${yyyy}-${mm}-${dd}`; 
             let start, end;
 
-            if(currentMode === 'all') {
-                filteredData = [...rawData];
+            if(currentMode === 'yearly') {
+                start = `${yyyy}-01-01`; 
+                end = `${yyyy}-12-31`; 
+                filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
             } else {
                 if(currentMode === 'daily') { 
                     start = end = todayStr; 
@@ -1204,10 +1195,7 @@
                     start = `${yyyy}-${mm}-01`; 
                     let lastDay = new Date(yyyy, today.getMonth() + 1, 0); 
                     end = `${yyyy}-${mm}-${lastDay.getDate()}`;
-                } else if(currentMode === 'yearly') { 
-                    start = `${yyyy}-01-01`; 
-                    end = `${yyyy}-12-31`; 
-                }
+                } 
                 
                 filteredData = rawData.filter(r => r && r.date && r.date >= start && r.date <= end);
             }
@@ -1326,7 +1314,7 @@
         }
 
         // ==========================================
-        // CHARTS: TRI-PANEL DOWNTIME
+        // CHARTS: REVERTED DOWNTIME & MONTHLY LINE
         // ==========================================
         function initCharts() {
             const cleanScales = { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(100,116,139,0.1)' } } };
@@ -1347,34 +1335,37 @@
                 });
             }
             
-            const dOptions = { responsive: true, maintainAspectRatio: false, cutout:'60%', plugins: { legend: { display: false } } };
-            const bgColors = ['#ef4444','#f59e0b','#2563eb','#8b5cf6','#ec4899','#14b8a6','#10b981','#64748b'];
-            const labels = ['Welding', 'Seamer', 'Flanger', 'Elec', 'Elevator', 'Palletizer', 'Packing', 'Other'];
-
-            const utilOverall = document.getElementById('utilChartOverall');
-            if (utilOverall) {
-                charts.utilOverall = new Chart(utilOverall, { 
+            const utilCanvas = document.getElementById('utilChart');
+            if (utilCanvas) {
+                charts.util = new Chart(utilCanvas, { 
                     type: 'doughnut', 
-                    data: { labels: labels, datasets: [{ data: [0,0,0,0,0,0,0,0], backgroundColor: bgColors, borderWidth: 2, borderColor: 'var(--surface)' }]}, 
-                    options: dOptions 
-                });
-            }
-
-            const utilDay = document.getElementById('utilChartDay');
-            if (utilDay) {
-                charts.utilDay = new Chart(utilDay, { 
-                    type: 'doughnut', 
-                    data: { labels: labels, datasets: [{ data: [0,0,0,0,0,0,0,0], backgroundColor: bgColors, borderWidth: 2, borderColor: 'var(--surface)' }]}, 
-                    options: dOptions 
-                });
-            }
-
-            const utilNight = document.getElementById('utilChartNight');
-            if (utilNight) {
-                charts.utilNight = new Chart(utilNight, { 
-                    type: 'doughnut', 
-                    data: { labels: labels, datasets: [{ data: [0,0,0,0,0,0,0,0], backgroundColor: bgColors, borderWidth: 2, borderColor: 'var(--surface)' }]}, 
-                    options: dOptions 
+                    data: { 
+                        labels: ['Welding', 'Seamer', 'Flanger', 'Elec', 'Elevator', 'Palletizer', 'Packing', 'Other'], 
+                        datasets: [{ 
+                            data: [0,0,0,0,0,0,0,0], 
+                            backgroundColor: ['#ef4444','#f59e0b','#2563eb','#8b5cf6','#ec4899','#14b8a6','#10b981','#64748b'], 
+                            borderWidth: 2, 
+                            borderColor: 'var(--surface)' 
+                        }]
+                    }, 
+                    options: { 
+                        responsive: true, maintainAspectRatio: false, cutout:'60%', plugins: { legend: { position: 'right' } },
+                        onClick: (e, activeEls) => {
+                            if(activeEls.length > 0) {
+                                const index = activeEls[0].index; const filterLabel = charts.util.data.labels[index];
+                                let drillData = [];
+                                if(filterLabel === 'Welding') drillData = filteredData.filter(r => r.down_welder > 0);
+                                else if(filterLabel === 'Seamer') drillData = filteredData.filter(r => r.down_seamer > 0);
+                                else if(filterLabel === 'Flanger') drillData = filteredData.filter(r => r.down_flanger > 0);
+                                else if(filterLabel === 'Elec') drillData = filteredData.filter(r => r.down_elec > 0);
+                                else if(filterLabel === 'Elevator') drillData = filteredData.filter(r => r.down_elevator > 0);
+                                else if(filterLabel === 'Palletizer') drillData = filteredData.filter(r => r.down_palletizer > 0);
+                                else if(filterLabel === 'Packing') drillData = filteredData.filter(r => r.down_pack > 0);
+                                else if(filterLabel === 'Other') drillData = filteredData.filter(r => r.down_other > 0 || r.down_mech > 0 || r.down_mat > 0 || r.down_qc > 0);
+                                renderTable(drillData);
+                            }
+                        }
+                    } 
                 });
             }
 
@@ -1428,14 +1419,31 @@
 
         function updateCharts() {
             if(!charts.prod) return;
-            const labels = [...new Set(filteredData.map(r => r.date))].sort();
             
-            charts.prod.data.labels = labels; 
-            charts.prod.data.datasets[0].data = labels.map(d => filteredData.filter(r => r.date === d).reduce((s,r)=>s+(r.actual||0),0)); 
-            charts.prod.data.datasets[1].data = labels.map(d => filteredData.filter(r => r.date === d).reduce((s,r)=>s+(r.target||0),0)); 
+            // DYNAMIC MONTHLY AGGREGATION FOR HISTORICAL CHART
+            const monthlyData = {};
+            filteredData.forEach(r => {
+                if(!r.date) return;
+                const monthStr = r.date.substring(0, 7); // Extracts "YYYY-MM"
+                if(!monthlyData[monthStr]) monthlyData[monthStr] = { actual: 0, target: 0 };
+                monthlyData[monthStr].actual += (r.actual || 0);
+                monthlyData[monthStr].target += (r.target || 0);
+            });
+            
+            const sortedMonths = Object.keys(monthlyData).sort();
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const displayLabels = sortedMonths.map(m => {
+                const [yy, mm] = m.split('-');
+                return monthNames[parseInt(mm)-1] + " " + yy;
+            });
+
+            charts.prod.data.labels = displayLabels; 
+            charts.prod.data.datasets[0].data = sortedMonths.map(m => monthlyData[m].actual); 
+            charts.prod.data.datasets[1].data = sortedMonths.map(m => monthlyData[m].target); 
             charts.prod.update();
 
-            let oDown=[0,0,0,0,0,0,0,0], dDown=[0,0,0,0,0,0,0,0], nDown=[0,0,0,0,0,0,0,0];
+            // REVERTED TO SINGLE OVERALL DOWNTIME
+            let oDown=[0,0,0,0,0,0,0,0];
             let sQ=0, fQ=0; 
             const sizeYields = {};
 
@@ -1453,8 +1461,6 @@
                 
                 for(let i=0; i<8; i++) {
                     oDown[i] += arr[i];
-                    if(r.shift === 'Day Shift') dDown[i] += arr[i];
-                    if(r.shift === 'Night Shift') nDown[i] += arr[i];
                 }
                 
                 sQ += (r.defect_scratch||0); 
@@ -1464,9 +1470,8 @@
                 if(r.actual > 0) sizeYields[safeSize] = (sizeYields[safeSize] || 0) + r.actual;
             });
             
-            charts.utilOverall.data.datasets[0].data = oDown; charts.utilOverall.update();
-            charts.utilDay.data.datasets[0].data = dDown; charts.utilDay.update();
-            charts.utilNight.data.datasets[0].data = nDown; charts.utilNight.update();
+            charts.util.data.datasets[0].data = oDown; 
+            charts.util.update();
 
             let qcData = [
                 {n:'Scratches', v:sQ}, 
@@ -1646,6 +1651,8 @@
             if(!error) { 
                 btn.innerText = "☁️ TRANSMIT RECORD";
                 ['f-actual', 'f-down-weld', 'f-down-seam', 'f-down-flange', 'f-down-elec', 'f-down-elev', 'f-down-pallet', 'f-down-pack', 'f-down-other', 'f-scrap-scratch', 'f-scrap-flange', 'f-reject-reason'].forEach(id => document.getElementById(id).value = '');
+                // Force a data refresh to immediately render the new data locally
+                fetchData();
             } else { 
                 alert("ACCESS DENIED: Please run the SQL database update."); 
                 btn.innerText = "☁️ TRANSMIT RECORD"; 
@@ -1913,7 +1920,7 @@
         }
 
         // ==========================================
-        // SHIFT-INTELLIGENCE AI REPORT MAKER
+        // AI REPORT MAKER
         // ==========================================
         function generateSmartReportText() {
             if(filteredData.length === 0) return "No data found for this time period.";
@@ -1927,8 +1934,7 @@
             const eff = target > 0 ? (yield/target*100).toFixed(1) : 0;
 
             let lines = {}; let lineSizes = {}; 
-            const dDown = { "Welding": 0, "Seamer": 0, "Flanger": 0, "Electrical": 0, "Elevator": 0, "Palletizer": 0, "Packing": 0, "Other": 0 };
-            const nDown = { "Welding": 0, "Seamer": 0, "Flanger": 0, "Electrical": 0, "Elevator": 0, "Palletizer": 0, "Packing": 0, "Other": 0 };
+            const downReasons = { "Welding": 0, "Seamer": 0, "Flanger": 0, "Electrical": 0, "Elevator": 0, "Palletizer": 0, "Packing": 0, "Other": 0 };
             
             filteredData.forEach(r => { 
                 const safeLine = r.line || "Unknown Asset"; const safeSize = r.can_size || "Standard";
@@ -1944,11 +1950,18 @@
                 
                 if(r.shift === 'Day Shift') {
                     lineSizes[safeLine][safeSize].day += (r.actual||0);
-                    dDown.Welding += (r.down_welder||0); dDown.Seamer += (r.down_seamer||0); dDown.Flanger += (r.down_flanger||0); dDown.Electrical += (r.down_elec||0); dDown.Elevator += (r.down_elevator||0); dDown.Palletizer += (r.down_palletizer||0); dDown.Packing += (r.down_pack||0); dDown.Other += (r.down_other||0);
                 } else if(r.shift === 'Night Shift') {
                     lineSizes[safeLine][safeSize].night += (r.actual||0);
-                    nDown.Welding += (r.down_welder||0); nDown.Seamer += (r.down_seamer||0); nDown.Flanger += (r.down_flanger||0); nDown.Electrical += (r.down_elec||0); nDown.Elevator += (r.down_elevator||0); nDown.Palletizer += (r.down_palletizer||0); nDown.Packing += (r.down_pack||0); nDown.Other += (r.down_other||0);
                 }
+                
+                downReasons.Welding += (r.down_welder||0); 
+                downReasons.Seamer += (r.down_seamer||0); 
+                downReasons.Flanger += (r.down_flanger||0); 
+                downReasons.Electrical += (r.down_elec||0); 
+                downReasons.Elevator += (r.down_elevator||0); 
+                downReasons.Palletizer += (r.down_palletizer||0); 
+                downReasons.Packing += (r.down_pack||0); 
+                downReasons.Other += (r.down_other||0);
             });
             
             let worstEffLine = "None"; let worstEff = 100;
@@ -1964,8 +1977,7 @@
                 if(lines[l].d > highestDown) { highestDown = lines[l].d; highestDownLine = l; }
             }
 
-            let topDayReason = Object.keys(dDown).reduce((a,b) => dDown[a] > dDown[b] ? a : b);
-            let topNightReason = Object.keys(nDown).reduce((a,b) => nDown[a] > nDown[b] ? a : b);
+            let topDownReason = Object.keys(downReasons).reduce((a,b) => downReasons[a] > downReasons[b] ? a : b);
 
             const downPercent = runTime > 0 ? ((down / runTime) * 100).toFixed(1) : 0;
             const scrapPercent = yield > 0 ? ((scrap / yield) * 100).toFixed(2) : 0;
@@ -1977,18 +1989,11 @@
             text += `• Total Machine Downtime: ${(down/60).toFixed(2)} hours\n`;
             text += `• Total QC Scrap: ${scrap.toLocaleString()} cans\n\n`;
 
-            text += `🔬 2. DEEP ANALYST INSIGHTS (SHIFT DELTA ANALYSIS)\n--------------------------------------------------\n`;
+            text += `🔬 2. DEEP ANALYST INSIGHTS (DOWNTIME ROOT CAUSE)\n--------------------------------------------------\n`;
             if (downPercent > 10) text += `⚠️ CRITICAL DOWNTIME: Plant downtime accounts for ${downPercent}% of scheduled run time.\n`;
             else text += `✅ DOWNTIME HEALTHY: Plant downtime is within acceptable limits (${downPercent}% of run time).\n`;
             
-            text += `   ↳ ☀️ Day Shift Primary Bottleneck: ${topDayReason} (${(dDown[topDayReason]/60).toFixed(1)} hrs)\n`;
-            if (topDayReason === 'Electrical') text += `      (Suggestion: Schedule a midday thermal imaging scan of control panels)\n`;
-            if (topDayReason === 'Palletizer') text += `      (Suggestion: Verify pneumatic pressure settings at start of Day Shift)\n`;
-            
-            text += `   ↳ 🌙 Night Shift Primary Bottleneck: ${topNightReason} (${(nDown[topNightReason]/60).toFixed(1)} hrs)\n`;
-            if (topNightReason === 'Electrical') text += `      (Suggestion: Check for voltage drops or condensation during Night Shift)\n`;
-            if (topNightReason === 'Palletizer') text += `      (Suggestion: Audit layer-pad alignment sensors under low light conditions)\n`;
-
+            text += `   ↳ ⚠️ Primary Bottleneck: ${topDownReason} (${(downReasons[topDownReason]/60).toFixed(1)} hrs)\n`;
             if (highestDownLine !== "None") text += `   ↳ 🔍 Root Cause Asset: ${highestDownLine} is bleeding the most time overall.\n\n`;
 
             if (scrapPercent > 2) text += `⚠️ CRITICAL QC SCRAP: Scrap rate is failing at ${scrapPercent}% of total yield.\n`;
@@ -2054,3 +2059,4 @@
     </script>
 </body>
 </html>
+
